@@ -54,7 +54,7 @@ const AdminNavItems = ({ toggleMobileNav }: Props) => {
 
 	const manageNavigation = [
 		{
-			name: "My Caps",
+			name: "My Recordings",
 			href: `/dashboard/caps`,
 			extraText: userCapsCount,
 			icon: <CapIcon />,
@@ -68,7 +68,7 @@ const AdminNavItems = ({ toggleMobileNav }: Props) => {
 			subNav: [],
 		},
 		{
-			name: "Record a Cap",
+			name: "Record a Video",
 			href: `/dashboard/caps/record`,
 			icon: <RecordIcon />,
 			subNav: [],
@@ -168,29 +168,19 @@ const AdminNavItems = ({ toggleMobileNav }: Props) => {
 												/>
 											)}
 										</div>
-										{!sidebarCollapsed && (
+										{!sidebarCollapsed && isDomainSetupVerified && (
 											<Link
-												href={
-													isDomainSetupVerified
-														? `https://${activeOrg.organization.customDomain}`
-														: "/dashboard/settings/organization"
-												}
-												rel={
-													isDomainSetupVerified
-														? "noopener noreferrer"
-														: undefined
-												}
-												target={isDomainSetupVerified ? "_blank" : "_self"}
+												href={`https://${activeOrg.organization.customDomain}`}
+												rel="noopener noreferrer"
+												target="_blank"
 												className="flex truncate w-full overflow-hidden flex-1 gap-1.5 items-center self-start"
 											>
 												<FontAwesomeIcon
-													icon={isDomainSetupVerified ? faLink : faCircleInfo}
+													icon={faLink}
 													className="duration-200 size-3 text-gray-10"
 												/>
 												<p className="w-full text-[11px] flex-1 duration-200 truncate leading-0 text-gray-11">
-													{isDomainSetupVerified
-														? activeOrg?.organization.customDomain
-														: "No custom domain set"}
+													{activeOrg?.organization.customDomain}
 												</p>
 											</Link>
 										)}
