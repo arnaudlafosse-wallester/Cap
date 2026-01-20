@@ -2,15 +2,10 @@
 
 import { Button, Input } from "@cap/ui";
 import { Organisation } from "@cap/web-domain";
-import {
-	faArrowLeft,
-	faEnvelope,
-	faExclamationCircle,
-} from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { AnimatePresence, motion } from "framer-motion";
 import Cookies from "js-cookie";
-import { LucideArrowUpRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -19,7 +14,6 @@ import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { getOrganizationSSOData } from "@/actions/organization/get-organization-sso-data";
 import { trackEvent } from "@/app/utils/analytics";
-import { usePublicEnv } from "@/utils/public-env";
 
 const MotionInput = motion(Input);
 const MotionButton = motion(Button);
@@ -308,12 +302,6 @@ export function LoginForm() {
 										className="flex flex-col space-y-3"
 									>
 										<NormalLogin
-											setShowOrgInput={setShowOrgInput}
-											email={email}
-											emailSent={emailSent}
-											setEmail={setEmail}
-											loading={loading}
-											oauthError={oauthError}
 											handleGoogleSignIn={handleGoogleSignIn}
 										/>
 									</motion.form>
@@ -364,115 +352,24 @@ const LoginWithSSO = ({
 };
 
 const NormalLogin = ({
-	setShowOrgInput,
-	email,
-	emailSent,
-	setEmail,
-	loading,
-	oauthError,
 	handleGoogleSignIn,
 }: {
-	setShowOrgInput: (show: boolean) => void;
-	email: string;
-	emailSent: boolean;
-	setEmail: (email: string) => void;
-	loading: boolean;
-	oauthError: boolean;
 	handleGoogleSignIn: () => void;
 }) => {
-	const publicEnv = usePublicEnv();
-
 	return (
 		<motion.div>
-			{/* Google Sign-in as PRIMARY method */}
-			{publicEnv.googleAuthAvailable && !oauthError && (
-				<motion.div layout className="flex flex-col space-y-3 mb-4">
-					<MotionButton
-						variant="dark"
-						type="button"
-						className="flex gap-2 justify-center items-center w-full text-sm"
-						onClick={handleGoogleSignIn}
-						disabled={loading || emailSent}
-					>
-						<Image src="/google.svg" alt="Google" width={18} height={18} />
-						Sign in with Google
-					</MotionButton>
-				</motion.div>
-			)}
-
-			{oauthError && (
-				<div className="flex gap-3 items-center p-3 mb-4 bg-red-400 rounded-xl border border-red-600">
-					<FontAwesomeIcon
-						className="text-gray-50 size-8"
-						icon={faExclamationCircle}
-					/>
-					<p className="text-xs leading-5 text-gray-50">
-						It looks like you've previously used this email to sign up via
-						email login. Please enter your email below.
-					</p>
-				</div>
-			)}
-
-			{/* Email login as secondary option */}
-			{publicEnv.googleAuthAvailable && (
-				<div className="flex gap-4 items-center mb-4">
-					<span className="flex-1 h-px bg-gray-5" />
-					<p className="text-sm text-center text-gray-10">or</p>
-					<span className="flex-1 h-px bg-gray-5" />
-				</div>
-			)}
-
+			{/* Google Sign-in - only option for Wallester */}
 			<motion.div layout className="flex flex-col space-y-3">
-				<MotionInput
-					id="email"
-					name="email"
-					autoFocus={!publicEnv.googleAuthAvailable}
-					type="email"
-					placeholder={emailSent ? "" : "tim@apple.com"}
-					autoComplete="email"
-					required
-					value={email}
-					disabled={emailSent || loading}
-					onChange={(e) => {
-						setEmail(e.target.value);
-					}}
-				/>
 				<MotionButton
-					variant="gray"
-					type="submit"
-					disabled={loading || emailSent}
-					icon={<FontAwesomeIcon className="mr-1 size-4" icon={faEnvelope} />}
+					variant="dark"
+					type="button"
+					className="flex gap-2 justify-center items-center w-full text-sm"
+					onClick={handleGoogleSignIn}
 				>
-					Login with email
+					<Image src="/google.svg" alt="Google" width={18} height={18} />
+					Sign in with Google
 				</MotionButton>
 			</motion.div>
-
-			{/* SAML SSO option */}
-			{publicEnv.workosAuthAvailable && (
-				<>
-					<div className="flex gap-4 items-center mt-4 mb-4">
-						<span className="flex-1 h-px bg-gray-5" />
-						<p className="text-sm text-center text-gray-10">OR</p>
-						<span className="flex-1 h-px bg-gray-5" />
-					</div>
-					<motion.div
-						layout
-						className="flex flex-col gap-3 justify-center items-center"
-					>
-						<MotionButton
-							variant="gray"
-							type="button"
-							className="w-full"
-							layout
-							onClick={() => setShowOrgInput(true)}
-							disabled={loading || emailSent}
-						>
-							<LucideArrowUpRight size={20} />
-							Login with SAML SSO
-						</MotionButton>
-					</motion.div>
-				</>
-			)}
 		</motion.div>
 	);
 };
