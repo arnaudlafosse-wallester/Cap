@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input } from "@cap/ui";
+import { Button, Input, Switch } from "@cap/ui";
 import {
 	faEdit,
 	faLayerGroup,
@@ -8,9 +8,9 @@ import {
 	faTrash,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Search } from "lucide-react";
+import { ChevronDown, ChevronRight, Search } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { deleteSpace } from "@/actions/organization/delete-space";
@@ -20,68 +20,115 @@ import SpaceDialog from "../../_components/Navbar/SpaceDialog";
 import { useDashboardContext } from "../../Contexts";
 import type { Spaces } from "../../dashboard-data";
 
-type SpaceWithDepth = Spaces & { depth: number };
+type SpaceWithDepth = Spaces & { depth: number; hasChildren: boolean; isShared: boolean };
 
 export default function BrowseSpacesPage() {
 	const { spacesData, user, activeOrganization } = useDashboardContext();
 	const [showSpaceDialog, setShowSpaceDialog] = useState(false);
 	const [editSpace, setEditSpace] = useState<any | null>(null);
 	const [searchQuery, setSearchQuery] = useState("");
+	const [showShared, setShowShared] = useState(true);
+	const [showPrivate, setShowPrivate] = useState(true);
+	const [collapsedSpaces, setCollapsedSpaces] = useState<Set<string>>(new Set());
+
+	const toggleSpaceCollapse = (spaceId: string) => {
+		setCollapsedSpaces(prev => {
+			const next = new Set(prev);
+			if (next.has(spaceId)) {
+				next.delete(spaceId);
+			} else {
+				next.add(spaceId);
+			}
+			return next;
+		});
+	};
 
 	const trueActiveOrgMembers = activeOrganization?.members.filter(
 		(m) => m.user?.id !== user?.id,
 	);
 
-	// Build hierarchical structure with depth
-	const hierarchicalSpaces: SpaceWithDepth[] = (() => {
+	// Build hierarchical structure with depth, hasChildren, and isShared flag
+	const hierarchicalSpaces: SpaceWithDepth[] = useMemo(() => {
 		if (!spacesData) return [];
 
-		// Build children map
+		// Build children map and track which spaces have children
 		const childrenByParent = new Map<string, Spaces[]>();
+		const spacesWithChildrenSet = new Set<string>();
+
 		for (const space of spacesData) {
 			if (space.parentSpaceId) {
 				const children = childrenByParent.get(space.parentSpaceId) || [];
 				children.push(space);
 				childrenByParent.set(space.parentSpaceId, children);
+				spacesWithChildrenSet.add(space.parentSpaceId);
 			}
 		}
 
-		// Recursively build tree
-		const buildTree = (parentId: string, depth: number): SpaceWithDepth[] => {
+		// Find primary space (Shared) - we don't display it, but use it as root for shared spaces
+		const primarySpace = spacesData.find(s => s.primary);
+		const sharedSpaceIds = new Set<string>();
+		if (primarySpace) {
+			sharedSpaceIds.add(primarySpace.id);
+		}
+
+		// Recursively build tree with collapse support
+		const buildTree = (parentId: string, depth: number, isShared: boolean, isParentCollapsed: boolean): SpaceWithDepth[] => {
+			if (isParentCollapsed) return [];
+
 			const children = childrenByParent.get(parentId) || [];
 			const result: SpaceWithDepth[] = [];
 			for (const child of children.sort((a, b) => a.name.localeCompare(b.name))) {
-				result.push({ ...child, depth });
-				result.push(...buildTree(child.id, depth + 1));
+				const hasChildren = spacesWithChildrenSet.has(child.id);
+				const isCollapsed = collapsedSpaces.has(child.id);
+				result.push({ ...child, depth, hasChildren, isShared });
+				if (isShared) sharedSpaceIds.add(child.id);
+				result.push(...buildTree(child.id, depth + 1, isShared, isCollapsed));
 			}
 			return result;
 		};
 
-		// Find primary space (Shared) and build from there
-		const primarySpace = spacesData.find(s => s.primary);
 		const result: SpaceWithDepth[] = [];
 
+		// SHARED section: Children of primary space directly (without showing "Shared" itself)
 		if (primarySpace) {
-			result.push({ ...primarySpace, depth: 0 });
-			result.push(...buildTree(primarySpace.id, 1));
+			const directChildren = childrenByParent.get(primarySpace.id) || [];
+			for (const child of directChildren.sort((a, b) => a.name.localeCompare(b.name))) {
+				const hasChildren = spacesWithChildrenSet.has(child.id);
+				const isCollapsed = collapsedSpaces.has(child.id);
+				result.push({ ...child, depth: 0, hasChildren, isShared: true });
+				sharedSpaceIds.add(child.id);
+				result.push(...buildTree(child.id, 1, true, isCollapsed));
+			}
 		}
 
-		// Add top-level non-primary spaces (Private spaces)
+		// PRIVATE section: top-level spaces not under Shared
 		const topLevelPrivate = spacesData.filter(s =>
-			!s.primary && !s.parentSpaceId
+			!s.primary && !s.parentSpaceId && !sharedSpaceIds.has(s.id)
 		).sort((a, b) => a.name.localeCompare(b.name));
 
 		for (const space of topLevelPrivate) {
-			result.push({ ...space, depth: 0 });
-			result.push(...buildTree(space.id, 1));
+			const hasChildren = spacesWithChildrenSet.has(space.id);
+			const isCollapsed = collapsedSpaces.has(space.id);
+			result.push({ ...space, depth: 0, hasChildren, isShared: false });
+			result.push(...buildTree(space.id, 1, false, isCollapsed));
 		}
 
 		return result;
-	})();
+	}, [spacesData, collapsedSpaces]);
 
-	const filteredSpaces = hierarchicalSpaces.filter((space: SpaceWithDepth) =>
-		space.name.toLowerCase().includes(searchQuery.toLowerCase()),
-	);
+	// Apply search and type filters
+	const filteredSpaces = useMemo(() => {
+		return hierarchicalSpaces.filter((space: SpaceWithDepth) => {
+			// Search filter
+			if (searchQuery && !space.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+				return false;
+			}
+			// Type filter
+			if (space.isShared && !showShared) return false;
+			if (!space.isShared && !showPrivate) return false;
+			return true;
+		});
+	}, [hierarchicalSpaces, searchQuery, showShared, showPrivate]);
 	const router = useRouter();
 	const params = useParams();
 
@@ -125,14 +172,35 @@ export default function BrowseSpacesPage() {
 	return (
 		<>
 			<div className="flex flex-wrap gap-3 justify-between items-start w-full">
-				<Button
-					onClick={() => setShowSpaceDialog(true)}
-					size="sm"
-					variant="dark"
-				>
-					<FontAwesomeIcon className="size-3" icon={faPlus} />
-					Create Space
-				</Button>
+				<div className="flex flex-wrap gap-3 items-center">
+					<Button
+						onClick={() => setShowSpaceDialog(true)}
+						size="sm"
+						variant="dark"
+					>
+						<FontAwesomeIcon className="size-3" icon={faPlus} />
+						Create Space
+					</Button>
+					{/* Type filter toggles */}
+					<div className="flex gap-4 items-center ml-4">
+						<label className="flex gap-2 items-center cursor-pointer">
+							<Switch
+								checked={showShared}
+								onCheckedChange={setShowShared}
+								className="data-[state=checked]:bg-green-600"
+							/>
+							<span className="text-sm text-gray-11">Shared</span>
+						</label>
+						<label className="flex gap-2 items-center cursor-pointer">
+							<Switch
+								checked={showPrivate}
+								onCheckedChange={setShowPrivate}
+								className="data-[state=checked]:bg-gray-600"
+							/>
+							<span className="text-sm text-gray-11">Private</span>
+						</label>
+					</div>
+				</div>
 				<div className="flex relative w-full max-w-md">
 					<div className="flex absolute inset-y-0 left-3 items-center pointer-events-none">
 						<Search className="size-4 text-gray-9" />
@@ -175,6 +243,7 @@ export default function BrowseSpacesPage() {
 						)}
 						{filteredSpaces?.map((space: SpaceWithDepth) => {
 							const indentPadding = space.depth * 24; // 24px per level
+							const isCollapsed = collapsedSpaces.has(space.id);
 							return (
 								<tr
 									key={space.id}
@@ -183,11 +252,26 @@ export default function BrowseSpacesPage() {
 								>
 									<td className="px-6 py-4">
 										<div
-											className="flex gap-3 items-center"
+											className="flex gap-2 items-center"
 											style={{ paddingLeft: `${indentPadding}px` }}
 										>
-											{space.depth > 0 && (
-												<span className="text-gray-6 mr-1">└</span>
+											{/* Collapse/expand chevron for spaces with children */}
+											{space.hasChildren ? (
+												<div
+													onClick={(e) => {
+														e.stopPropagation();
+														toggleSpaceCollapse(space.id);
+													}}
+													className="flex justify-center items-center rounded hover:bg-gray-4 size-6 flex-shrink-0 cursor-pointer"
+												>
+													{isCollapsed ? (
+														<ChevronRight size={16} className="text-gray-10" />
+													) : (
+														<ChevronDown size={16} className="text-gray-10" />
+													)}
+												</div>
+											) : (
+												<div className="size-6 flex-shrink-0" />
 											)}
 											<SignedImageUrl
 												image={space.iconUrl}
