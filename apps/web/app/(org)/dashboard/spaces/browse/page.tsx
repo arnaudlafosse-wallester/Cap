@@ -220,7 +220,6 @@ export default function BrowseSpacesPage() {
 						<tr className="text-sm text-left text-gray-10">
 							<th className="px-6 py-3 font-medium">Name</th>
 							<th className="px-6 py-3 font-medium">Type</th>
-							<th className="px-6 py-3 font-medium">Members</th>
 							<th className="px-6 py-3 font-medium">Videos</th>
 							<th className="px-6 py-3 font-medium">Role</th>
 							<th className="px-6 py-3 font-medium">Actions</th>
@@ -229,14 +228,14 @@ export default function BrowseSpacesPage() {
 					<tbody>
 						{!spacesData && (
 							<tr>
-								<td colSpan={6} className="px-6 py-6 text-center text-gray-8">
+								<td colSpan={5} className="px-6 py-6 text-center text-gray-8">
 									Loading Spaces…
 								</td>
 							</tr>
 						)}
 						{spacesData && filteredSpaces && filteredSpaces.length === 0 && (
 							<tr>
-								<td colSpan={6} className="px-6 py-6 text-center text-gray-8">
+								<td colSpan={5} className="px-6 py-6 text-center text-gray-8">
 									No folders found.
 								</td>
 							</tr>
@@ -286,16 +285,12 @@ export default function BrowseSpacesPage() {
 									</td>
 									<td className="px-6 py-4">
 										<span className={`text-xs px-2 py-1 rounded-full ${
-											space.privacy === "Public"
+											space.isShared
 												? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
 												: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
 										}`}>
-											{space.privacy}
+											{space.isShared ? "Shared" : "Private"}
 										</span>
-									</td>
-									<td className="px-6 py-4 text-sm text-gray-12">
-										{space.memberCount} member
-										{space.memberCount === 1 ? "" : "s"}
 									</td>
 									<td className="px-6 py-4 text-sm text-gray-12">
 										{space.videoCount} video
