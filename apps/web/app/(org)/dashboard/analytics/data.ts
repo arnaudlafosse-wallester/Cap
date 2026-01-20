@@ -166,19 +166,54 @@ const getSpaceVideoIds = async (spaceId: SpaceOrOrgId): Promise<VideoId[]> => {
 	return rows.map((row) => row.videoId);
 };
 
+const getUserVideoIds = async (orgId: OrgId, userId: string): Promise<VideoId[]> => {
+	const rows = await db()
+		.select({ id: videos.id })
+		.from(videos)
+		.where(and(eq(videos.orgId, orgId), eq(videos.ownerId, userId)));
+	return rows.map((row) => row.id);
+};
+
 export const getOrgAnalyticsData = async (
 	orgId: string,
 	range: AnalyticsRange,
 	spaceId?: string,
 	capId?: string,
+	filterByUserId?: string,
 ): Promise<OrgAnalyticsResponse> => {
 	const typedOrgId = orgId as OrgId;
+
+	// Get user's videos if filtering by user (non-owner)
+	const userVideoIds = filterByUserId
+		? await getUserVideoIds(typedOrgId, filterByUserId)
+		: undefined;
 
 	const spaceVideoIds = spaceId
 		? await getSpaceVideoIds(spaceId as SpaceOrOrgId)
 		: undefined;
 	const capVideoIds = capId ? [capId as VideoId] : undefined;
-	const videoIds = capVideoIds || spaceVideoIds;
+
+	// Combine filters: user videos intersected with space/cap videos
+	let videoIds: VideoId[] | undefined;
+	if (capVideoIds) {
+		// If viewing a specific cap, check if user owns it (for non-owners)
+		if (userVideoIds && !userVideoIds.some(id => capVideoIds.includes(id))) {
+			// User doesn't own this cap, return empty data
+			videoIds = [];
+		} else {
+			videoIds = capVideoIds;
+		}
+	} else if (spaceVideoIds) {
+		// If viewing a space, filter to user's videos in that space (for non-owners)
+		if (userVideoIds) {
+			videoIds = spaceVideoIds.filter(id => userVideoIds.includes(id));
+		} else {
+			videoIds = spaceVideoIds;
+		}
+	} else {
+		// No space or cap filter, use user's videos (for non-owners)
+		videoIds = userVideoIds;
+	}
 
 	const { from, to, bucket } = await resolveRangeBounds(
 		range,

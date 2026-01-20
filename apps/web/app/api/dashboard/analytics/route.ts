@@ -1,4 +1,7 @@
+import { db } from "@cap/database";
 import { getCurrentUser } from "@cap/database/auth/session";
+import { organizations } from "@cap/database/schema";
+import { eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 
 import { getOrgAnalyticsData } from "@/app/(org)/dashboard/analytics/data";
@@ -25,14 +28,26 @@ export async function GET(request: NextRequest) {
 		return Response.json({ error: "Forbidden" }, { status: 403 });
 	}
 
+	// Check if user is the organization owner
+	const org = await db()
+		.select({ ownerId: organizations.ownerId })
+		.from(organizations)
+		.where(eq(organizations.id, orgId))
+		.limit(1);
+
+	const isOwner = org[0]?.ownerId === user.id;
+
+	// Non-owners can only see their own analytics
+	const filterByUserId = isOwner ? undefined : user.id;
+
 	const rangeParam = (searchParams.get("range") ?? "7d") as AnalyticsRange;
 	const range: AnalyticsRange = RANGE_VALUES.includes(rangeParam)
 		? rangeParam
 		: "7d";
 
 	try {
-		const data = await getOrgAnalyticsData(orgId, range, spaceId, capId);
-		return Response.json({ data });
+		const data = await getOrgAnalyticsData(orgId, range, spaceId, capId, filterByUserId);
+		return Response.json({ data, isOwner });
 	} catch (error) {
 		console.error("Failed to load analytics", error);
 		return Response.json(
