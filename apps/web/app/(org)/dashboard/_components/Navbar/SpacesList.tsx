@@ -423,10 +423,13 @@ const DepthIndicator = ({ depth }: { depth: number }) => {
 	const shapes = ["○", "△", "□"];
 	const shape = shapes[Math.min(depth - 1, shapes.length - 1)];
 
+	// Base indent of 24px (to match parent's chevron/spacer) + 12px per additional depth level
+	const indent = 24 + (depth - 1) * 12;
+
 	return (
 		<span
 			className="text-[10px] text-gray-8 mr-1.5 flex-shrink-0 w-3 text-center"
-			style={{ marginLeft: `${(depth - 1) * 8}px` }}
+			style={{ marginLeft: `${indent}px` }}
 		>
 			{shape}
 		</span>
@@ -549,11 +552,11 @@ const SpaceItem = ({
 						{!sidebarCollapsed && depth > 0 && !hasChildren && (
 							<DepthIndicator depth={depth} />
 						)}
-						{/* Indentation + shape for items with children at depth > 0 */}
+						{/* Indentation for items with children at depth > 0 */}
 						{!sidebarCollapsed && depth > 0 && hasChildren && (
 							<span
 								className="flex-shrink-0"
-								style={{ marginLeft: `${(depth - 1) * 8}px` }}
+								style={{ marginLeft: `${24 + (depth - 1) * 12}px` }}
 							/>
 						)}
 						<Link

@@ -214,7 +214,7 @@ export default function BrowseSpacesPage() {
 					/>
 				</div>
 			</div>
-			<div className="overflow-x-auto rounded-xl border border-gray-3">
+			<div className="overflow-x-auto rounded-xl border border-gray-3 mt-6">
 				<table className="min-w-full bg-gray-1">
 					<thead>
 						<tr className="text-sm text-left text-gray-10">
