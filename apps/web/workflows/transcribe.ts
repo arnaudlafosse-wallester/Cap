@@ -9,6 +9,11 @@ import { eq } from "drizzle-orm";
 import { Option } from "effect";
 import { FatalError } from "workflow";
 import { checkHasAudioTrack, extractAudioFromUrl } from "@/lib/audio-extract";
+import {
+	autoAssignLabels,
+	classifyVideoLabels,
+	seedSystemLabels,
+} from "@/lib/classify-video-labels";
 import { startAiGeneration } from "@/lib/generate-ai";
 import {
 	checkHasAudioTrackViaMediaServer,
@@ -28,6 +33,8 @@ interface VideoData {
 	video: typeof videos.$inferSelect;
 	bucketId: S3Bucket.S3BucketId | null;
 	transcriptionDisabled: boolean;
+	orgId: string | null;
+	ownerId: string;
 }
 
 export async function transcribeVideoWorkflow(
@@ -62,6 +69,17 @@ export async function transcribeVideoWorkflow(
 
 	if (aiGenerationEnabled) {
 		await queueAiGeneration(videoId, userId);
+	}
+
+	// Auto-classify video and assign labels
+	if (videoData.orgId) {
+		await classifyAndLabelVideo(
+			videoId,
+			videoData.orgId,
+			videoData.ownerId,
+			transcription,
+			videoData.video.name,
+		);
 	}
 
 	return { success: true, message: "Transcription completed successfully" };
@@ -109,6 +127,8 @@ async function validateVideo(videoId: string): Promise<VideoData> {
 		video: result.video,
 		bucketId: (result.bucket?.id ?? null) as S3Bucket.S3BucketId | null,
 		transcriptionDisabled,
+		orgId: result.video.orgId,
+		ownerId: result.video.ownerId,
 	};
 }
 
@@ -274,4 +294,54 @@ async function queueAiGeneration(
 	"use step";
 
 	await startAiGeneration(videoId as Video.VideoId, userId);
+}
+
+async function classifyAndLabelVideo(
+	videoId: string,
+	orgId: string,
+	ownerId: string,
+	transcription: string,
+	videoTitle: string | null,
+): Promise<void> {
+	"use step";
+
+	try {
+		// Ensure system labels exist for this organization
+		await seedSystemLabels(orgId);
+
+		// Classify the video based on transcription
+		const classification = await classifyVideoLabels(
+			videoId as Video.VideoId,
+			transcription,
+			{
+				title: videoTitle || undefined,
+			},
+		);
+
+		if (!classification.success) {
+			console.warn(
+				`[classifyAndLabelVideo] Classification failed for video ${videoId}:`,
+				classification.error,
+			);
+			return;
+		}
+
+		// Auto-assign labels based on classification (owner acts as system user)
+		const { assigned, skipped } = await autoAssignLabels(
+			videoId as Video.VideoId,
+			orgId,
+			classification,
+			ownerId,
+		);
+
+		console.log(
+			`[classifyAndLabelVideo] Video ${videoId}: assigned ${assigned.length} labels (${assigned.join(", ")}), skipped ${skipped.length}`,
+		);
+	} catch (error) {
+		// Classification errors should not fail the transcription workflow
+		console.error(
+			`[classifyAndLabelVideo] Error classifying video ${videoId}:`,
+			error,
+		);
+	}
 }
