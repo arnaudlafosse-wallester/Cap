@@ -15,6 +15,7 @@ interface EmptySharedCapStateProps {
 	};
 	currentUserId?: string;
 	onAddVideos?: () => void;
+	headerActions?: React.ReactNode;
 }
 
 export const EmptySharedCapState: React.FC<EmptySharedCapStateProps> = ({
@@ -23,6 +24,7 @@ export const EmptySharedCapState: React.FC<EmptySharedCapStateProps> = ({
 	spaceData,
 	currentUserId,
 	onAddVideos,
+	headerActions,
 }) => {
 	const { theme } = useTheme();
 	const { RiveComponent: EmptyCap } = useRive({
@@ -37,14 +39,14 @@ export const EmptySharedCapState: React.FC<EmptySharedCapStateProps> = ({
 		(type === "organization" && onAddVideos);
 
 	return (
-		<div className="flex flex-col flex-1 justify-center items-center w-full h-full">
-			<div className="mx-auto mb-20 w-full max-w-md">
+		<div className="flex flex-col flex-1 justify-center items-center w-full h-full min-h-[60vh]">
+			<div className="mx-auto mb-8 w-full max-w-sm">
 				<EmptyCap
 					key={`${theme}empty-shared-cap`}
-					className="max-w-[300px] w-full mx-auto md:max-w-[600px] h-[250px]"
+					className="max-w-[200px] w-full mx-auto md:max-w-[300px] h-[150px]"
 				/>
 			</div>
-			<div className="text-center pb-[30px]">
+			<div className="text-center">
 				<p className="mb-3 text-xl font-semibold text-gray-12">
 					{type === "space"
 						? "Start sharing videos to this Folder"
@@ -55,17 +57,20 @@ export const EmptySharedCapState: React.FC<EmptySharedCapStateProps> = ({
 						? "Add videos directly here in this Folder, or add videos from the My Caps page."
 						: `There are no Caps shared with ${organizationName} yet. Ask your team members to share their Caps with this ${type}.`}
 				</p>
-				{showAddButton && (
-					<Button
-						onClick={onAddVideos}
-						variant="dark"
-						size="lg"
-						className="flex gap-2 items-center mx-auto"
-					>
-						<FontAwesomeIcon icon={faPlus} className="size-3.5" />
-						Add videos to {type === "space" ? "Folder" : "Organization"}
-					</Button>
-				)}
+				<div className="flex flex-wrap gap-3 justify-center items-center">
+					{headerActions}
+					{showAddButton && (
+						<Button
+							onClick={onAddVideos}
+							variant="dark"
+							size="lg"
+							className="flex gap-2 items-center"
+						>
+							<FontAwesomeIcon icon={faPlus} className="size-3.5" />
+							Add videos to {type === "space" ? "Folder" : "Organization"}
+						</Button>
+					)}
+				</div>
 			</div>
 		</div>
 	);

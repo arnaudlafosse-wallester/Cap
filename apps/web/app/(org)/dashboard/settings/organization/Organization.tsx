@@ -61,13 +61,9 @@ export const Organization = () => {
 		<form className="flex flex-col gap-6">
 			<SeatsInfoCards />
 
-			<div className="flex flex-col gap-6 justify-center items-stretch xl:flex-row">
-				<OrganizationDetailsCard />
-			</div>
+			<OrganizationDetailsCard />
 
-			<div>
-				<CapSettingsCard />
-			</div>
+			<CapSettingsCard />
 
 			<MembersCard
 				isOwner={isOwner}

@@ -8,7 +8,7 @@ import OrgName from "./OrgName";
 
 export const OrganizationDetailsCard = () => {
 	return (
-		<Card className="flex flex-col flex-1 gap-6 w-full min-h-fit">
+		<Card className="flex flex-col gap-6 w-full">
 			<CardHeader>
 				<CardTitle>Settings</CardTitle>
 				<CardDescription>

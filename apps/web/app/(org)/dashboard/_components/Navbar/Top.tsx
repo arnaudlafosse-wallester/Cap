@@ -99,7 +99,7 @@ const Top = () => {
 			)}
 		>
 			<div className="flex flex-col gap-0.5">
-				{activeSpace && <span className="text-xs text-gray-11">Space</span>}
+				{activeSpace && <span className="text-xs text-gray-11">Folder</span>}
 				<div className="flex gap-1.5 items-center">
 					{activeSpace && (
 						<SignedImageUrl

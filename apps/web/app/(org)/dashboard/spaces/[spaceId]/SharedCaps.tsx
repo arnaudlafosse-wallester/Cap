@@ -109,26 +109,6 @@ export const SharedCaps = ({
 	if (data.length === 0 && folders?.length === 0) {
 		return (
 			<div className="flex relative flex-col w-full h-full">
-				{/* Only show MembersIndicator for Private spaces */}
-				{spaceData && spaceMembers && spaceData.privacy === "Private" && (
-					<MembersIndicator
-						memberCount={spaceMemberCount}
-						members={spaceMembers}
-						organizationMembers={organizationMembers || []}
-						spaceId={spaceData.id}
-						canManageMembers={isSpaceOwner}
-						onAddVideos={() => setIsAddVideosDialogOpen(true)}
-					/>
-				)}
-				{organizationData && organizationMembers && !spaceData && (
-					<OrganizationIndicator
-						memberCount={organizationMemberCount}
-						members={organizationMembers}
-						organizationName={organizationData.name}
-						canManageMembers={isOrgOwner}
-						onAddVideos={() => setIsAddOrganizationVideosDialogOpen(true)}
-					/>
-				)}
 				<EmptySharedCapState
 					organizationName={activeOrganization?.organization.name || ""}
 					type={spaceData ? "space" : "organization"}
@@ -138,6 +118,28 @@ export const SharedCaps = ({
 						spaceData
 							? () => setIsAddVideosDialogOpen(true)
 							: () => setIsAddOrganizationVideosDialogOpen(true)
+					}
+					headerActions={
+						<>
+							{/* Only show MembersIndicator for Private spaces */}
+							{spaceData && spaceMembers && spaceData.privacy === "Private" && (
+								<MembersIndicator
+									memberCount={spaceMemberCount}
+									members={spaceMembers}
+									organizationMembers={organizationMembers || []}
+									spaceId={spaceData.id}
+									canManageMembers={isSpaceOwner}
+								/>
+							)}
+							{organizationData && organizationMembers && !spaceData && (
+								<OrganizationIndicator
+									memberCount={organizationMemberCount}
+									members={organizationMembers}
+									organizationName={organizationData.name}
+									canManageMembers={isOrgOwner}
+								/>
+							)}
+						</>
 					}
 				/>
 				{spaceData && (

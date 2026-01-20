@@ -146,7 +146,7 @@ const CapSettingsCard = () => {
 	};
 
 	return (
-		<Card className="flex relative flex-col flex-1 gap-6 w-full min-h-fit">
+		<Card className="flex flex-col gap-6 w-full">
 			<CardHeader>
 				<CardTitle>Cap Settings</CardTitle>
 				<CardDescription>

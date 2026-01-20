@@ -122,12 +122,12 @@ export const MembersIndicator = ({
 						icon={<FontAwesomeIcon icon={faUserGroup} />}
 						description={
 							canManageMembers
-								? "View and manage members of this space"
-								: "View members of this space"
+								? "View and manage members of this folder"
+								: "View members of this folder"
 						}
 					>
 						<DialogTitle className="text-lg text-gray-12">
-							Space Members: {memberCount}
+							Folder Members: {memberCount}
 						</DialogTitle>
 					</DialogHeader>
 

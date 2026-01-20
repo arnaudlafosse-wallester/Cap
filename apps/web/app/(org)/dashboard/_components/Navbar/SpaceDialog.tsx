@@ -131,8 +131,8 @@ export interface NewSpaceFormProps {
 const formSchema = z.object({
 	name: z
 		.string()
-		.min(1, "Space name is required")
-		.max(25, "Space name must be at most 25 characters"),
+		.min(1, "Folder name is required")
+		.max(25, "Folder name must be at most 25 characters"),
 	members: z.array(z.string()).optional(),
 	privacy: z.enum(["Public", "Private"]).default("Private"),
 	parentSpaceId: z.string().nullable().optional(),
