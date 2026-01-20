@@ -42,6 +42,7 @@ export type Spaces = Omit<
 	memberCount: number;
 	videoCount: number;
 	iconUrl: ImageUpload.ImageUrl | null;
+	parentSpaceId?: string | null;
 };
 
 export type UserPreferences = (typeof users.$inferSelect)["preferences"];
@@ -146,6 +147,7 @@ export async function getDashboardData(user: typeof userSelectProps) {
 								organizationId: spaces.organizationId,
 								createdById: spaces.createdById,
 								iconUrl: spaces.iconUrl,
+								parentSpaceId: spaces.parentSpaceId,
 								memberCount: sql<number>`(
           SELECT COUNT(*) FROM space_members WHERE space_members.spaceId = spaces.id
         )`,
