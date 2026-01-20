@@ -20,6 +20,8 @@ import SpaceDialog from "../../_components/Navbar/SpaceDialog";
 import { useDashboardContext } from "../../Contexts";
 import type { Spaces } from "../../dashboard-data";
 
+type SpaceWithDepth = Spaces & { depth: number };
+
 export default function BrowseSpacesPage() {
 	const { spacesData, user, activeOrganization } = useDashboardContext();
 	const [showSpaceDialog, setShowSpaceDialog] = useState(false);
@@ -30,7 +32,54 @@ export default function BrowseSpacesPage() {
 		(m) => m.user?.id !== user?.id,
 	);
 
-	const filteredSpaces = spacesData?.filter((space: Spaces) =>
+	// Build hierarchical structure with depth
+	const hierarchicalSpaces: SpaceWithDepth[] = (() => {
+		if (!spacesData) return [];
+
+		// Build children map
+		const childrenByParent = new Map<string, Spaces[]>();
+		for (const space of spacesData) {
+			if (space.parentSpaceId) {
+				const children = childrenByParent.get(space.parentSpaceId) || [];
+				children.push(space);
+				childrenByParent.set(space.parentSpaceId, children);
+			}
+		}
+
+		// Recursively build tree
+		const buildTree = (parentId: string, depth: number): SpaceWithDepth[] => {
+			const children = childrenByParent.get(parentId) || [];
+			const result: SpaceWithDepth[] = [];
+			for (const child of children.sort((a, b) => a.name.localeCompare(b.name))) {
+				result.push({ ...child, depth });
+				result.push(...buildTree(child.id, depth + 1));
+			}
+			return result;
+		};
+
+		// Find primary space (Shared) and build from there
+		const primarySpace = spacesData.find(s => s.primary);
+		const result: SpaceWithDepth[] = [];
+
+		if (primarySpace) {
+			result.push({ ...primarySpace, depth: 0 });
+			result.push(...buildTree(primarySpace.id, 1));
+		}
+
+		// Add top-level non-primary spaces (Private spaces)
+		const topLevelPrivate = spacesData.filter(s =>
+			!s.primary && !s.parentSpaceId
+		).sort((a, b) => a.name.localeCompare(b.name));
+
+		for (const space of topLevelPrivate) {
+			result.push({ ...space, depth: 0 });
+			result.push(...buildTree(space.id, 1));
+		}
+
+		return result;
+	})();
+
+	const filteredSpaces = hierarchicalSpaces.filter((space: SpaceWithDepth) =>
 		space.name.toLowerCase().includes(searchQuery.toLowerCase()),
 	);
 	const router = useRouter();
@@ -102,6 +151,7 @@ export default function BrowseSpacesPage() {
 					<thead>
 						<tr className="text-sm text-left text-gray-10">
 							<th className="px-6 py-3 font-medium">Name</th>
+							<th className="px-6 py-3 font-medium">Type</th>
 							<th className="px-6 py-3 font-medium">Members</th>
 							<th className="px-6 py-3 font-medium">Videos</th>
 							<th className="px-6 py-3 font-medium">Role</th>
@@ -111,34 +161,52 @@ export default function BrowseSpacesPage() {
 					<tbody>
 						{!spacesData && (
 							<tr>
-								<td colSpan={5} className="px-6 py-6 text-center text-gray-8">
+								<td colSpan={6} className="px-6 py-6 text-center text-gray-8">
 									Loading Spaces…
 								</td>
 							</tr>
 						)}
 						{spacesData && filteredSpaces && filteredSpaces.length === 0 && (
 							<tr>
-								<td colSpan={5} className="px-6 py-6 text-center text-gray-8">
+								<td colSpan={6} className="px-6 py-6 text-center text-gray-8">
 									No spaces found.
 								</td>
 							</tr>
 						)}
-						{filteredSpaces?.map((space: Spaces) => {
+						{filteredSpaces?.map((space: SpaceWithDepth) => {
+							const indentPadding = space.depth * 24; // 24px per level
 							return (
 								<tr
 									key={space.id}
 									onClick={() => router.push(`/dashboard/spaces/${space.id}`)}
 									className="border-t transition-colors cursor-pointer hover:bg-gray-2 border-gray-3"
 								>
-									<td className="flex gap-3 items-center px-6 py-4">
-										<SignedImageUrl
-											image={space.iconUrl}
-											name={space.name}
-											className="relative flex-shrink-0 size-7"
-											letterClass="text-sm"
-										/>
-										<span className="text-sm font-semibold text-gray-12">
-											{space.name}
+									<td className="px-6 py-4">
+										<div
+											className="flex gap-3 items-center"
+											style={{ paddingLeft: `${indentPadding}px` }}
+										>
+											{space.depth > 0 && (
+												<span className="text-gray-6 mr-1">└</span>
+											)}
+											<SignedImageUrl
+												image={space.iconUrl}
+												name={space.name}
+												className="relative flex-shrink-0 size-7"
+												letterClass="text-sm"
+											/>
+											<span className="text-sm font-semibold text-gray-12">
+												{space.name}
+											</span>
+										</div>
+									</td>
+									<td className="px-6 py-4">
+										<span className={`text-xs px-2 py-1 rounded-full ${
+											space.privacy === "Public"
+												? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+												: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
+										}`}>
+											{space.privacy}
 										</span>
 									</td>
 									<td className="px-6 py-4 text-sm text-gray-12">
@@ -168,6 +236,8 @@ export default function BrowseSpacesPage() {
 																(m: { user: { id: string } }) => m.user.id,
 															),
 															iconUrl: space.iconUrl,
+															privacy: space.privacy as "Public" | "Private",
+															parentSpaceId: space.parentSpaceId,
 														});
 														setShowSpaceDialog(true);
 													}}

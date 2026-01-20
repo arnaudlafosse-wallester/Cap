@@ -338,39 +338,43 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 						/>
 					)}
 
-					{/* Space Members Input */}
-					<div className="space-y-1">
-						<Label htmlFor="members">Members</Label>
-						<CardDescription className="w-full max-w-[400px]">
-							Add team members to this space.
-						</CardDescription>
-					</div>
-					<FormField
-						control={form.control}
-						name="members"
-						render={({ field }) => {
-							return (
-								<FormControl>
-									<MemberSelect
-										placeholder="Add member..."
-										showEmptyIfNoMembers={false}
-										disabled={isUploading}
-										canManageMembers={true}
-										selected={(activeOrganization?.members ?? [])
-											.filter((m) => (field.value ?? []).includes(m.user.id))
-											.map((m) => ({
-												value: m.user.id,
-												label: m.user.name || m.user.email,
-												image: m.user.image ?? undefined,
-											}))}
-										onSelect={(selected) =>
-											field.onChange(selected.map((opt) => opt.value))
-										}
-									/>
-								</FormControl>
-							);
-						}}
-					/>
+					{/* Space Members Input - Only show for Private spaces */}
+					{form.watch("privacy") === "Private" && (
+						<>
+							<div className="space-y-1">
+								<Label htmlFor="members">Members</Label>
+								<CardDescription className="w-full max-w-[400px]">
+									Add team members to this space.
+								</CardDescription>
+							</div>
+							<FormField
+								control={form.control}
+								name="members"
+								render={({ field }) => {
+									return (
+										<FormControl>
+											<MemberSelect
+												placeholder="Add member..."
+												showEmptyIfNoMembers={false}
+												disabled={isUploading}
+												canManageMembers={true}
+												selected={(activeOrganization?.members ?? [])
+													.filter((m) => (field.value ?? []).includes(m.user.id))
+													.map((m) => ({
+														value: m.user.id,
+														label: m.user.name || m.user.email,
+														image: m.user.image ?? undefined,
+													}))}
+												onSelect={(selected) =>
+													field.onChange(selected.map((opt) => opt.value))
+												}
+											/>
+										</FormControl>
+									);
+								}}
+							/>
+						</>
+					)}
 
 					<div className="space-y-1">
 						<Label htmlFor="icon">Space Icon</Label>
