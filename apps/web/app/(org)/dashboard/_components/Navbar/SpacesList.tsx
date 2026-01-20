@@ -416,12 +416,28 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 	);
 };
 
+// Depth indicator shapes: ○ (level 1), △ (level 2), □ (level 3+)
+const DepthIndicator = ({ depth }: { depth: number }) => {
+	if (depth === 0) return null;
+
+	const shapes = ["○", "△", "□"];
+	const shape = shapes[Math.min(depth - 1, shapes.length - 1)];
+
+	return (
+		<span
+			className="text-[10px] text-gray-8 mr-1.5 flex-shrink-0 w-3 text-center"
+			style={{ marginLeft: `${(depth - 1) * 8}px` }}
+		>
+			{shape}
+		</span>
+	);
+};
+
 // SpaceItem component for rendering individual spaces with depth-based indentation
 const SpaceItem = ({
 	space,
 	depth,
 	hasChildren,
-	isLastChild,
 	isCollapsed,
 	onToggleCollapse,
 	isOwner,
@@ -450,9 +466,6 @@ const SpaceItem = ({
 	handleDrop: (e: React.DragEvent, spaceId: Space.SpaceIdOrOrganisationId) => void;
 	handleDeleteSpace: (e: React.MouseEvent, space: Spaces) => void;
 }) => {
-	// For child items (depth > 0), we show tree connectors instead of margin
-	const showTreeConnector = !sidebarCollapsed && depth > 0;
-
 	return (
 		<Tooltip
 			position="right"
@@ -461,7 +474,7 @@ const SpaceItem = ({
 		>
 			<div
 				className={clsx(
-					"relative transition-colors border border-transparent overflow-visible duration-150 rounded-xl mb-1.5 flex items-stretch",
+					"relative transition-colors border border-transparent overflow-visible duration-150 rounded-xl mb-1 flex items-stretch",
 					activeSpaceParams(space.id)
 						? "hover:bg-gray-3 cursor-default"
 						: "cursor-pointer",
@@ -470,32 +483,6 @@ const SpaceItem = ({
 				onDragLeave={handleDragLeave}
 				onDrop={(e) => handleDrop(e, space.id)}
 			>
-				{/* Tree connector for child items */}
-				{showTreeConnector && (
-					<div className="flex items-center flex-shrink-0" style={{ width: `${depth * 16}px` }}>
-						{/* Render connector lines for each depth level */}
-						{Array.from({ length: depth }).map((_, i) => (
-							<div key={i} className="relative w-4 h-full flex items-center justify-center">
-								{i === depth - 1 ? (
-									// Last level: show the L-connector (├─ or └─)
-									<>
-										{/* Vertical line (only for non-last items) */}
-										{!isLastChild && (
-											<div className="absolute left-1/2 top-1/2 w-px h-1/2 bg-gray-6 -translate-x-1/2" />
-										)}
-										{/* Vertical line going up */}
-										<div className="absolute left-1/2 bottom-1/2 w-px h-1/2 bg-gray-6 -translate-x-1/2" />
-										{/* Horizontal line */}
-										<div className="absolute left-1/2 top-1/2 w-1/2 h-px bg-gray-6 -translate-y-1/2" />
-									</>
-								) : (
-									// Previous levels: just show vertical continuation line if not last at that level
-									<div className="w-px h-full bg-gray-6" />
-								)}
-							</div>
-						))}
-					</div>
-				)}
 				{/* Main content wrapper */}
 				<div className="flex-1 relative">
 					{activeSpaceParams(space.id) && (
@@ -529,7 +516,7 @@ const SpaceItem = ({
 					</AnimatePresence>
 					<div
 						className={clsx(
-							"flex relative z-10 items-center px-2 py-2 truncate rounded-xl transition-colors group",
+							"flex relative z-10 items-center px-2 py-1.5 truncate rounded-xl transition-colors group",
 							sidebarCollapsed ? "justify-center" : "",
 							activeSpaceParams(space.id)
 								? "hover:bg-gray-3"
@@ -554,9 +541,20 @@ const SpaceItem = ({
 								)}
 							</div>
 						)}
-						{/* Spacer for alignment when no children */}
+						{/* Spacer for alignment when no children at depth 0 */}
 						{!sidebarCollapsed && !hasChildren && depth === 0 && (
 							<div className="w-6 flex-shrink-0" />
+						)}
+						{/* Depth indicator shape for child items */}
+						{!sidebarCollapsed && depth > 0 && !hasChildren && (
+							<DepthIndicator depth={depth} />
+						)}
+						{/* Indentation + shape for items with children at depth > 0 */}
+						{!sidebarCollapsed && depth > 0 && hasChildren && (
+							<span
+								className="flex-shrink-0"
+								style={{ marginLeft: `${(depth - 1) * 8}px` }}
+							/>
 						)}
 						<Link
 							href={`/dashboard/spaces/${space.id}`}
