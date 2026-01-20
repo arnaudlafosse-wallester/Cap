@@ -60,14 +60,16 @@ export const DesktopNav = () => {
 					<Tooltip
 						kbd={[cmdSymbol, "Shift", "S"]}
 						position="right"
-						content="Toggle collapse"
+						content={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
 					>
 						<Button
 							variant="white"
 							onClick={toggleSidebarCollapsed}
 							className={clsx(
-								"size-7 p-0 min-w-[unset] rounded-full transition-all z-10 opacity-0 group-hover:opacity-100",
-								sidebarCollapsed ? "hidden" : "",
+								"size-7 p-0 min-w-[unset] rounded-full transition-all z-10",
+								sidebarCollapsed
+									? "opacity-100"
+									: "opacity-0 group-hover:opacity-100",
 							)}
 						>
 							<ChevronRight
