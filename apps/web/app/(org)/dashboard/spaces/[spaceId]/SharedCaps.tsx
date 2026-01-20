@@ -11,7 +11,7 @@ import { useVideosAnalyticsQuery } from "@/lib/Queries/Analytics";
 import { useDashboardContext } from "../../Contexts";
 import { CapPagination } from "../../caps/components/CapPagination";
 import Folder, { type FolderDataType } from "../../caps/components/Folder";
-import { NewFolderDialog } from "../../caps/components/NewFolderDialog";
+import SpaceDialog from "../../_components/Navbar/SpaceDialog";
 import { AddVideosDialog } from "./components/AddVideosDialog";
 import { AddVideosToOrganizationDialog } from "./components/AddVideosToOrganizationDialog";
 import { EmptySharedCapState } from "./components/EmptySharedCapState";
@@ -184,10 +184,17 @@ export const SharedCaps = ({
 					</div>
 				</div>
 			)}
-			<NewFolderDialog
+			<SpaceDialog
 				open={openNewFolderDialog}
-				spaceId={spaceData?.id ?? activeOrganization?.organization.id}
-				onOpenChange={setOpenNewFolderDialog}
+				onClose={() => setOpenNewFolderDialog(false)}
+				edit={false}
+				space={null}
+				onSpaceUpdated={() => {
+					setOpenNewFolderDialog(false);
+					router.refresh();
+				}}
+				defaultPrivacy={spaceData?.privacy || "Private"}
+				defaultParentSpaceId={spaceData?.id || null}
 			/>
 			<div className="flex flex-wrap gap-3 mb-10">
 				{/* Only show MembersIndicator for Private spaces */}

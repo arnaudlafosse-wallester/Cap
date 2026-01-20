@@ -41,6 +41,10 @@ interface SpaceDialogProps {
 		parentSpaceId?: string | null;
 	} | null;
 	onSpaceUpdated?: () => void;
+	/** Default privacy for new folders (when not editing) */
+	defaultPrivacy?: "Public" | "Private";
+	/** Default parent space ID for new folders (when not editing) */
+	defaultParentSpaceId?: string | null;
 }
 
 const SpaceDialog = ({
@@ -49,6 +53,8 @@ const SpaceDialog = ({
 	edit = false,
 	space,
 	onSpaceUpdated,
+	defaultPrivacy,
+	defaultParentSpaceId,
 }: SpaceDialogProps) => {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const formRef = useRef<HTMLFormElement | null>(null);
@@ -81,6 +87,8 @@ const SpaceDialog = ({
 						onNameChange={setSpaceName}
 						edit={edit}
 						space={space}
+						defaultPrivacy={defaultPrivacy}
+						defaultParentSpaceId={defaultParentSpaceId}
 					/>
 				</div>
 				<DialogFooter>
@@ -126,6 +134,10 @@ export interface NewSpaceFormProps {
 		privacy?: "Public" | "Private";
 		parentSpaceId?: string | null;
 	} | null;
+	/** Default privacy for new folders (when not editing) */
+	defaultPrivacy?: "Public" | "Private";
+	/** Default parent space ID for new folders (when not editing) */
+	defaultParentSpaceId?: string | null;
 }
 
 const formSchema = z.object({
@@ -139,7 +151,7 @@ const formSchema = z.object({
 });
 
 export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
-	const { edit = false, space } = props;
+	const { edit = false, space, defaultPrivacy, defaultParentSpaceId } = props;
 	const router = useRouter();
 
 	const form = useForm<z.infer<typeof formSchema>>({
@@ -147,8 +159,8 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 		defaultValues: {
 			name: space?.name || "",
 			members: space?.members || [],
-			privacy: space?.privacy || "Private",
-			parentSpaceId: space?.parentSpaceId || null,
+			privacy: space?.privacy || defaultPrivacy || "Private",
+			parentSpaceId: space?.parentSpaceId || defaultParentSpaceId || null,
 		},
 		mode: "onChange",
 	});
@@ -162,7 +174,12 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 				parentSpaceId: space.parentSpaceId || null,
 			});
 		} else {
-			form.reset({ name: "", members: [], privacy: "Private", parentSpaceId: null });
+			form.reset({
+				name: "",
+				members: [],
+				privacy: defaultPrivacy || "Private",
+				parentSpaceId: defaultParentSpaceId || null,
+			});
 		}
 	}, [space, form]);
 
