@@ -313,25 +313,31 @@ export const SharingDialog: React.FC<SharingDialogProps> = ({
 					{activeTab === "Share" ? (
 						<>
 							{/* Public sharing toggle */}
-							<div className="flex justify-between items-center p-3 mb-4 rounded-lg border bg-gray-1 border-gray-4">
-								<div className="flex gap-3 items-center">
-									<div className="flex justify-center items-center w-8 h-8 rounded-full bg-gray-3">
-										<Globe2 className="w-4 h-4 text-gray-11" />
+							<div className="p-3 mb-4 rounded-lg border bg-gray-1 border-gray-4">
+								<div className="flex justify-between items-center">
+									<div className="flex gap-3 items-center">
+										<div className="flex justify-center items-center w-8 h-8 rounded-full bg-gray-3">
+											<Globe2 className="w-4 h-4 text-gray-11" />
+										</div>
+										<div>
+											<p className="text-sm font-medium text-gray-12">
+												Public link
+											</p>
+											<p className="text-xs text-gray-10">
+												{publicToggle
+													? "Anyone with the link can view (no login required)"
+													: "Only space members can view (login required)"}
+											</p>
+										</div>
 									</div>
-									<div>
-										<p className="text-sm font-medium text-gray-12">
-											Anyone with the link
-										</p>
-										<p className="text-xs text-gray-10">
-											{publicToggle
-												? "Anyone on the internet with the link can view"
-												: "Only people with access can view"}
-										</p>
-									</div>
+									<Switch
+										checked={publicToggle}
+										onCheckedChange={setPublicToggle}
+									/>
 								</div>
-								<Switch
-									checked={publicToggle}
-									onCheckedChange={setPublicToggle}
+								<PublicLinkSection
+									isPublic={publicToggle}
+									capId={capId}
 								/>
 							</div>
 
@@ -482,8 +488,7 @@ const SpaceCheckboxItem = ({
 		>
 			<Checkbox
 				checked={isSelected}
-				onCheckedChange={() => onToggle(space.id)}
-				className="flex-shrink-0"
+				className="flex-shrink-0 pointer-events-none"
 			/>
 			<SignedImageUrl
 				image={space.iconUrl}
@@ -492,6 +497,53 @@ const SpaceCheckboxItem = ({
 				className="relative flex-shrink-0 size-5"
 			/>
 			<span className="text-sm truncate text-gray-12">{space.name}</span>
+		</div>
+	);
+};
+
+const PublicLinkSection = ({
+	isPublic,
+	capId,
+}: {
+	isPublic: boolean;
+	capId: Video.VideoId;
+}) => {
+	const publicEnv = usePublicEnv();
+	const videoUrl = `${publicEnv.webUrl}/s/${capId}`;
+
+	const handleCopyLink = async () => {
+		try {
+			await navigator.clipboard.writeText(videoUrl);
+			toast.success("Link copied to clipboard");
+		} catch (_error) {
+			toast.error("Failed to copy link");
+		}
+	};
+
+	if (!isPublic) return null;
+
+	return (
+		<div className="mt-3 pt-3 border-t border-gray-4">
+			<div className="flex gap-2 items-center">
+				<input
+					type="text"
+					readOnly
+					value={videoUrl}
+					className="flex-1 px-2 py-1.5 text-xs rounded border bg-gray-2 border-gray-4 text-gray-11 truncate"
+				/>
+				<Button
+					size="sm"
+					variant="dark"
+					onClick={handleCopyLink}
+					className="flex-shrink-0"
+				>
+					<FontAwesomeIcon icon={faCopy} className="size-3 mr-1" />
+					Copy
+				</Button>
+			</div>
+			<p className="mt-2 text-xs text-gray-9">
+				Share this link with anyone - they can view without logging in.
+			</p>
 		</div>
 	);
 };

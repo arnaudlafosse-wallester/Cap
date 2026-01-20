@@ -136,35 +136,40 @@ export const CapCardContent: React.FC<CapContentProps> = ({
 			hideSharedStatus ? "pointer-events-none" : "cursor-pointer",
 		);
 		if (isOwner && !hideSharedStatus) {
-			const hasSpaceSharing =
-				(cap.sharedOrganizations?.length ?? 0) > 0 ||
-				(cap.sharedSpaces?.length ?? 0) > 0;
-			const isPublic = cap.public;
+			const sharedSpaceNames = cap.sharedSpaces?.map((s) => s.name) ?? [];
+			const hasSpaceSharing = sharedSpaceNames.length > 0;
 
-			if (!hasSpaceSharing && !isPublic) {
+			if (!hasSpaceSharing) {
 				return (
 					<p
 						className={baseClassName}
 						onClick={() => setIsSharingDialogOpen(true)}
 					>
-						Not shared{" "}
+						Private{" "}
 						<FontAwesomeIcon className="ml-2 size-2.5" icon={faChevronDown} />
 					</p>
 				);
-			} else {
-				return (
-					<p
-						className={baseClassName}
-						onClick={() => setIsSharingDialogOpen(true)}
-					>
-						Shared{" "}
-						<FontAwesomeIcon className="ml-1 size-2.5" icon={faChevronDown} />
-					</p>
-				);
 			}
-		} else {
-			return <p className={baseClassName}>Shared with you</p>;
+			// Build display text: "Shared in X, Y" or truncate if too many
+			const maxDisplay = 2;
+			const displayNames = sharedSpaceNames.slice(0, maxDisplay);
+			const remaining = sharedSpaceNames.length - maxDisplay;
+			const sharedText =
+				remaining > 0
+					? `Shared in ${displayNames.join(", ")} +${remaining}`
+					: `Shared in ${displayNames.join(", ")}`;
+
+			return (
+				<p
+					className={baseClassName}
+					onClick={() => setIsSharingDialogOpen(true)}
+				>
+					{sharedText}{" "}
+					<FontAwesomeIcon className="ml-1 size-2.5" icon={faChevronDown} />
+				</p>
+			);
 		}
+		return <p className={baseClassName}>Shared with you</p>;
 	};
 
 	return (
