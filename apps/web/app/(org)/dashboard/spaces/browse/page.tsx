@@ -319,7 +319,6 @@ export default function BrowseSpacesPage() {
 															members: (trueActiveOrgMembers || []).map(
 																(m: { user: { id: string } }) => m.user.id,
 															),
-															iconUrl: space.iconUrl,
 															privacy: space.privacy as "Public" | "Private",
 															parentSpaceId: space.parentSpaceId,
 														});

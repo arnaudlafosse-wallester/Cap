@@ -15,7 +15,6 @@ import {
 	Label,
 	Switch,
 } from "@cap/ui";
-import type { ImageUpload } from "@cap/web-domain";
 import { faLayerGroup } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,7 +25,6 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 import { updateSpace } from "@/actions/organization/update-space";
-import { FileInput } from "@/components/FileInput";
 import { useDashboardContext } from "../../Contexts";
 import { MemberSelect } from "../../spaces/[spaceId]/components/MemberSelect";
 import { createSpace } from "./server";
@@ -39,7 +37,6 @@ interface SpaceDialogProps {
 		id: string;
 		name: string;
 		members: string[];
-		iconUrl?: ImageUpload.ImageUrl;
 		privacy?: "Public" | "Private";
 		parentSpaceId?: string | null;
 	} | null;
@@ -121,7 +118,6 @@ export interface NewSpaceFormProps {
 		id: string;
 		name: string;
 		members: string[];
-		iconUrl?: ImageUpload.ImageUrl;
 		privacy?: "Public" | "Private";
 		parentSpaceId?: string | null;
 	} | null;
@@ -165,32 +161,42 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 		}
 	}, [space, form]);
 
-	const [selectedFile, setSelectedFile] = useState<File | null>(null);
-	const [isUploading, setIsUploading] = useState(false);
 	const { activeOrganization, spacesData } = useDashboardContext();
 
-	// Filter out the current space and its children from parent options
-	// Allow any space without a parent (top-level) to be a potential parent
-	const availableParentSpaces = spacesData?.filter(s =>
-		s.id !== space?.id && // Can't be its own parent
-		!s.parentSpaceId // Only top-level spaces can be parents (including primary "All Wallester")
-	) || [];
+	// Watch the privacy field to filter parent spaces accordingly
+	const currentPrivacy = form.watch("privacy");
 
-	const handleFileChange = (file: File | null) => {
-		if (file) {
-			// Validate file size (1MB = 1024 * 1024 bytes)
-			if (file.size > 1024 * 1024) {
-				toast.error("File size must be less than 1MB");
-				return;
-			}
-			// Validate file type
-			if (!file.type.startsWith("image/")) {
-				toast.error("File must be an image");
-				return;
+	// Filter parent spaces based on selected privacy type
+	// Shared (Public) spaces can only be nested under other Shared spaces
+	// Private spaces can only be nested under other Private spaces
+	const availableParentSpaces = spacesData?.filter(s => {
+		// Can't be its own parent
+		if (s.id === space?.id) return false;
+
+		if (currentPrivacy === "Public") {
+			// For Shared spaces: show primary space and all Public spaces
+			return s.primary || s.privacy === "Public";
+		} else {
+			// For Private spaces: show only Private spaces (excluding primary)
+			return !s.primary && s.privacy === "Private";
+		}
+	}) || [];
+
+	// Clear parentSpaceId when privacy changes (since parent must match privacy type)
+	useEffect(() => {
+		const currentParentId = form.getValues("parentSpaceId");
+		if (currentParentId) {
+			const parentSpace = spacesData?.find(s => s.id === currentParentId);
+			if (parentSpace) {
+				const isValidParent = currentPrivacy === "Public"
+					? (parentSpace.primary || parentSpace.privacy === "Public")
+					: (!parentSpace.primary && parentSpace.privacy === "Private");
+				if (!isValidParent) {
+					form.setValue("parentSpaceId", null);
+				}
 			}
 		}
-		setSelectedFile(file);
-	};
+	}, [currentPrivacy, spacesData, form]);
 
 	return (
 		<Form {...form}>
@@ -199,9 +205,6 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 				ref={props.formRef}
 				onSubmit={form.handleSubmit(async (values) => {
 					try {
-						if (selectedFile) {
-							setIsUploading(true);
-						}
 						props.setCreateLoading?.(true);
 
 						const formData = new FormData();
@@ -209,10 +212,6 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 						formData.append("privacy", values.privacy);
 						if (values.parentSpaceId) {
 							formData.append("parentSpaceId", values.parentSpaceId);
-						}
-
-						if (selectedFile) {
-							formData.append("icon", selectedFile);
 						}
 
 						if (values.members && values.members.length > 0) {
@@ -223,10 +222,6 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 
 						if (edit && space?.id) {
 							formData.append("id", space.id);
-							// If the user removed the icon, send a removeIcon flag
-							if (selectedFile === null && space.iconUrl) {
-								formData.append("removeIcon", "true");
-							}
 							const result = await updateSpace(formData);
 							if (!result.success) {
 								throw new Error(result.error || "Failed to update space");
@@ -243,7 +238,6 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 						}
 
 						form.reset();
-						setSelectedFile(null);
 						props.onSpaceCreated();
 					} catch (error: any) {
 						console.error(
@@ -256,7 +250,6 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 								(edit ? "Failed to update space" : "Failed to create space"),
 						);
 					} finally {
-						setIsUploading(false);
 						props.setCreateLoading?.(false);
 					}
 				})}
@@ -356,7 +349,6 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 											<MemberSelect
 												placeholder="Add member..."
 												showEmptyIfNoMembers={false}
-												disabled={isUploading}
 												canManageMembers={true}
 												selected={(activeOrganization?.members ?? [])
 													.filter((m) => (field.value ?? []).includes(m.user.id))
@@ -375,25 +367,6 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 							/>
 						</>
 					)}
-
-					<div className="space-y-1">
-						<Label htmlFor="icon">Space Icon</Label>
-						<CardDescription className="w-full max-w-[400px]">
-							Upload a custom logo or icon for your space (max 1MB).
-						</CardDescription>
-					</div>
-
-					<div className="relative mt-2">
-						<FileInput
-							id="space-icon"
-							name="icon"
-							initialPreviewUrl={space?.iconUrl || null}
-							notDraggingClassName="hover:bg-gray-3"
-							onChange={handleFileChange}
-							disabled={isUploading}
-							isLoading={isUploading}
-						/>
-					</div>
 				</div>
 			</form>
 		</Form>

@@ -693,16 +693,6 @@ async function AuthorizedContent({
 					aiGenerationEnabled={aiGenerationEnabled}
 				/>
 			</div>
-			<div className="py-4 mt-auto">
-				<a
-					target="_blank"
-					href={`/?ref=video_${video.id}`}
-					className="flex justify-center items-center px-4 py-2 mx-auto mb-2 space-x-2 bg-white rounded-full border border-gray-5 w-fit"
-				>
-					<span className="text-sm">Recorded with</span>
-					<Logo className="w-14 h-auto" />
-				</a>
-			</div>
 		</>
 	);
 }

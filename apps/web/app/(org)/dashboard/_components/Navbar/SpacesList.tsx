@@ -89,7 +89,7 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 	if (!spacesData) return null;
 
 	// Build hierarchical structure with multi-level support and SHARED/PRIVATE sections
-	type SpaceWithDepth = Spaces & { depth: number; hasChildren: boolean };
+	type SpaceWithDepth = Spaces & { depth: number; hasChildren: boolean; isLastChild: boolean };
 
 	const { sharedSpaces, privateSpaces, hasMoreShared, hiddenSharedCount, hasMorePrivate, hiddenPrivateCount, spacesWithChildren } = useMemo(() => {
 		// Build children map for quick lookup
@@ -111,10 +111,12 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 
 			const children = childrenByParent.get(parentId) || [];
 			const result: SpaceWithDepth[] = [];
-			for (const child of children) {
+			for (let i = 0; i < children.length; i++) {
+				const child = children[i];
 				const hasChildren = spacesWithChildrenSet.has(child.id);
 				const isCollapsed = collapsedSpaces.has(child.id);
-				result.push({ ...child, depth, hasChildren });
+				const isLastChild = i === children.length - 1;
+				result.push({ ...child, depth, hasChildren, isLastChild });
 				result.push(...buildTree(child.id, depth + 1, isCollapsed));
 			}
 			return result;
@@ -131,10 +133,12 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 			sharedSpaceIds.add(primarySpace.id);
 			// Get direct children of primary space at depth 0
 			const directChildren = childrenByParent.get(primarySpace.id) || [];
-			for (const child of directChildren) {
+			for (let i = 0; i < directChildren.length; i++) {
+				const child = directChildren[i];
 				const hasChildren = spacesWithChildrenSet.has(child.id);
 				const isCollapsed = collapsedSpaces.has(child.id);
-				sharedTree.push({ ...child, depth: 0, hasChildren });
+				const isLastChild = i === directChildren.length - 1;
+				sharedTree.push({ ...child, depth: 0, hasChildren, isLastChild });
 				sharedSpaceIds.add(child.id);
 				// Get grandchildren at depth 1, etc.
 				const descendants = buildTree(child.id, 1, isCollapsed);
@@ -151,10 +155,12 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 			!s.primary && !s.parentSpaceId && !sharedSpaceIds.has(s.id)
 		);
 
-		for (const space of topLevelPrivate) {
+		for (let i = 0; i < topLevelPrivate.length; i++) {
+			const space = topLevelPrivate[i];
 			const hasChildren = spacesWithChildrenSet.has(space.id);
 			const isCollapsed = collapsedSpaces.has(space.id);
-			privateTree.push({ ...space, depth: 0, hasChildren });
+			const isLastChild = i === topLevelPrivate.length - 1;
+			privateTree.push({ ...space, depth: 0, hasChildren, isLastChild });
 			privateTree.push(...buildTree(space.id, 1, isCollapsed));
 		}
 
@@ -320,6 +326,7 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 								space={space}
 								depth={space.depth}
 								hasChildren={space.hasChildren}
+								isLastChild={space.isLastChild}
 								isCollapsed={collapsedSpaces.has(space.id)}
 								onToggleCollapse={() => toggleSpaceCollapse(space.id)}
 								isOwner={space.createdById === user?.id}
@@ -361,6 +368,7 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 								space={space}
 								depth={space.depth}
 								hasChildren={space.hasChildren}
+								isLastChild={space.isLastChild}
 								isCollapsed={collapsedSpaces.has(space.id)}
 								onToggleCollapse={() => toggleSpaceCollapse(space.id)}
 								isOwner={space.createdById === user?.id}
@@ -413,6 +421,7 @@ const SpaceItem = ({
 	space,
 	depth,
 	hasChildren,
+	isLastChild,
 	isCollapsed,
 	onToggleCollapse,
 	isOwner,
@@ -428,6 +437,7 @@ const SpaceItem = ({
 	space: Spaces;
 	depth: number;
 	hasChildren: boolean;
+	isLastChild: boolean;
 	isCollapsed: boolean;
 	onToggleCollapse: () => void;
 	isOwner: boolean;
@@ -440,10 +450,8 @@ const SpaceItem = ({
 	handleDrop: (e: React.DragEvent, spaceId: Space.SpaceIdOrOrganisationId) => void;
 	handleDeleteSpace: (e: React.MouseEvent, space: Spaces) => void;
 }) => {
-	// Calculate indentation: 16px (ml-4) per depth level
-	const indentStyle = !sidebarCollapsed && depth > 0
-		? { marginLeft: `${depth * 16}px` }
-		: undefined;
+	// For child items (depth > 0), we show tree connectors instead of margin
+	const showTreeConnector = !sidebarCollapsed && depth > 0;
 
 	return (
 		<Tooltip
@@ -453,114 +461,142 @@ const SpaceItem = ({
 		>
 			<div
 				className={clsx(
-					"relative transition-colors border border-transparent overflow-visible duration-150 rounded-xl mb-1.5",
+					"relative transition-colors border border-transparent overflow-visible duration-150 rounded-xl mb-1.5 flex items-stretch",
 					activeSpaceParams(space.id)
 						? "hover:bg-gray-3 cursor-default"
 						: "cursor-pointer",
 				)}
-				style={indentStyle}
 				onDragOver={(e) => handleDragOver(e, space.id)}
 				onDragLeave={handleDragLeave}
 				onDrop={(e) => handleDrop(e, space.id)}
 			>
-				{activeSpaceParams(space.id) && (
-					<motion.div
-						layoutId="navlinks"
-						className={clsx(
-							"absolute rounded-xl bg-gray-3",
-							sidebarCollapsed
-								? "inset-0 right-0 left-0 mx-auto"
-								: "inset-0",
-						)}
-						style={{ willChange: "transform" }}
-						transition={{
-							layout: {
-								type: "tween",
-								duration: 0.1,
-							},
-						}}
-					/>
+				{/* Tree connector for child items */}
+				{showTreeConnector && (
+					<div className="flex items-center flex-shrink-0" style={{ width: `${depth * 16}px` }}>
+						{/* Render connector lines for each depth level */}
+						{Array.from({ length: depth }).map((_, i) => (
+							<div key={i} className="relative w-4 h-full flex items-center justify-center">
+								{i === depth - 1 ? (
+									// Last level: show the L-connector (├─ or └─)
+									<>
+										{/* Vertical line (only for non-last items) */}
+										{!isLastChild && (
+											<div className="absolute left-1/2 top-1/2 w-px h-1/2 bg-gray-6 -translate-x-1/2" />
+										)}
+										{/* Vertical line going up */}
+										<div className="absolute left-1/2 bottom-1/2 w-px h-1/2 bg-gray-6 -translate-x-1/2" />
+										{/* Horizontal line */}
+										<div className="absolute left-1/2 top-1/2 w-1/2 h-px bg-gray-6 -translate-y-1/2" />
+									</>
+								) : (
+									// Previous levels: just show vertical continuation line if not last at that level
+									<div className="w-px h-full bg-gray-6" />
+								)}
+							</div>
+						))}
+					</div>
 				)}
-				<AnimatePresence>
-					{activeDropTarget === space.id && (
+				{/* Main content wrapper */}
+				<div className="flex-1 relative">
+					{activeSpaceParams(space.id) && (
 						<motion.div
-							className="absolute inset-0 z-10 rounded-xl border transition-all duration-200 pointer-events-none border-blue-10 bg-gray-4"
-							initial={{ opacity: 0 }}
-							animate={{ opacity: 1 }}
-							exit={{ opacity: 0 }}
-							transition={{ duration: 0.2 }}
+							layoutId="navlinks"
+							className={clsx(
+								"absolute rounded-xl bg-gray-3",
+								sidebarCollapsed
+									? "inset-0 right-0 left-0 mx-auto"
+									: "inset-0",
+							)}
+							style={{ willChange: "transform" }}
+							transition={{
+								layout: {
+									type: "tween",
+									duration: 0.1,
+								},
+							}}
 						/>
 					)}
-				</AnimatePresence>
-				<div
-					className={clsx(
-						"flex relative z-10 items-center px-2 py-2 truncate rounded-xl transition-colors group",
-						sidebarCollapsed ? "justify-center" : "",
-						activeSpaceParams(space.id)
-							? "hover:bg-gray-3"
-							: "hover:bg-gray-2",
-						space.primary ? "h-10" : "h-fit",
-					)}
-				>
-					{/* Collapse/Expand chevron for spaces with children */}
-					{!sidebarCollapsed && hasChildren && (
-						<div
-							onClick={(e) => {
-								e.preventDefault();
-								e.stopPropagation();
-								onToggleCollapse();
-							}}
-							className="flex justify-center items-center mr-1 rounded hover:bg-gray-4 size-5 flex-shrink-0 cursor-pointer"
-						>
-							{isCollapsed ? (
-								<ChevronRight size={14} className="text-gray-10" />
-							) : (
-								<ChevronDown size={14} className="text-gray-10" />
-							)}
-						</div>
-					)}
-					{/* Spacer for alignment when no children */}
-					{!sidebarCollapsed && !hasChildren && depth === 0 && (
-						<div className="w-6 flex-shrink-0" />
-					)}
-					<Link
-						href={`/dashboard/spaces/${space.id}`}
-						className="flex items-center flex-1 min-w-0"
-					>
-						{/* Only show avatar when sidebar is collapsed */}
-						{sidebarCollapsed && (
-							<SignedImageUrl
-								image={space.iconUrl}
-								name={space.name}
-								letterClass="text-sm"
-								className="relative flex-shrink-0 size-6"
+					<AnimatePresence>
+						{activeDropTarget === space.id && (
+							<motion.div
+								className="absolute inset-0 z-10 rounded-xl border transition-all duration-200 pointer-events-none border-blue-10 bg-gray-4"
+								initial={{ opacity: 0 }}
+								animate={{ opacity: 1 }}
+								exit={{ opacity: 0 }}
+								transition={{ duration: 0.2 }}
 							/>
 						)}
-						{!sidebarCollapsed && (
-							<span className="text-sm truncate transition-colors text-gray-11 group-hover:text-gray-12">
-								{space.name}
-							</span>
+					</AnimatePresence>
+					<div
+						className={clsx(
+							"flex relative z-10 items-center px-2 py-2 truncate rounded-xl transition-colors group",
+							sidebarCollapsed ? "justify-center" : "",
+							activeSpaceParams(space.id)
+								? "hover:bg-gray-3"
+								: "hover:bg-gray-2",
+							space.primary ? "h-10" : "h-fit",
 						)}
-					</Link>
-					{!sidebarCollapsed && (
-						<>
-							{/* Hide delete button for Shared spaces and primary entry */}
-							{!space.primary && isOwner && !isShared && (
-								<div
-									onClick={(e) => handleDeleteSpace(e, space)}
-									className={
-										"flex justify-center items-center ml-auto rounded-full opacity-0 transition-all group size-6 group-hover:opacity-100 hover:bg-gray-4"
-									}
-									aria-label={`Delete ${space.name} space`}
-								>
-									<FontAwesomeIcon
-										icon={faXmark}
-										className="size-3.5 text-gray-12"
-									/>
-								</div>
+					>
+						{/* Collapse/Expand chevron for spaces with children */}
+						{!sidebarCollapsed && hasChildren && (
+							<div
+								onClick={(e) => {
+									e.preventDefault();
+									e.stopPropagation();
+									onToggleCollapse();
+								}}
+								className="flex justify-center items-center mr-1 rounded hover:bg-gray-4 size-5 flex-shrink-0 cursor-pointer"
+							>
+								{isCollapsed ? (
+									<ChevronRight size={14} className="text-gray-10" />
+								) : (
+									<ChevronDown size={14} className="text-gray-10" />
+								)}
+							</div>
+						)}
+						{/* Spacer for alignment when no children */}
+						{!sidebarCollapsed && !hasChildren && depth === 0 && (
+							<div className="w-6 flex-shrink-0" />
+						)}
+						<Link
+							href={`/dashboard/spaces/${space.id}`}
+							className="flex items-center flex-1 min-w-0"
+						>
+							{/* Only show avatar when sidebar is collapsed */}
+							{sidebarCollapsed && (
+								<SignedImageUrl
+									image={space.iconUrl}
+									name={space.name}
+									letterClass="text-sm"
+									className="relative flex-shrink-0 size-6"
+								/>
 							)}
-						</>
-					)}
+							{!sidebarCollapsed && (
+								<span className="text-sm truncate transition-colors text-gray-11 group-hover:text-gray-12">
+									{space.name}
+								</span>
+							)}
+						</Link>
+						{!sidebarCollapsed && (
+							<>
+								{/* Hide delete button for Shared spaces and primary entry */}
+								{!space.primary && isOwner && !isShared && (
+									<div
+										onClick={(e) => handleDeleteSpace(e, space)}
+										className={
+											"flex justify-center items-center ml-auto rounded-full opacity-0 transition-all group size-6 group-hover:opacity-100 hover:bg-gray-4"
+										}
+										aria-label={`Delete ${space.name} space`}
+									>
+										<FontAwesomeIcon
+											icon={faXmark}
+											className="size-3.5 text-gray-12"
+										/>
+									</div>
+								)}
+							</>
+						)}
+					</div>
 				</div>
 			</div>
 		</Tooltip>
