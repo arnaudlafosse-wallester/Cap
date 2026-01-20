@@ -136,11 +136,10 @@ export const ShareHeader = ({
 
 	const renderSharedStatus = () => {
 		if (isOwner) {
-			const hasSpaceSharing =
-				sharedOrganizations?.length > 0 || effectiveSharedSpaces?.length > 0;
-			const isPublic = data.public;
+			const sharedSpaceNames = effectiveSharedSpaces?.map((s) => s.name) ?? [];
+			const hasSpaceSharing = sharedSpaceNames.length > 0;
 
-			if (!hasSpaceSharing && !isPublic) {
+			if (!hasSpaceSharing) {
 				return (
 					<Button
 						className="px-3 w-fit"
@@ -148,34 +147,41 @@ export const ShareHeader = ({
 						variant="outline"
 						onClick={() => setIsSharingDialogOpen(true)}
 					>
-						Not shared{" "}
+						Private{" "}
 						<FontAwesomeIcon className="ml-2 size-2.5" icon={faChevronDown} />
 					</Button>
 				);
-			} else {
-				return (
-					<Button
-						className="px-3 w-fit"
-						size="xs"
-						variant="outline"
-						onClick={() => setIsSharingDialogOpen(true)}
-					>
-						Shared{" "}
-						<FontAwesomeIcon className="ml-1 size-2.5" icon={faChevronDown} />
-					</Button>
-				);
 			}
-		} else {
+			// Build display text: "Shared in X, Y" or truncate if too many
+			const maxDisplay = 2;
+			const displayNames = sharedSpaceNames.slice(0, maxDisplay);
+			const remaining = sharedSpaceNames.length - maxDisplay;
+			const sharedText =
+				remaining > 0
+					? `Shared in ${displayNames.join(", ")} +${remaining}`
+					: `Shared in ${displayNames.join(", ")}`;
+
 			return (
 				<Button
-					className="px-3 pointer-events-none w-fit"
+					className="px-3 w-fit"
 					size="xs"
 					variant="outline"
+					onClick={() => setIsSharingDialogOpen(true)}
 				>
-					Shared with you
+					{sharedText}{" "}
+					<FontAwesomeIcon className="ml-1 size-2.5" icon={faChevronDown} />
 				</Button>
 			);
 		}
+		return (
+			<Button
+				className="px-3 pointer-events-none w-fit"
+				size="xs"
+				variant="outline"
+			>
+				Shared with you
+			</Button>
+		);
 	};
 
 	const userIsOwnerAndNotPro = user?.id === data.owner.id && !data.owner.isPro;
