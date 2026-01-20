@@ -318,7 +318,7 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 										onCheckedChange={(checked) =>
 											field.onChange(checked ? "Public" : "Private")
 										}
-										className="data-[state=checked]:bg-green-600"
+										className="data-[state=checked]:bg-green-600 data-[state=unchecked]:bg-blue-500"
 									/>
 								</FormControl>
 							</div>

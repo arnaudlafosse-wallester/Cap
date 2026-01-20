@@ -26,6 +26,7 @@ export class Spaces extends Effect.Service<Spaces>()("Spaces", {
 							name: Db.spaces.name,
 							organizationId: Db.spaces.organizationId,
 							createdById: Db.spaces.createdById,
+							privacy: Db.spaces.privacy,
 						})
 						.from(Db.spaces)
 						.where(Dz.eq(Db.spaces.id, spaceOrOrgId))
