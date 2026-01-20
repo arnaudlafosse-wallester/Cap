@@ -84,6 +84,11 @@ const SpaceDialog = ({
 					/>
 				</div>
 				<DialogFooter>
+					{!spaceName.trim().length && (
+						<p className="text-xs text-gray-10 mr-auto ml-4">
+							Enter a space name to continue
+						</p>
+					)}
 					<Button variant="gray" size="sm" onClick={onClose}>
 						Cancel
 					</Button>
@@ -280,7 +285,9 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 						render={({ field }) => (
 							<div className="flex items-center justify-between p-3 rounded-lg bg-gray-3">
 								<div className="space-y-0.5">
-									<Label htmlFor="privacy">Private Space</Label>
+									<Label htmlFor="privacy">
+									{field.value === "Private" ? "Private Space" : "Public Space"}
+								</Label>
 									<CardDescription className="text-xs">
 										{field.value === "Private"
 											? "Only invited members can see this space"
