@@ -23,6 +23,7 @@ export async function updateSpace(formData: FormData) {
 
 	const id = Space.SpaceId.make(formData.get("id") as string);
 	const name = formData.get("name") as string;
+	const privacy = (formData.get("privacy") as "Public" | "Private") || undefined;
 	const members = formData.getAll("members[]") as User.UserId[];
 	const iconFile = formData.get("icon") as File | null;
 
@@ -52,8 +53,12 @@ export async function updateSpace(formData: FormData) {
 		return { success: false, error: "Unauthorized" };
 	}
 
-	// Update space name
-	await db().update(spaces).set({ name }).where(eq(spaces.id, id));
+	// Update space name and privacy
+	const updateData: { name: string; privacy?: "Public" | "Private" } = { name };
+	if (privacy) {
+		updateData.privacy = privacy;
+	}
+	await db().update(spaces).set(updateData).where(eq(spaces.id, id));
 
 	// Update members - ensure creator is always included
 	const memberIds = Array.from(new Set([...members, space.createdById]));

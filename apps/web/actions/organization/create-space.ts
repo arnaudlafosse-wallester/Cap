@@ -37,6 +37,7 @@ export async function createSpace(
 		}
 
 		const name = formData.get("name") as string;
+		const privacy = (formData.get("privacy") as "Public" | "Private") || "Private";
 
 		if (!name) {
 			return {
@@ -73,6 +74,7 @@ export async function createSpace(
 			await tx.insert(spaces).values({
 				id: spaceId,
 				name,
+				privacy,
 				organizationId: user.activeOrganizationId,
 				createdById: user.id,
 				iconUrl: null,

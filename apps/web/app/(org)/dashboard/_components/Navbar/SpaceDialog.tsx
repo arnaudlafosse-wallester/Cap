@@ -13,6 +13,7 @@ import {
 	FormField,
 	Input,
 	Label,
+	Switch,
 } from "@cap/ui";
 import type { ImageUpload } from "@cap/web-domain";
 import { faLayerGroup } from "@fortawesome/free-solid-svg-icons";
@@ -39,6 +40,7 @@ interface SpaceDialogProps {
 		name: string;
 		members: string[];
 		iconUrl?: ImageUpload.ImageUrl;
+		privacy?: "Public" | "Private";
 	} | null;
 	onSpaceUpdated?: () => void;
 }
@@ -119,6 +121,7 @@ export interface NewSpaceFormProps {
 		name: string;
 		members: string[];
 		iconUrl?: ImageUpload.ImageUrl;
+		privacy?: "Public" | "Private";
 	} | null;
 }
 
@@ -128,6 +131,7 @@ const formSchema = z.object({
 		.min(1, "Space name is required")
 		.max(25, "Space name must be at most 25 characters"),
 	members: z.array(z.string()).optional(),
+	privacy: z.enum(["Public", "Private"]).default("Private"),
 });
 
 export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
@@ -139,6 +143,7 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 		defaultValues: {
 			name: space?.name || "",
 			members: space?.members || [],
+			privacy: space?.privacy || "Private",
 		},
 		mode: "onChange",
 	});
@@ -148,9 +153,10 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 			form.reset({
 				name: space.name,
 				members: space.members,
+				privacy: space.privacy || "Private",
 			});
 		} else {
-			form.reset({ name: "", members: [] });
+			form.reset({ name: "", members: [], privacy: "Private" });
 		}
 	}, [space, form]);
 
@@ -188,6 +194,7 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 
 						const formData = new FormData();
 						formData.append("name", values.name);
+						formData.append("privacy", values.privacy);
 
 						if (selectedFile) {
 							formData.append("icon", selectedFile);
@@ -255,6 +262,33 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 									}}
 								/>
 							</FormControl>
+						)}
+					/>
+
+					{/* Privacy Toggle */}
+					<FormField
+						control={form.control}
+						name="privacy"
+						render={({ field }) => (
+							<div className="flex items-center justify-between p-3 rounded-lg bg-gray-3">
+								<div className="space-y-0.5">
+									<Label htmlFor="privacy">Private Space</Label>
+									<CardDescription className="text-xs">
+										{field.value === "Private"
+											? "Only invited members can see this space"
+											: "All organization members can see this space"}
+									</CardDescription>
+								</div>
+								<FormControl>
+									<Switch
+										id="privacy"
+										checked={field.value === "Private"}
+										onCheckedChange={(checked) =>
+											field.onChange(checked ? "Private" : "Public")
+										}
+									/>
+								</FormControl>
+							</div>
 						)}
 					/>
 
