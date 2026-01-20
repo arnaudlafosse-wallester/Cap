@@ -10,7 +10,7 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import clsx from "clsx";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronRight, ChevronUp } from "lucide-react";
 import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
@@ -510,12 +510,12 @@ const SpaceItem = ({
 								e.stopPropagation();
 								onToggleCollapse();
 							}}
-							className="flex justify-center items-center mr-1 rounded hover:bg-gray-4 size-5 flex-shrink-0"
+							className="flex justify-center items-center mr-1 rounded hover:bg-gray-4 size-5 flex-shrink-0 cursor-pointer"
 						>
 							{isCollapsed ? (
-								<ChevronDown size={14} className="text-gray-10" />
+								<ChevronRight size={14} className="text-gray-10" />
 							) : (
-								<ChevronUp size={14} className="text-gray-10" />
+								<ChevronDown size={14} className="text-gray-10" />
 							)}
 						</div>
 					)}
@@ -527,19 +527,17 @@ const SpaceItem = ({
 						href={`/dashboard/spaces/${space.id}`}
 						className="flex items-center flex-1 min-w-0"
 					>
-						<SignedImageUrl
-							image={space.iconUrl}
-							name={space.name}
-							letterClass={clsx(
-								sidebarCollapsed ? "text-sm" : "text-[11px]",
-							)}
-							className={clsx(
-								"relative flex-shrink-0",
-								sidebarCollapsed ? "size-6" : "size-5",
-							)}
-						/>
+						{/* Only show avatar when sidebar is collapsed */}
+						{sidebarCollapsed && (
+							<SignedImageUrl
+								image={space.iconUrl}
+								name={space.name}
+								letterClass="text-sm"
+								className="relative flex-shrink-0 size-6"
+							/>
+						)}
 						{!sidebarCollapsed && (
-							<span className="ml-2.5 text-sm truncate transition-colors text-gray-11 group-hover:text-gray-12">
+							<span className="text-sm truncate transition-colors text-gray-11 group-hover:text-gray-12">
 								{space.name}
 							</span>
 						)}
