@@ -75,34 +75,66 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 
 	if (!spacesData) return null;
 
-	// Build hierarchical structure: top-level spaces first, then their children
-	const { displayedSpaces, hasMoreSpaces, hiddenSpacesCount } = useMemo(() => {
-		// Separate parent spaces (no parentSpaceId) from child spaces
-		const parentSpaces = spacesData.filter(s => !s.parentSpaceId);
-		const childSpacesByParent = spacesData.reduce((acc, space) => {
-			if (space.parentSpaceId) {
-				if (!acc[space.parentSpaceId]) {
-					acc[space.parentSpaceId] = [];
-				}
-				acc[space.parentSpaceId].push(space);
-			}
-			return acc;
-		}, {} as Record<string, typeof spacesData>);
+	// Build hierarchical structure with multi-level support and PUBLIC/PRIVATE sections
+	type SpaceWithDepth = Spaces & { depth: number };
 
-		// Build flat list with hierarchy (parent followed by its children)
-		const hierarchicalSpaces: (typeof spacesData[0] & { isChild?: boolean })[] = [];
-		for (const parent of parentSpaces) {
-			hierarchicalSpaces.push(parent);
-			const children = childSpacesByParent[parent.id] || [];
-			for (const child of children) {
-				hierarchicalSpaces.push({ ...child, isChild: true });
+	const { publicSpaces, privateSpaces, hasMorePublic, hiddenPublicCount, hasMorePrivate, hiddenPrivateCount } = useMemo(() => {
+		// Build children map for quick lookup
+		const childrenByParent = new Map<string, Spaces[]>();
+		for (const space of spacesData) {
+			if (space.parentSpaceId) {
+				const children = childrenByParent.get(space.parentSpaceId) || [];
+				children.push(space);
+				childrenByParent.set(space.parentSpaceId, children);
 			}
 		}
 
+		// Recursively build tree with depth
+		const buildTree = (parentId: string, depth: number): SpaceWithDepth[] => {
+			const children = childrenByParent.get(parentId) || [];
+			const result: SpaceWithDepth[] = [];
+			for (const child of children) {
+				result.push({ ...child, depth });
+				result.push(...buildTree(child.id, depth + 1));
+			}
+			return result;
+		};
+
+		// Find "All Wallester" (primary space)
+		const primarySpace = spacesData.find(s => s.primary);
+
+		// PUBLIC section: All Wallester + all children
+		const publicTree: SpaceWithDepth[] = [];
+		const publicSpaceIds = new Set<string>();
+
+		if (primarySpace) {
+			publicTree.push({ ...primarySpace, depth: 0 });
+			publicSpaceIds.add(primarySpace.id);
+			const children = buildTree(primarySpace.id, 1);
+			for (const child of children) {
+				publicTree.push(child);
+				publicSpaceIds.add(child.id);
+			}
+		}
+
+		// PRIVATE section: top-level spaces not under All Wallester (and their children)
+		const privateTree: SpaceWithDepth[] = [];
+		const topLevelPrivate = spacesData.filter(s =>
+			!s.primary && !s.parentSpaceId && !publicSpaceIds.has(s.id)
+		);
+
+		for (const space of topLevelPrivate) {
+			privateTree.push({ ...space, depth: 0 });
+			privateTree.push(...buildTree(space.id, 1));
+		}
+
 		return {
-			displayedSpaces: showAllSpaces ? hierarchicalSpaces : hierarchicalSpaces.slice(0, 5),
-			hasMoreSpaces: hierarchicalSpaces.length > 5,
-			hiddenSpacesCount: Math.max(0, hierarchicalSpaces.length - 5),
+			publicSpaces: showAllSpaces ? publicTree : publicTree.slice(0, 5),
+			privateSpaces: privateTree,
+			hasMorePublic: publicTree.length > 5,
+			hiddenPublicCount: Math.max(0, publicTree.length - 5),
+			hasMorePrivate: privateTree.length > 3,
+			hiddenPrivateCount: Math.max(0, privateTree.length - 3),
 		};
 	}, [spacesData, showAllSpaces]);
 
@@ -227,131 +259,76 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 				</Link>
 			</Tooltip>
 
-			{/* Wrapper div with overflow hidden to prevent scrollbar flash */}
-			<div className="overflow-hidden">
-				<div
-					className={clsx(
-						"transition-all duration-300",
-						showAllSpaces && !sidebarCollapsed
-							? "max-h-[calc(100vh-450px)] overflow-y-auto"
-							: "max-h-max overflow-hidden",
-					)}
-					style={{
-						scrollbarWidth: "none",
-						msOverflowStyle: "none",
-						WebkitOverflowScrolling: "touch",
-					}}
-				>
-					{displayedSpaces.map((space: Spaces & { isChild?: boolean }) => {
-						const isOwner = space.createdById === user?.id;
-						const isChild = space.isChild;
-						return (
-							<Tooltip
-								position="right"
-								disable={!sidebarCollapsed}
-								content={space.name}
+			{/* PUBLIC SPACES SECTION */}
+			{publicSpaces.length > 0 && (
+				<div className="overflow-hidden">
+					<div
+						className={clsx(
+							"transition-all duration-300",
+							showAllSpaces && !sidebarCollapsed
+								? "max-h-[calc(100vh-450px)] overflow-y-auto"
+								: "max-h-max overflow-hidden",
+						)}
+						style={{
+							scrollbarWidth: "none",
+							msOverflowStyle: "none",
+							WebkitOverflowScrolling: "touch",
+						}}
+					>
+						{publicSpaces.map((space) => (
+							<SpaceItem
 								key={space.id}
-							>
-								<div
-									className={clsx(
-										"relative transition-colors border border-transparent overflow-visible duration-150 rounded-xl mb-1.5",
-										activeSpaceParams(space.id)
-											? "hover:bg-gray-3 cursor-default"
-											: "cursor-pointer",
-										isChild && !sidebarCollapsed ? "ml-4" : "",
-									)}
-									onDragOver={(e) => handleDragOver(e, space.id)}
-									onDragLeave={handleDragLeave}
-									onDrop={(e) => handleDrop(e, space.id)}
-								>
-									{activeSpaceParams(space.id) && (
-										<motion.div
-											layoutId="navlinks"
-											className={clsx(
-												"absolute rounded-xl bg-gray-3",
-												sidebarCollapsed
-													? "inset-0 right-0 left-0 mx-auto"
-													: "inset-0",
-											)}
-											style={{ willChange: "transform" }}
-											transition={{
-												layout: {
-													type: "tween",
-													duration: 0.1,
-												},
-											}}
-										/>
-									)}
-									<AnimatePresence>
-										{activeDropTarget === space.id && (
-											<motion.div
-												className="absolute inset-0 z-10 rounded-xl border transition-all duration-200 pointer-events-none border-blue-10 bg-gray-4"
-												initial={{ opacity: 0 }}
-												animate={{ opacity: 1 }}
-												exit={{ opacity: 0 }}
-												transition={{ duration: 0.2 }}
-											/>
-										)}
-									</AnimatePresence>
-									<Link
-										href={`/dashboard/spaces/${space.id}`}
-										className={clsx(
-											"flex relative z-10 items-center px-2 py-2 truncate rounded-xl transition-colors group",
-											sidebarCollapsed ? "justify-center" : "",
-											activeSpaceParams(space.id)
-												? "hover:bg-gray-3"
-												: "hover:bg-gray-2",
-											space.primary ? "h-10" : "h-fit",
-										)}
-									>
-										<SignedImageUrl
-											image={space.iconUrl}
-											name={space.name}
-											letterClass={clsx(
-												sidebarCollapsed ? "text-sm" : "text-[11px]",
-											)}
-											className={clsx(
-												"relative flex-shrink-0",
-												sidebarCollapsed ? "size-6" : "size-5",
-											)}
-										/>
-										{!sidebarCollapsed && (
-											<>
-												<span className="ml-2.5 text-sm truncate transition-colors text-gray-11 group-hover:text-gray-12">
-													{space.name}
-												</span>
-												{/* Hide delete button for 'All spaces' synthetic entry */}
-												{!space.primary && isOwner && (
-													<div
-														onClick={(e) => handleDeleteSpace(e, space)}
-														className={
-															"flex justify-center items-center ml-auto rounded-full opacity-0 transition-all group size-6 group-hover:opacity-100 hover:bg-gray-4"
-														}
-														aria-label={`Delete ${space.name} space`}
-													>
-														<FontAwesomeIcon
-															icon={faXmark}
-															className="size-3.5 text-gray-12"
-														/>
-													</div>
-												)}
-											</>
-										)}
-									</Link>
-								</div>
-							</Tooltip>
-						);
-					})}
+								space={space}
+								depth={space.depth}
+								isOwner={space.createdById === user?.id}
+								sidebarCollapsed={sidebarCollapsed}
+								activeSpaceParams={activeSpaceParams}
+								activeDropTarget={activeDropTarget}
+								handleDragOver={handleDragOver}
+								handleDragLeave={handleDragLeave}
+								handleDrop={handleDrop}
+								handleDeleteSpace={handleDeleteSpace}
+							/>
+						))}
+					</div>
 				</div>
-			</div>
+			)}
 
 			<SpaceToggleControl
 				showAllSpaces={showAllSpaces}
-				hasMoreSpaces={hasMoreSpaces}
+				hasMoreSpaces={hasMorePublic}
 				sidebarCollapsed={sidebarCollapsed}
-				hiddenSpacesCount={hiddenSpacesCount}
+				hiddenSpacesCount={hiddenPublicCount}
 				setShowAllSpaces={setShowAllSpaces}
 			/>
+
+			{/* PRIVATE SPACES SECTION */}
+			{privateSpaces.length > 0 && !sidebarCollapsed && (
+				<>
+					<div className="flex items-center mt-4 mb-2">
+						<span className="text-xs font-medium uppercase tracking-wider text-gray-9">
+							Private
+						</span>
+					</div>
+					<div className="overflow-hidden">
+						{privateSpaces.map((space) => (
+							<SpaceItem
+								key={space.id}
+								space={space}
+								depth={space.depth}
+								isOwner={space.createdById === user?.id}
+								sidebarCollapsed={sidebarCollapsed}
+								activeSpaceParams={activeSpaceParams}
+								activeDropTarget={activeDropTarget}
+								handleDragOver={handleDragOver}
+								handleDragLeave={handleDragLeave}
+								handleDrop={handleDrop}
+								handleDeleteSpace={handleDeleteSpace}
+							/>
+						))}
+					</div>
+				</>
+			)}
 
 			<ConfirmationDialog
 				open={confirmOpen}
@@ -380,6 +357,132 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 				}}
 			/>
 		</div>
+	);
+};
+
+// SpaceItem component for rendering individual spaces with depth-based indentation
+const SpaceItem = ({
+	space,
+	depth,
+	isOwner,
+	sidebarCollapsed,
+	activeSpaceParams,
+	activeDropTarget,
+	handleDragOver,
+	handleDragLeave,
+	handleDrop,
+	handleDeleteSpace,
+}: {
+	space: Spaces;
+	depth: number;
+	isOwner: boolean;
+	sidebarCollapsed: boolean;
+	activeSpaceParams: (spaceId: Space.SpaceIdOrOrganisationId) => boolean;
+	activeDropTarget: string | null;
+	handleDragOver: (e: React.DragEvent, spaceId: string) => void;
+	handleDragLeave: () => void;
+	handleDrop: (e: React.DragEvent, spaceId: Space.SpaceIdOrOrganisationId) => void;
+	handleDeleteSpace: (e: React.MouseEvent, space: Spaces) => void;
+}) => {
+	// Calculate indentation: 16px (ml-4) per depth level
+	const indentStyle = !sidebarCollapsed && depth > 0
+		? { marginLeft: `${depth * 16}px` }
+		: undefined;
+
+	return (
+		<Tooltip
+			position="right"
+			disable={!sidebarCollapsed}
+			content={space.name}
+		>
+			<div
+				className={clsx(
+					"relative transition-colors border border-transparent overflow-visible duration-150 rounded-xl mb-1.5",
+					activeSpaceParams(space.id)
+						? "hover:bg-gray-3 cursor-default"
+						: "cursor-pointer",
+				)}
+				style={indentStyle}
+				onDragOver={(e) => handleDragOver(e, space.id)}
+				onDragLeave={handleDragLeave}
+				onDrop={(e) => handleDrop(e, space.id)}
+			>
+				{activeSpaceParams(space.id) && (
+					<motion.div
+						layoutId="navlinks"
+						className={clsx(
+							"absolute rounded-xl bg-gray-3",
+							sidebarCollapsed
+								? "inset-0 right-0 left-0 mx-auto"
+								: "inset-0",
+						)}
+						style={{ willChange: "transform" }}
+						transition={{
+							layout: {
+								type: "tween",
+								duration: 0.1,
+							},
+						}}
+					/>
+				)}
+				<AnimatePresence>
+					{activeDropTarget === space.id && (
+						<motion.div
+							className="absolute inset-0 z-10 rounded-xl border transition-all duration-200 pointer-events-none border-blue-10 bg-gray-4"
+							initial={{ opacity: 0 }}
+							animate={{ opacity: 1 }}
+							exit={{ opacity: 0 }}
+							transition={{ duration: 0.2 }}
+						/>
+					)}
+				</AnimatePresence>
+				<Link
+					href={`/dashboard/spaces/${space.id}`}
+					className={clsx(
+						"flex relative z-10 items-center px-2 py-2 truncate rounded-xl transition-colors group",
+						sidebarCollapsed ? "justify-center" : "",
+						activeSpaceParams(space.id)
+							? "hover:bg-gray-3"
+							: "hover:bg-gray-2",
+						space.primary ? "h-10" : "h-fit",
+					)}
+				>
+					<SignedImageUrl
+						image={space.iconUrl}
+						name={space.name}
+						letterClass={clsx(
+							sidebarCollapsed ? "text-sm" : "text-[11px]",
+						)}
+						className={clsx(
+							"relative flex-shrink-0",
+							sidebarCollapsed ? "size-6" : "size-5",
+						)}
+					/>
+					{!sidebarCollapsed && (
+						<>
+							<span className="ml-2.5 text-sm truncate transition-colors text-gray-11 group-hover:text-gray-12">
+								{space.name}
+							</span>
+							{/* Hide delete button for 'All spaces' synthetic entry */}
+							{!space.primary && isOwner && (
+								<div
+									onClick={(e) => handleDeleteSpace(e, space)}
+									className={
+										"flex justify-center items-center ml-auto rounded-full opacity-0 transition-all group size-6 group-hover:opacity-100 hover:bg-gray-4"
+									}
+									aria-label={`Delete ${space.name} space`}
+								>
+									<FontAwesomeIcon
+										icon={faXmark}
+										className="size-3.5 text-gray-12"
+									/>
+								</div>
+							)}
+						</>
+					)}
+				</Link>
+			</div>
+		</Tooltip>
 	);
 };
 

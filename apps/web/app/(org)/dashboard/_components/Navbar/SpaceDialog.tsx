@@ -169,8 +169,12 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 	const [isUploading, setIsUploading] = useState(false);
 	const { activeOrganization, spacesData } = useDashboardContext();
 
-	// Filter out the current space from parent options (can't be its own parent)
-	const availableParentSpaces = spacesData?.filter(s => s.id !== space?.id && s.primary) || [];
+	// Filter out the current space and its children from parent options
+	// Allow any space without a parent (top-level) to be a potential parent
+	const availableParentSpaces = spacesData?.filter(s =>
+		s.id !== space?.id && // Can't be its own parent
+		!s.parentSpaceId // Only top-level spaces can be parents (including primary "All Wallester")
+	) || [];
 
 	const handleFileChange = (file: File | null) => {
 		if (file) {
