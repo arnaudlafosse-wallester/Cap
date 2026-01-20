@@ -347,22 +347,22 @@ export const videos = mysqlTable(
 		skipProcessing: boolean("skipProcessing").notNull().default(false),
 
 		// RAG ELIGIBILITY
-		ragStatus: varchar("ragStatus", {
+		ragStatus: varchar("rag_status", {
 			length: 10,
 			enum: ["eligible", "excluded", "pending"],
 		}).default("pending"),
-		ragStatusUpdatedAt: timestamp("ragStatusUpdatedAt"),
-		ragStatusUpdatedById: nanoIdNullable("ragStatusUpdatedById").$type<User.UserId>(),
+		ragStatusUpdatedAt: timestamp("rag_status_updated_at"),
+		ragStatusUpdatedById: nanoIdNullable("rag_status_updated_by_id").$type<User.UserId>(),
 
 		// RETENTION
-		keepPermanently: boolean("keepPermanently").notNull().default(false),
-		expiresAt: timestamp("expiresAt"),
+		keepPermanently: boolean("keep_permanently").notNull().default(false),
+		expiresAt: timestamp("expires_at"),
 
 		// AI CLASSIFICATION
-		aiSuggestedLabels: json("aiSuggestedLabels").$type<
+		aiSuggestedLabels: json("ai_suggested_labels").$type<
 			Array<{ labelName: string; confidence: number }>
 		>(),
-		aiClassifiedAt: timestamp("aiClassifiedAt"),
+		aiClassifiedAt: timestamp("ai_classified_at"),
 	},
 	(table) => [
 		index("owner_id_idx").on(table.ownerId),
@@ -819,13 +819,13 @@ export const videoLabels = mysqlTable(
 	"video_labels",
 	{
 		id: nanoId("id").notNull().primaryKey().$type<VideoLabelId>(),
-		organizationId: nanoId("organizationId")
+		organizationId: nanoId("organization_id")
 			.notNull()
 			.$type<Organisation.OrganisationId>(),
 
 		// Label info
 		name: varchar("name", { length: 100 }).notNull(),
-		displayName: varchar("displayName", { length: 100 }).notNull(),
+		displayName: varchar("display_name", { length: 100 }).notNull(),
 		description: varchar("description", { length: 500 }),
 		color: varchar("color", { length: 7 }).notNull().default("#6B7280"),
 		icon: varchar("icon", { length: 50 }),
@@ -839,21 +839,21 @@ export const videoLabels = mysqlTable(
 			.default("content_type"),
 
 		// Retention policy (NULL = permanent)
-		retentionDays: int("retentionDays"),
+		retentionDays: int("retention_days"),
 
 		// RAG eligibility default
-		ragDefault: varchar("ragDefault", {
+		ragDefault: varchar("rag_default", {
 			length: 10,
 			enum: ["eligible", "excluded", "pending"],
 		}).default("pending"),
 
 		// System flags
-		isSystem: boolean("isSystem").notNull().default(false),
-		isActive: boolean("isActive").notNull().default(true),
+		isSystem: boolean("is_system").notNull().default(false),
+		isActive: boolean("is_active").notNull().default(true),
 
 		// Timestamps
-		createdAt: timestamp("createdAt").notNull().defaultNow(),
-		updatedAt: timestamp("updatedAt").notNull().defaultNow().onUpdateNow(),
+		createdAt: timestamp("created_at").notNull().defaultNow(),
+		updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
 	},
 	(table) => ({
 		orgIdx: index("org_idx").on(table.organizationId),
@@ -869,16 +869,16 @@ export const videoLabelAssignments = mysqlTable(
 	"video_label_assignments",
 	{
 		id: nanoId("id").notNull().primaryKey(),
-		videoId: nanoId("videoId").notNull().$type<Video.VideoId>(),
-		labelId: nanoId("labelId").notNull().$type<VideoLabelId>(),
+		videoId: nanoId("video_id").notNull().$type<Video.VideoId>(),
+		labelId: nanoId("label_id").notNull().$type<VideoLabelId>(),
 
 		// Who assigned
-		assignedById: nanoId("assignedById").notNull().$type<User.UserId>(),
-		assignedAt: timestamp("assignedAt").notNull().defaultNow(),
+		assignedById: nanoId("assigned_by_id").notNull().$type<User.UserId>(),
+		assignedAt: timestamp("assigned_at").notNull().defaultNow(),
 
 		// AI suggestion tracking
-		isAiSuggested: boolean("isAiSuggested").notNull().default(false),
-		aiConfidence: float("aiConfidence"),
+		isAiSuggested: boolean("is_ai_suggested").notNull().default(false),
+		aiConfidence: float("ai_confidence"),
 	},
 	(table) => ({
 		videoIdx: index("video_idx").on(table.videoId),
@@ -927,10 +927,10 @@ export const videoViews = mysqlTable(
 	"video_views",
 	{
 		id: nanoId("id").notNull().primaryKey().$type<VideoViewId>(),
-		videoId: nanoId("videoId").notNull().$type<Video.VideoId>(),
-		orgId: nanoId("orgId").notNull().$type<Organisation.OrganisationId>(),
-		viewerId: nanoIdNullable("viewerId").$type<User.UserId>(), // null = anonymous
-		sessionId: varchar("sessionId", { length: 128 }).notNull(),
+		videoId: nanoId("video_id").notNull().$type<Video.VideoId>(),
+		orgId: nanoId("org_id").notNull().$type<Organisation.OrganisationId>(),
+		viewerId: nanoIdNullable("viewer_id").$type<User.UserId>(), // null = anonymous
+		sessionId: varchar("session_id", { length: 128 }).notNull(),
 
 		// Geo & Device (enriched at write time)
 		country: varchar("country", { length: 64 }),
@@ -940,7 +940,7 @@ export const videoViews = mysqlTable(
 		device: varchar("device", { length: 64 }),
 		os: varchar("os", { length: 64 }),
 
-		viewedAt: timestamp("viewedAt").notNull().defaultNow(),
+		viewedAt: timestamp("viewed_at").notNull().defaultNow(),
 	},
 	(table) => ({
 		videoIdIdx: index("video_id_idx").on(table.videoId),
