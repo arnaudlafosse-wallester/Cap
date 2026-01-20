@@ -39,11 +39,11 @@ export const EmptySharedCapState: React.FC<EmptySharedCapStateProps> = ({
 		(type === "organization" && onAddVideos);
 
 	return (
-		<div className="flex flex-col flex-1 justify-center items-center w-full h-full min-h-[60vh]">
-			<div className="mx-auto mb-8 w-full max-w-sm">
+		<div className="flex flex-col flex-1 justify-center items-center w-full h-full min-h-[calc(100vh-200px)]">
+			<div className="mx-auto mb-6 w-full max-w-sm">
 				<EmptyCap
 					key={`${theme}empty-shared-cap`}
-					className="max-w-[200px] w-full mx-auto md:max-w-[300px] h-[150px]"
+					className="max-w-[180px] w-full mx-auto md:max-w-[240px] h-[120px]"
 				/>
 			</div>
 			<div className="text-center">
@@ -54,7 +54,7 @@ export const EmptySharedCapState: React.FC<EmptySharedCapStateProps> = ({
 				</p>
 				<p className="mb-6 max-w-md text-md text-gray-10">
 					{type === "space"
-						? "Add videos directly here in this Folder, or add videos from the My Caps page."
+						? "Add videos directly here in this Folder, or add videos from My Recordings."
 						: `There are no Caps shared with ${organizationName} yet. Ask your team members to share their Caps with this ${type}.`}
 				</p>
 				<div className="flex flex-wrap gap-3 justify-center items-center">
