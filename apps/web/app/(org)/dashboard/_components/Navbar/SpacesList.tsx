@@ -261,21 +261,29 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 
 			{/* PUBLIC SPACES SECTION */}
 			{publicSpaces.length > 0 && (
-				<div className="overflow-hidden">
-					<div
-						className={clsx(
-							"transition-all duration-300",
-							showAllSpaces && !sidebarCollapsed
-								? "max-h-[calc(100vh-450px)] overflow-y-auto"
-								: "max-h-max overflow-hidden",
-						)}
-						style={{
-							scrollbarWidth: "none",
-							msOverflowStyle: "none",
-							WebkitOverflowScrolling: "touch",
-						}}
-					>
-						{publicSpaces.map((space) => (
+				<>
+					{!sidebarCollapsed && (
+						<div className="flex items-center mb-2">
+							<span className="text-xs font-medium uppercase tracking-wider text-gray-9">
+								Public
+							</span>
+						</div>
+					)}
+					<div className="overflow-hidden">
+						<div
+							className={clsx(
+								"transition-all duration-300",
+								showAllSpaces && !sidebarCollapsed
+									? "max-h-[calc(100vh-450px)] overflow-y-auto"
+									: "max-h-max overflow-hidden",
+							)}
+							style={{
+								scrollbarWidth: "none",
+								msOverflowStyle: "none",
+								WebkitOverflowScrolling: "touch",
+							}}
+						>
+							{publicSpaces.map((space) => (
 							<SpaceItem
 								key={space.id}
 								space={space}
@@ -288,10 +296,11 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 								handleDragLeave={handleDragLeave}
 								handleDrop={handleDrop}
 								handleDeleteSpace={handleDeleteSpace}
-							/>
-						))}
+								/>
+							))}
+						</div>
 					</div>
-				</div>
+				</>
 			)}
 
 			<SpaceToggleControl

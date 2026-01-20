@@ -242,8 +242,8 @@ export async function getDashboardData(user: typeof userSelectProps) {
 						id: activeOrgInfo.organization.id,
 						primary: true,
 						privacy: "Public",
-						name: `All ${activeOrgInfo.organization.name}`,
-						description: `View all content in ${activeOrgInfo.organization.name}`,
+						name: "Shared",
+						description: `Shared content visible to all ${activeOrgInfo.organization.name} members`,
 						organizationId: activeOrgInfo.organization.id,
 						iconUrl: iconUrl
 							? yield* imageUploads.resolveImageUrl(iconUrl)
