@@ -127,6 +127,8 @@ export function DashboardContexts({
 		Cookies.set("theme", newTheme, {
 			expires: 365,
 		});
+		// Apply theme class to body immediately
+		document.body.className = newTheme;
 	};
 	useEffect(() => {
 		if (Cookies.get("theme")) {
