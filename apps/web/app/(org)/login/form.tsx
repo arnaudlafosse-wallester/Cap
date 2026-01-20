@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, LogoBadge } from "@cap/ui";
+import { Button, Input } from "@cap/ui";
 import { Organisation } from "@cap/web-domain";
 import {
 	faArrowLeft,
@@ -22,8 +22,6 @@ import { trackEvent } from "@/app/utils/analytics";
 import { usePublicEnv } from "@/utils/public-env";
 
 const MotionInput = motion(Input);
-const MotionLogoBadge = motion(LogoBadge);
-const MotionLink = motion(Link);
 const MotionButton = motion(Button);
 
 export function LoginForm() {
@@ -160,9 +158,9 @@ export function LoginForm() {
 					Back
 				</motion.p>
 			</motion.div>
-			<MotionLink layout="position" className="flex mx-auto size-fit" href="/">
-				<MotionLogoBadge layout="position" className="size-12" />
-			</MotionLink>
+			<motion.div layout="position" className="flex mx-auto w-fit">
+				<Image src="/wallester-logo.svg" alt="Wallester" width={150} height={28} />
+			</motion.div>
 			<motion.div
 				layout="position"
 				className="flex flex-col justify-center items-center my-7 text-left"
@@ -172,14 +170,14 @@ export function LoginForm() {
 					layout="position"
 					className="text-2xl font-semibold text-gray-12"
 				>
-					Sign in to Cap
+					Sign in to Wallester Record
 				</motion.h1>
 				<motion.p
 					key="subtitle"
 					layout="position"
 					className="text-[16px] text-gray-10"
 				>
-					Beautiful screen recordings, owned by you.
+					Beautiful screen recordings
 				</motion.p>
 			</motion.div>
 			<motion.div layout="position" className="flex flex-col space-y-3">
@@ -322,29 +320,6 @@ export function LoginForm() {
 								)}
 							</motion.div>
 						</AnimatePresence>
-						<motion.p
-							layout="position"
-							className="pt-3 text-xs text-center text-gray-9"
-						>
-							By typing your email and clicking continue, you acknowledge that
-							you have both read and agree to Cap's{" "}
-							<Link
-								href="/terms"
-								target="_blank"
-								className="text-xs font-semibold text-gray-12 hover:text-blue-300"
-							>
-								Terms of Service
-							</Link>{" "}
-							and{" "}
-							<Link
-								href="/privacy"
-								target="_blank"
-								className="text-xs font-semibold text-gray-12 hover:text-blue-300"
-							>
-								Privacy Policy
-							</Link>
-							.
-						</motion.p>
 					</motion.div>
 				</Suspense>
 			</motion.div>
@@ -471,19 +446,6 @@ const NormalLogin = ({
 					Login with email
 				</MotionButton>
 			</motion.div>
-
-			<motion.p
-				layout="position"
-				className="mt-3 mb-2 text-xs text-center text-gray-9"
-			>
-				Don't have an account?{" "}
-				<Link
-					href="/signup"
-					className="text-xs font-semibold text-blue-9 hover:text-blue-8"
-				>
-					Sign up here
-				</Link>
-			</motion.p>
 
 			{/* SAML SSO option */}
 			{publicEnv.workosAuthAvailable && (
