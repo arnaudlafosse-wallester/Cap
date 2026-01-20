@@ -10,22 +10,14 @@ import {
 	Input,
 } from "@cap/ui";
 import type { Folder, Space } from "@cap/web-domain";
-import { faFolderPlus } from "@fortawesome/free-solid-svg-icons";
+import { faFolder, faFolderPlus } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { type RiveFile, useRiveFile } from "@rive-app/react-canvas";
 import clsx from "clsx";
 import { Option } from "effect";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useEffectMutation, useRpcClient } from "@/lib/EffectRuntime";
-import {
-	BlueFolder,
-	type FolderHandle,
-	NormalFolder,
-	RedFolder,
-	YellowFolder,
-} from "./Folders";
 
 interface Props {
 	open: boolean;
@@ -33,38 +25,33 @@ interface Props {
 	spaceId?: Space.SpaceIdOrOrganisationId;
 }
 
+// Simple static folder icons with colors
+const FolderIcon = ({ color }: { color: string }) => (
+	<div className="w-[50px] h-[50px] flex items-center justify-center">
+		<FontAwesomeIcon icon={faFolder} className="size-10" style={{ color }} />
+	</div>
+);
+
 const FolderOptions = [
 	{
 		value: "normal",
 		label: "Normal",
-		component: (
-			riveFile: RiveFile | undefined,
-			ref: React.Ref<FolderHandle>,
-		) => <NormalFolder riveFile={riveFile} ref={ref} />,
+		color: "#9CA3AF", // gray
 	},
 	{
 		value: "blue",
 		label: "Blue",
-		component: (
-			riveFile: RiveFile | undefined,
-			ref: React.Ref<FolderHandle>,
-		) => <BlueFolder riveFile={riveFile} ref={ref} />,
+		color: "#3B82F6", // blue
 	},
 	{
 		value: "red",
 		label: "Red",
-		component: (
-			riveFile: RiveFile | undefined,
-			ref: React.Ref<FolderHandle>,
-		) => <RedFolder riveFile={riveFile} ref={ref} />,
+		color: "#EF4444", // red
 	},
 	{
 		value: "yellow",
 		label: "Yellow",
-		component: (
-			riveFile: RiveFile | undefined,
-			ref: React.Ref<FolderHandle>,
-		) => <YellowFolder riveFile={riveFile} ref={ref} />,
+		color: "#F59E0B", // yellow/amber
 	},
 ] as const;
 
@@ -79,26 +66,9 @@ export const NewFolderDialog: React.FC<Props> = ({
 	const [folderName, setFolderName] = useState<string>("");
 	const router = useRouter();
 
-	const { riveFile } = useRiveFile({
-		src: "/rive/dashboard.riv",
-	});
-
 	useEffect(() => {
 		if (!open) setSelectedColor(null);
 	}, [open]);
-
-	const folderRefs = useRef(
-		FolderOptions.reduce(
-			(acc, opt) => {
-				acc[opt.value] = React.createRef<FolderHandle>();
-				return acc;
-			},
-			{} as Record<
-				(typeof FolderOptions)[number]["value"],
-				React.RefObject<FolderHandle | null>
-			>,
-		),
-	);
 
 	const rpc = useRpcClient();
 
@@ -147,7 +117,7 @@ export const NewFolderDialog: React.FC<Props> = ({
 											? "border-gray-12 bg-gray-3 hover:bg-gray-3 hover:border-gray-12"
 											: "border-gray-4 hover:bg-gray-3 hover:border-gray-5 bg-transparent",
 									)}
-									key={`rive-${option.value}`}
+									key={`folder-${option.value}`}
 									onClick={() => {
 										if (selectedColor === option.value) {
 											setSelectedColor(null);
@@ -155,23 +125,8 @@ export const NewFolderDialog: React.FC<Props> = ({
 										}
 										setSelectedColor(option.value);
 									}}
-									onMouseEnter={() => {
-										const folderRef = folderRefs.current[option.value]?.current;
-										if (!folderRef) return;
-										folderRef.stop();
-										folderRef.play("folder-open");
-									}}
-									onMouseLeave={() => {
-										const folderRef = folderRefs.current[option.value]?.current;
-										if (!folderRef) return;
-										folderRef.stop();
-										folderRef.play("folder-close");
-									}}
 								>
-									{option.component(
-										riveFile as RiveFile,
-										folderRefs.current[option.value],
-									)}
+									<FolderIcon color={option.color} />
 									<p className="text-xs text-gray-10">{option.label}</p>
 								</div>
 							);
