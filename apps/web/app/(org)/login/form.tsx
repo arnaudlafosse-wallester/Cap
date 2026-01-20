@@ -2,7 +2,6 @@
 
 import Cookies from "js-cookie";
 import { Moon, Sun, Loader2 } from "lucide-react";
-import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useEffect, useState } from "react";
@@ -90,12 +89,10 @@ export function LoginForm() {
 				<div className="login-card rounded-2xl shadow-xl p-8 text-center">
 					{/* Wallester Logo */}
 					<div className="mb-6 flex justify-center items-center gap-2">
-						<Image
+						<img
 							src="https://cdn.brandfetch.io/idid01rD7k/w/400/h/400/theme/dark/icon.png"
 							alt=""
-							width={40}
-							height={40}
-							className="rounded-full"
+							className="h-10 w-10 rounded-full"
 						/>
 						<span className="text-2xl font-bold text-gray-12">Wallester</span>
 					</div>
