@@ -286,21 +286,22 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 							<div className="flex items-center justify-between p-3 rounded-lg bg-gray-3">
 								<div className="space-y-0.5">
 									<Label htmlFor="privacy">
-									{field.value === "Private" ? "Private Folder" : "Public Folder"}
+									{field.value === "Public" ? "Shared Folder" : "Private Folder"}
 								</Label>
 									<CardDescription className="text-xs">
-										{field.value === "Private"
-											? "Only invited members can see this folder"
-											: "All organization members can see this folder"}
+										{field.value === "Public"
+											? "All organization members can see this folder"
+											: "Only invited members can see this folder"}
 									</CardDescription>
 								</div>
 								<FormControl>
 									<Switch
 										id="privacy"
-										checked={field.value === "Private"}
+										checked={field.value === "Public"}
 										onCheckedChange={(checked) =>
-											field.onChange(checked ? "Private" : "Public")
+											field.onChange(checked ? "Public" : "Private")
 										}
+										className="data-[state=checked]:bg-green-600"
 									/>
 								</FormControl>
 							</div>
