@@ -6,6 +6,7 @@ export * from "./components/Avatar";
 // UI
 export * from "./components/Button";
 export * from "./components/Card";
+export * from "./components/Checkbox";
 export * from "./components/Cmdk";
 export * from "./components/Dialog";
 export * from "./components/Dropdown";

@@ -1,5 +1,6 @@
 import {
 	Button,
+	Checkbox,
 	Dialog,
 	DialogContent,
 	DialogFooter,
@@ -13,15 +14,13 @@ import { faCopy, faShareNodes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useMutation } from "@tanstack/react-query";
 import clsx from "clsx";
-import { motion } from "framer-motion";
-import { Check, Globe2, Search } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Globe2, Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { shareCap } from "@/actions/caps/share";
 import { useDashboardContext } from "@/app/(org)/dashboard/Contexts";
 import type { Spaces } from "@/app/(org)/dashboard/dashboard-data";
 import { SignedImageUrl } from "@/components/SignedImageUrl";
-import { Tooltip } from "@/components/Tooltip";
 import { usePublicEnv } from "@/utils/public-env";
 
 interface SharingDialogProps {
@@ -147,8 +146,6 @@ export const SharingDialog: React.FC<SharingDialogProps> = ({
 		},
 	});
 
-	const sharedSpaceIds = new Set(sharedSpaces?.map((space) => space.id) || []);
-
 	useEffect(() => {
 		if (isOpen && sharedSpaces) {
 			const spaceIds = new Set(sharedSpaces.map((space) => space.id));
@@ -160,15 +157,6 @@ export const SharingDialog: React.FC<SharingDialogProps> = ({
 			setActiveTab(tabs[0]);
 		}
 	}, [isOpen, sharedSpaces, isPublic, tabs[0]]);
-
-	const isSpaceSharedViaOrganization = useCallback(
-		(spaceId: string) => {
-			const space = spacesData?.find((s) => s.id === spaceId);
-			if (!space) return false;
-			return sharedSpaceIds.has(space.id);
-		},
-		[spacesData, sharedSpaceIds],
-	);
 
 	const handleToggleSpace = (spaceId: string) => {
 		setSelectedSpaces((prev) => {
@@ -193,24 +181,91 @@ export const SharingDialog: React.FC<SharingDialogProps> = ({
 		}
 	};
 
-	// Separate organization entries from real spaces
-	const organizationEntries =
-		spacesData?.filter(
-			(space) => space.id === space.organizationId && space.primary === true,
-		) || [];
+	// Build hierarchical structure for SHARED and PRIVATE sections
+	type SpaceWithDepth = Spaces & { depth: number };
 
-	const realSpaces =
-		spacesData?.filter(
-			(space) => !(space.id === space.organizationId && space.primary === true),
-		) || [];
+	const { sharedHierarchy, privateHierarchy } = useMemo(() => {
+		if (!spacesData) return { sharedHierarchy: [], privateHierarchy: [] };
 
-	const allShareableItems = [...organizationEntries, ...realSpaces];
+		// Find primary space (root of SHARED)
+		const primarySpace = spacesData.find((s) => s.primary);
+		const sharedSpaceIds = new Set<string>();
+		if (primarySpace) {
+			sharedSpaceIds.add(primarySpace.id);
+		}
 
-	const filteredSpaces = searchTerm
-		? allShareableItems.filter((space) =>
+		// Build children map
+		const childrenByParent = new Map<string, Spaces[]>();
+		for (const space of spacesData) {
+			if (space.parentSpaceId) {
+				const children = childrenByParent.get(space.parentSpaceId) || [];
+				children.push(space);
+				childrenByParent.set(space.parentSpaceId, children);
+			}
+		}
+
+		// Build tree recursively
+		const buildTree = (
+			parentId: string,
+			depth: number,
+			isShared: boolean,
+		): SpaceWithDepth[] => {
+			const children = childrenByParent.get(parentId) || [];
+			const result: SpaceWithDepth[] = [];
+			for (const child of children.sort((a, b) =>
+				a.name.localeCompare(b.name),
+			)) {
+				result.push({ ...child, depth });
+				if (isShared) sharedSpaceIds.add(child.id);
+				result.push(...buildTree(child.id, depth + 1, isShared));
+			}
+			return result;
+		};
+
+		// SHARED: children of primary space
+		const sharedHierarchy: SpaceWithDepth[] = [];
+		if (primarySpace) {
+			const directChildren = childrenByParent.get(primarySpace.id) || [];
+			for (const child of directChildren.sort((a, b) =>
+				a.name.localeCompare(b.name),
+			)) {
+				sharedHierarchy.push({ ...child, depth: 0 });
+				sharedSpaceIds.add(child.id);
+				sharedHierarchy.push(...buildTree(child.id, 1, true));
+			}
+		}
+
+		// PRIVATE: top-level spaces not under SHARED
+		const privateHierarchy: SpaceWithDepth[] = [];
+		const topLevelPrivate = spacesData
+			.filter(
+				(s) => !s.primary && !s.parentSpaceId && !sharedSpaceIds.has(s.id),
+			)
+			.sort((a, b) => a.name.localeCompare(b.name));
+
+		for (const space of topLevelPrivate) {
+			privateHierarchy.push({ ...space, depth: 0 });
+			privateHierarchy.push(...buildTree(space.id, 1, false));
+		}
+
+		return { sharedHierarchy, privateHierarchy };
+	}, [spacesData]);
+
+	// Filter by search term
+	const filteredShared = searchTerm
+		? sharedHierarchy.filter((space) =>
 				space.name.toLowerCase().includes(searchTerm.toLowerCase()),
 			)
-		: allShareableItems;
+		: sharedHierarchy;
+
+	const filteredPrivate = searchTerm
+		? privateHierarchy.filter((space) =>
+				space.name.toLowerCase().includes(searchTerm.toLowerCase()),
+			)
+		: privateHierarchy;
+
+	const hasResults = filteredShared.length > 0 || filteredPrivate.length > 0;
+	const hasSpaces = sharedHierarchy.length > 0 || privateHierarchy.length > 0;
 
 	return (
 		<Dialog open={isOpen} onOpenChange={onClose}>
@@ -293,23 +348,53 @@ export const SharingDialog: React.FC<SharingDialogProps> = ({
 									size={20}
 								/>
 							</div>
-							<div className="grid overflow-y-auto grid-cols-4 gap-3 pt-2 max-h-60">
-								{filteredSpaces && filteredSpaces.length > 0 ? (
-									filteredSpaces.map((space) => (
-										<SpaceCard
-											key={space.id}
-											space={space}
-											selectedSpaces={selectedSpaces}
-											handleToggleSpace={handleToggleSpace}
-											isSharedViaOrganization={isSpaceSharedViaOrganization(
-												space.id,
-											)}
-										/>
-									))
+							<div className="overflow-y-auto pt-2 max-h-60 space-y-4">
+								{hasResults ? (
+									<>
+										{/* SHARED Section */}
+										{filteredShared.length > 0 && (
+											<div>
+												<p className="mb-2 text-xs font-medium uppercase text-gray-10">
+													Shared
+												</p>
+												<div className="space-y-0.5">
+													{filteredShared.map((space) => (
+														<SpaceCheckboxItem
+															key={space.id}
+															space={space}
+															depth={space.depth}
+															isSelected={selectedSpaces.has(space.id)}
+															onToggle={handleToggleSpace}
+														/>
+													))}
+												</div>
+											</div>
+										)}
+
+										{/* PRIVATE Section */}
+										{filteredPrivate.length > 0 && (
+											<div>
+												<p className="mb-2 text-xs font-medium uppercase text-gray-10">
+													Private
+												</p>
+												<div className="space-y-0.5">
+													{filteredPrivate.map((space) => (
+														<SpaceCheckboxItem
+															key={space.id}
+															space={space}
+															depth={space.depth}
+															isSelected={selectedSpaces.has(space.id)}
+															onToggle={handleToggleSpace}
+														/>
+													))}
+												</div>
+											</div>
+										)}
+									</>
 								) : (
-									<div className="flex col-span-5 gap-2 justify-center items-center text-sm">
-										<p className="text-gray-12">
-											{allShareableItems && allShareableItems.length > 0
+									<div className="flex justify-center items-center py-4 text-sm">
+										<p className="text-gray-10">
+											{hasSpaces
 												? "No spaces match your search"
 												: "No spaces available"}
 										</p>
@@ -371,72 +456,43 @@ export const SharingDialog: React.FC<SharingDialogProps> = ({
 	);
 };
 
-const SpaceCard = ({
+const SpaceCheckboxItem = ({
 	space,
-	selectedSpaces,
-	handleToggleSpace,
-	isSharedViaOrganization,
+	depth,
+	isSelected,
+	onToggle,
 }: {
 	space: {
 		id: string;
 		name: string;
 		iconUrl?: ImageUpload.ImageUrl | null;
-		organizationId: string;
 	};
-	selectedSpaces: Set<string>;
-	handleToggleSpace: (spaceId: string) => void;
-	isSharedViaOrganization?: boolean;
+	depth: number;
+	isSelected: boolean;
+	onToggle: (spaceId: string) => void;
 }) => {
-	const isSelected = selectedSpaces.has(space.id);
-
 	return (
-		<Tooltip
-			content={
-				isSharedViaOrganization
-					? `${space.name} (shared via organization)`
-					: space.name
-			}
+		<div
+			className={clsx(
+				"flex items-center gap-2 py-1.5 px-2 rounded-lg cursor-pointer transition-colors",
+				isSelected ? "bg-gray-3" : "hover:bg-gray-3",
+			)}
+			style={{ paddingLeft: `${8 + depth * 16}px` }}
+			onClick={() => onToggle(space.id)}
 		>
-			<div
-				className={clsx(
-					"flex items-center relative overflow-visible flex-col justify-center gap-2 border transition-colors bg-gray-2",
-					"duration-200 w-full p-2.5 rounded-xl cursor-pointer",
-					isSelected
-						? "bg-gray-3 border-green-500"
-						: "hover:bg-gray-3 hover:border-gray-5 border-gray-4",
-					isSharedViaOrganization && "ring-1 ring-inset ring-green-500/30",
-				)}
-				onClick={() => handleToggleSpace(space.id)}
-			>
-				<SignedImageUrl
-					image={space.iconUrl}
-					name={space.name}
-					letterClass="text-[11px]"
-					className="relative z-10 flex-shrink-0 size-5"
-				/>
-				<p className="max-w-full text-xs truncate transition-colors duration-200 text-gray-10">
-					{space.name}
-				</p>
-				<motion.div
-					key={space.id}
-					animate={{
-						scale: isSelected ? 1 : 0,
-					}}
-					initial={{
-						scale: isSelected ? 1 : 0,
-					}}
-					transition={{
-						type: isSelected ? "spring" : "tween",
-						stiffness: isSelected ? 300 : undefined,
-						damping: isSelected ? 20 : undefined,
-						duration: !isSelected ? 0.2 : undefined,
-					}}
-					className="flex absolute -top-2 -right-2 z-10 justify-center items-center bg-green-500 rounded-full bg-gray-4 size-4"
-				>
-					<Check className="text-white" size={10} />
-				</motion.div>
-			</div>
-		</Tooltip>
+			<Checkbox
+				checked={isSelected}
+				onCheckedChange={() => onToggle(space.id)}
+				className="flex-shrink-0"
+			/>
+			<SignedImageUrl
+				image={space.iconUrl}
+				name={space.name}
+				letterClass="text-[10px]"
+				className="relative flex-shrink-0 size-5"
+			/>
+			<span className="text-sm truncate text-gray-12">{space.name}</span>
+		</div>
 	);
 };
 

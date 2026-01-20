@@ -262,7 +262,11 @@ export const SharedCaps = ({
 									isLoadingAnalytics={analyticsQuery.isLoading}
 									analytics={analytics[cap.id] || 0}
 									organizationName={activeOrganization?.organization.name || ""}
-									spaceName={spaceData?.name || ""}
+									spaceName={spaceData?.name || organizationData?.name || ""}
+									spaceId={spaceData?.id}
+									organizationId={
+										spaceData?.organizationId || organizationData?.id
+									}
 									userId={currentUserId}
 									onDragStart={() =>
 										setIsDraggingCap({ isOwner, isDragging: true })
