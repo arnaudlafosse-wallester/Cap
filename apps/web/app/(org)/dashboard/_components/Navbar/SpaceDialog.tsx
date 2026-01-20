@@ -65,12 +65,12 @@ const SpaceDialog = ({
 					icon={<FontAwesomeIcon icon={faLayerGroup} />}
 					description={
 						edit
-							? "Edit your space details"
-							: "A new space for your team to collaborate"
+							? "Edit your folder details"
+							: "A new folder for your team to collaborate"
 					}
 				>
 					<DialogTitle className="text-lg text-gray-12">
-						{edit ? "Edit Space" : "Create New Space"}
+						{edit ? "Edit Folder" : "Create New Folder"}
 					</DialogTitle>
 				</DialogHeader>
 				<div className="p-5">
@@ -86,7 +86,7 @@ const SpaceDialog = ({
 				<DialogFooter>
 					{!spaceName.trim().length && (
 						<p className="text-xs text-gray-10 mr-auto ml-4">
-							Enter a space name to continue
+							Enter a folder name to continue
 						</p>
 					)}
 					<Button variant="gray" size="sm" onClick={onClose}>
@@ -229,16 +229,16 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 							formData.append("id", space.id);
 							const result = await updateSpace(formData);
 							if (!result.success) {
-								throw new Error(result.error || "Failed to update space");
+								throw new Error(result.error || "Failed to update folder");
 							}
-							toast.success("Space updated successfully");
+							toast.success("Folder updated successfully");
 							router.refresh();
 						} else {
 							const result = await createSpace(formData);
 							if (!result.success) {
-								throw new Error(result.error || "Failed to create space");
+								throw new Error(result.error || "Failed to create folder");
 							}
-							toast.success("Space created successfully");
+							toast.success("Folder created successfully");
 							router.refresh();
 						}
 
@@ -252,7 +252,7 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 						toast.error(
 							error?.message ||
 								error?.error ||
-								(edit ? "Failed to update space" : "Failed to create space"),
+								(edit ? "Failed to update folder" : "Failed to create folder"),
 						);
 					} finally {
 						props.setCreateLoading?.(false);
@@ -266,7 +266,7 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 						render={({ field }) => (
 							<FormControl>
 								<Input
-									placeholder="Space name"
+									placeholder="Folder name"
 									maxLength={25}
 									{...field}
 									onChange={(e) => {
@@ -286,12 +286,12 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 							<div className="flex items-center justify-between p-3 rounded-lg bg-gray-3">
 								<div className="space-y-0.5">
 									<Label htmlFor="privacy">
-									{field.value === "Private" ? "Private Space" : "Public Space"}
+									{field.value === "Private" ? "Private Folder" : "Public Folder"}
 								</Label>
 									<CardDescription className="text-xs">
 										{field.value === "Private"
-											? "Only invited members can see this space"
-											: "All organization members can see this space"}
+											? "Only invited members can see this folder"
+											: "All organization members can see this folder"}
 									</CardDescription>
 								</div>
 								<FormControl>
@@ -314,9 +314,9 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 							name="parentSpaceId"
 							render={({ field }) => (
 								<div className="space-y-1">
-									<Label htmlFor="parentSpace">Parent Space (optional)</Label>
+									<Label htmlFor="parentSpace">Parent Folder (optional)</Label>
 									<CardDescription className="text-xs">
-										Nest this space under another space
+										Nest this folder under another folder
 									</CardDescription>
 									<FormControl>
 										<select
@@ -344,7 +344,7 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 							<div className="space-y-1">
 								<Label htmlFor="members">Members</Label>
 								<CardDescription className="w-full max-w-[400px]">
-									Add team members to this space.
+									Add team members to this folder.
 								</CardDescription>
 							</div>
 							<FormField

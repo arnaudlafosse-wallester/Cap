@@ -329,7 +329,7 @@ export default function Header({
 								{filteredSpaces && filteredSpaces.length > 0 && (
 									<>
 										<div className="px-3 py-2 text-xs font-semibold text-gray-9 uppercase tracking-wider">
-											Spaces
+											Folders
 										</div>
 										{filteredSpaces.map((space) => {
 											return (

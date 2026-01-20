@@ -68,17 +68,17 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 		try {
 			const result = await deleteSpace(pendingDeleteSpace.id);
 			if (result.success) {
-				toast.success("Space deleted successfully");
+				toast.success("Folder deleted successfully");
 				router.refresh();
 				if (params.spaceId === pendingDeleteSpace.id) {
 					router.push("/dashboard");
 				}
 			} else {
-				toast.error(result.error || "Failed to delete space");
+				toast.error(result.error || "Failed to delete folder");
 			}
 		} catch (error) {
 			console.error("Error deleting space:", error);
-			toast.error("Failed to delete space");
+			toast.error("Failed to delete folder");
 		} finally {
 			setRemoving(false);
 			setConfirmOpen(false);
@@ -205,7 +205,7 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 
 			if (result.success) {
 				const space = spacesData.find((s) => s.id === spaceId);
-				toast.success(`Shared "${cap.name}" to ${space?.name || "space"}`);
+				toast.success(`Shared "${cap.name}" to ${space?.name || "folder"}`);
 				router.refresh();
 			} else {
 				toast.error(result.error || "Failed to share cap");
@@ -233,9 +233,9 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 						sidebarCollapsed ? "hidden" : "flex",
 					)}
 				>
-					Spaces
+					Folders
 				</h2>
-				<Tooltip position="right" content="Create space">
+				<Tooltip position="right" content="Create folder">
 					<Button
 						className={clsx(
 							"p-0 min-w-[unset] hover:bg-gray-3",
@@ -258,7 +258,7 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 			</div>
 
 			<Tooltip
-				content="Browse spaces"
+				content="Browse folders"
 				disable={sidebarCollapsed === false}
 				position="right"
 			>
@@ -291,7 +291,7 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 							sidebarCollapsed ? "hidden" : "ml-2.5",
 						)}
 					>
-						Browse spaces
+						Browse folders
 					</p>
 				</Link>
 			</Tooltip>
@@ -389,10 +389,10 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 			<ConfirmationDialog
 				open={confirmOpen}
 				icon={<FontAwesomeIcon icon={faLayerGroup} />}
-				title="Delete space"
+				title="Delete folder"
 				description={
 					pendingDeleteSpace
-						? `Are you sure you want to delete the space "${pendingDeleteSpace.name}"? This action cannot be undone.`
+						? `Are you sure you want to delete the folder "${pendingDeleteSpace.name}"? This action cannot be undone.`
 						: ""
 				}
 				confirmLabel={removing ? "Deleting..." : "Delete"}
@@ -587,7 +587,7 @@ const SpaceItem = ({
 										className={
 											"flex justify-center items-center ml-auto rounded-full opacity-0 transition-all group size-6 group-hover:opacity-100 hover:bg-gray-4"
 										}
-										aria-label={`Delete ${space.name} space`}
+										aria-label={`Delete ${space.name} folder`}
 									>
 										<FontAwesomeIcon
 											icon={faXmark}

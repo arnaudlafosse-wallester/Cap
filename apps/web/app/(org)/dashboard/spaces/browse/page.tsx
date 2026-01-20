@@ -151,17 +151,17 @@ export default function BrowseSpacesPage() {
 		try {
 			const result = await deleteSpace(pendingDeleteSpace.id);
 			if (result.success) {
-				toast.success("Space deleted successfully");
+				toast.success("Folder deleted successfully");
 				router.refresh();
 				if (params.spaceId === pendingDeleteSpace.id) {
 					router.push("/dashboard");
 				}
 			} else {
-				toast.error(result.error || "Failed to delete space");
+				toast.error(result.error || "Failed to delete folder");
 			}
 		} catch (error) {
 			console.error("Error deleting space:", error);
-			toast.error("Failed to delete space");
+			toast.error("Failed to delete folder");
 		} finally {
 			setRemoving(false);
 			setConfirmOpen(false);
@@ -179,7 +179,7 @@ export default function BrowseSpacesPage() {
 						variant="dark"
 					>
 						<FontAwesomeIcon className="size-3" icon={faPlus} />
-						Create Space
+						Create Folder
 					</Button>
 					{/* Type filter toggles */}
 					<div className="flex gap-4 items-center ml-4">
@@ -207,7 +207,7 @@ export default function BrowseSpacesPage() {
 					</div>
 					<Input
 						type="text"
-						placeholder="Search spaces..."
+						placeholder="Search folders..."
 						className="flex-1 pr-3 pl-8 w-full min-w-full text-sm placeholder-gray-8"
 						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
@@ -237,7 +237,7 @@ export default function BrowseSpacesPage() {
 						{spacesData && filteredSpaces && filteredSpaces.length === 0 && (
 							<tr>
 								<td colSpan={6} className="px-6 py-6 text-center text-gray-8">
-									No spaces found.
+									No folders found.
 								</td>
 							</tr>
 						)}
@@ -365,11 +365,11 @@ export default function BrowseSpacesPage() {
 			<ConfirmationDialog
 				open={confirmOpen}
 				icon={<FontAwesomeIcon icon={faLayerGroup} />}
-				title="Delete space"
+				title="Delete folder"
 				description={
 					pendingDeleteSpace
-						? `Are you sure you want to delete the space "${pendingDeleteSpace?.name || "selected"}"? This action cannot be undone.`
-						: "Are you sure you want to delete this space? This action cannot be undone."
+						? `Are you sure you want to delete the folder "${pendingDeleteSpace?.name || "selected"}"? This action cannot be undone.`
+						: "Are you sure you want to delete this folder? This action cannot be undone."
 				}
 				confirmLabel={removing ? "Deleting..." : "Delete"}
 				cancelLabel="Cancel"

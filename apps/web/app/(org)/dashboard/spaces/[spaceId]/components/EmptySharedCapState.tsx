@@ -47,12 +47,12 @@ export const EmptySharedCapState: React.FC<EmptySharedCapStateProps> = ({
 			<div className="text-center pb-[30px]">
 				<p className="mb-3 text-xl font-semibold text-gray-12">
 					{type === "space"
-						? "Start sharing videos to this Space"
+						? "Start sharing videos to this Folder"
 						: "No shared Caps yet!"}
 				</p>
 				<p className="mb-6 max-w-md text-md text-gray-10">
 					{type === "space"
-						? "Add videos directly here in this Space, or add videos from the My Caps page."
+						? "Add videos directly here in this Folder, or add videos from the My Caps page."
 						: `There are no Caps shared with ${organizationName} yet. Ask your team members to share their Caps with this ${type}.`}
 				</p>
 				{showAddButton && (
@@ -63,7 +63,7 @@ export const EmptySharedCapState: React.FC<EmptySharedCapStateProps> = ({
 						className="flex gap-2 items-center mx-auto"
 					>
 						<FontAwesomeIcon icon={faPlus} className="size-3.5" />
-						Add videos to {type === "space" ? "Space" : "Organization"}
+						Add videos to {type === "space" ? "Folder" : "Organization"}
 					</Button>
 				)}
 			</div>

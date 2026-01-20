@@ -92,7 +92,7 @@ export const SharingDialog: React.FC<SharingDialogProps> = ({
 
 			const getSpaceName = (id: string) => {
 				const space = spacesData?.find((space) => space.id === id);
-				return space?.name || `Space ${id}`;
+				return space?.name || `Folder ${id}`;
 			};
 
 			if (
@@ -122,13 +122,13 @@ export const SharingDialog: React.FC<SharingDialogProps> = ({
 				removedSpaceIds.length === 0 &&
 				!publicChanged
 			) {
-				toast.success(`Shared to ${addedSpaceIds.length} spaces`);
+				toast.success(`Shared to ${addedSpaceIds.length} folders`);
 			} else if (
 				removedSpaceIds.length > 0 &&
 				addedSpaceIds.length === 0 &&
 				!publicChanged
 			) {
-				toast.success(`Unshared from ${removedSpaceIds.length} spaces`);
+				toast.success(`Unshared from ${removedSpaceIds.length} folders`);
 			} else if (
 				addedSpaceIds.length > 0 ||
 				removedSpaceIds.length > 0 ||
@@ -326,7 +326,7 @@ export const SharingDialog: React.FC<SharingDialogProps> = ({
 											<p className="text-xs text-gray-10">
 												{publicToggle
 													? "Anyone with the link can view (no login required)"
-													: "Only space members can view (login required)"}
+													: "Only folder members can view (login required)"}
 											</p>
 										</div>
 									</div>
@@ -344,7 +344,7 @@ export const SharingDialog: React.FC<SharingDialogProps> = ({
 							<div className="relative mb-3">
 								<Input
 									type="text"
-									placeholder="Search and add to spaces..."
+									placeholder="Search and add to folders..."
 									value={searchTerm}
 									className="pr-8"
 									onChange={(e) => setSearchTerm(e.target.value)}
@@ -401,8 +401,8 @@ export const SharingDialog: React.FC<SharingDialogProps> = ({
 									<div className="flex justify-center items-center py-4 text-sm">
 										<p className="text-gray-10">
 											{hasSpaces
-												? "No spaces match your search"
-												: "No spaces available"}
+												? "No folders match your search"
+												: "No folders available"}
 										</p>
 									</div>
 								)}

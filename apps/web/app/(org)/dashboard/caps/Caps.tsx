@@ -321,7 +321,7 @@ export const Caps = ({
 								icon={faInfoCircle}
 							/>
 							<p className="text-white">
-								Drag to a space to share or folder to move
+								Drag to a folder to share or move
 							</p>
 						</div>
 					</div>
