@@ -9,9 +9,5 @@ export default async function LoginPage() {
 	if (session) {
 		redirect("/dashboard");
 	}
-	return (
-		<div className="flex relative justify-center items-center w-full h-screen bg-gray-2">
-			<LoginForm />
-		</div>
-	);
+	return <LoginForm />;
 }

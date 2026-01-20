@@ -910,3 +910,28 @@ footer a {
 		@apply bg-background text-foreground;
 	}
 }
+
+/* Wallester Login Page Styles */
+:root {
+	--login-gradient-center: #f0fdf4;
+	--login-gradient-edge: #dcfce7;
+}
+
+.dark {
+	--login-gradient-center: #064e3b;
+	--login-gradient-edge: #022c22;
+}
+
+.login-gradient {
+	background: radial-gradient(ellipse at center, var(--login-gradient-center) 0%, var(--login-gradient-edge) 100%);
+}
+
+.login-card {
+	background-color: var(--gray-1);
+	border: 1px solid var(--gray-6);
+}
+
+.dark .login-card {
+	background-color: #131314;
+	border-color: #3c3d3f;
+}

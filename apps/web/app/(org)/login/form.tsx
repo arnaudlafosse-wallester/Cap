@@ -1,375 +1,136 @@
 "use client";
 
-import { Button, Input } from "@cap/ui";
-import { Organisation } from "@cap/web-domain";
-import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { AnimatePresence, motion } from "framer-motion";
 import Cookies from "js-cookie";
+import { Moon, Sun, Loader2 } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { Suspense, useEffect, useState } from "react";
-import { toast } from "sonner";
-import { getOrganizationSSOData } from "@/actions/organization/get-organization-sso-data";
+import { useEffect, useState } from "react";
 import { trackEvent } from "@/app/utils/analytics";
 
-const MotionInput = motion(Input);
-const MotionButton = motion(Button);
+// Google icon with colors
+function GoogleIcon({ className }: { className?: string }) {
+	return (
+		<svg className={className} viewBox="0 0 24 24">
+			<path
+				fill="#4285F4"
+				d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+			/>
+			<path
+				fill="#34A853"
+				d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+			/>
+			<path
+				fill="#FBBC05"
+				d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+			/>
+			<path
+				fill="#EA4335"
+				d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+			/>
+		</svg>
+	);
+}
 
 export function LoginForm() {
 	const searchParams = useSearchParams();
-	const router = useRouter();
 	const next = searchParams?.get("next");
-	const [email, setEmail] = useState("");
-	const [loading, setLoading] = useState(false);
-	const [emailSent, setEmailSent] = useState(false);
-	const [oauthError, setOauthError] = useState(false);
-	const [showOrgInput, setShowOrgInput] = useState(false);
-	const [organizationId, setOrganizationId] = useState("");
-	const [organizationName, setOrganizationName] = useState<string | null>(null);
-	const [lastEmailSentTime, setLastEmailSentTime] = useState<number | null>(
-		null,
-	);
-	const theme = Cookies.get("theme") || "light";
+	const [isLoading, setIsLoading] = useState(false);
+	const [isDark, setIsDark] = useState(false);
 
+	// Initialize theme from cookie or system preference
 	useEffect(() => {
-		theme === "dark"
-			? (document.body.className = "dark")
-			: (document.body.className = "light");
-		//remove the dark mode when we leave the dashboard
+		const savedTheme = Cookies.get("theme");
+		if (savedTheme) {
+			setIsDark(savedTheme === "dark");
+			document.body.className = savedTheme;
+		} else {
+			const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+			setIsDark(prefersDark);
+			document.body.className = prefersDark ? "dark" : "light";
+		}
+
 		return () => {
 			document.body.className = "light";
 		};
-	}, [theme]);
+	}, []);
 
-	useEffect(() => {
-		const error = searchParams?.get("error");
-		const errorDesc = searchParams?.get("error_description");
-
-		const handleErrors = () => {
-			if (error === "OAuthAccountNotLinked" && !errorDesc) {
-				setOauthError(true);
-				return toast.error(
-					"This email is already associated with a different sign-in method",
-				);
-			} else if (
-				error === "profile_not_allowed_outside_organization" &&
-				!errorDesc
-			) {
-				return toast.error(
-					"Your email domain is not authorized for SSO access. Please use your work email or contact your administrator.",
-				);
-			} else if (error && errorDesc) {
-				return toast.error(errorDesc);
-			}
-		};
-		handleErrors();
-	}, [searchParams]);
-
-	useEffect(() => {
-		const pendingPriceId = localStorage.getItem("pendingPriceId");
-		const pendingQuantity = localStorage.getItem("pendingQuantity") ?? "1";
-		if (emailSent && pendingPriceId) {
-			localStorage.removeItem("pendingPriceId");
-			localStorage.removeItem("pendingQuantity");
-
-			// Wait a bit to ensure the user is created
-			setTimeout(async () => {
-				const response = await fetch(`/api/settings/billing/subscribe`, {
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({
-						priceId: pendingPriceId,
-						quantity: parseInt(pendingQuantity, 10),
-					}),
-				});
-				const data = await response.json();
-
-				if (data.url) {
-					window.location.href = data.url;
-				}
-			}, 2000);
-		}
-	}, [emailSent]);
+	const toggleTheme = () => {
+		const newTheme = isDark ? "light" : "dark";
+		setIsDark(!isDark);
+		document.body.className = newTheme;
+		Cookies.set("theme", newTheme, { expires: 365 });
+	};
 
 	const handleGoogleSignIn = () => {
+		setIsLoading(true);
 		trackEvent("auth_started", { method: "google", is_signup: true });
 		signIn("google", {
 			...(next && next.length > 0 ? { callbackUrl: next } : {}),
 		});
 	};
 
-	const handleOrganizationLookup = async (e: React.FormEvent) => {
-		e.preventDefault();
-		if (!organizationId) {
-			toast.error("Please enter an organization ID");
-			return;
-		}
-
-		try {
-			const data = await getOrganizationSSOData(
-				Organisation.OrganisationId.make(organizationId),
-			);
-			setOrganizationName(data.name);
-
-			signIn("workos", undefined, {
-				organization: data.organizationId,
-				connection: data.connectionId,
-			});
-		} catch (error) {
-			console.error("Lookup Error:", error);
-			toast.error("Organization not found or SSO not configured");
-		}
-	};
-
 	return (
-		<motion.div
-			layout
-			transition={{
-				layout: { duration: 0.3, ease: "easeInOut" },
-				height: { duration: 0.3, ease: "easeInOut" },
-			}}
-			className="overflow-hidden relative w-[calc(100%-5%)] p-[28px] max-w-[432px] bg-gray-3 border border-gray-5 rounded-2xl"
-		>
-			<motion.div
-				layout="position"
-				key="back-button"
-				initial={{ opacity: 0, display: "none" }}
-				animate={{
-					opacity: showOrgInput ? 1 : 0,
-					display: showOrgInput ? "flex" : "none",
-					transition: { duration: 0.1, delay: 0.2 },
-				}}
-				onClick={() => setShowOrgInput(false)}
-				className="absolute overflow-hidden top-5 rounded-full left-5 z-20 hover:bg-gray-1 gap-2 items-center py-1.5 px-3 text-gray-12 bg-transparent border border-gray-4 transition-colors duration-300 cursor-pointer"
+		<div className="min-h-screen w-full login-gradient flex items-center justify-center relative">
+			{/* Dark mode toggle - bottom left */}
+			<button
+				onClick={toggleTheme}
+				className="absolute bottom-6 left-6 p-2 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+				title={isDark ? "Switch to light mode" : "Switch to dark mode"}
 			>
-				<FontAwesomeIcon className="w-2" icon={faArrowLeft} />
-				<motion.p layout="position" className="text-xs text-inherit">
-					Back
-				</motion.p>
-			</motion.div>
-			<motion.div layout="position" className="flex mx-auto w-fit">
-				<Image src="/wallester-logo.svg" alt="Wallester" width={150} height={28} />
-			</motion.div>
-			<motion.div
-				layout="position"
-				className="flex flex-col justify-center items-center my-7 text-left"
-			>
-				<motion.h1
-					key="title"
-					layout="position"
-					className="text-2xl font-semibold text-gray-12"
-				>
-					Sign in to Wallester Record
-				</motion.h1>
-				<motion.p
-					key="subtitle"
-					layout="position"
-					className="text-[16px] text-gray-10"
-				>
-					Beautiful screen recordings
-				</motion.p>
-			</motion.div>
-			<motion.div layout="position" className="flex flex-col space-y-3">
-				<Suspense
-					fallback={
-						<>
-							<Button disabled={true} variant="primary" />
-							<Button disabled={true} variant="destructive" />
-							<div className="mx-auto w-3/4 h-5 rounded-lg bg-gray-1" />
-						</>
-					}
-				>
-					<motion.div layout className="flex flex-col space-y-3">
-						<AnimatePresence mode="wait" initial={false}>
-							<motion.div
-								key={showOrgInput ? "sso-wrapper" : "email-wrapper"}
-								layout
-								initial={{ height: 0, opacity: 0 }}
-								animate={{ height: "auto", opacity: 1 }}
-								exit={{ height: 0, opacity: 0 }}
-								transition={{
-									duration: 0.25,
-									ease: "easeInOut",
-									opacity: { delay: 0.05 },
-								}}
-								className="px-1"
-							>
-								{showOrgInput ? (
-									<motion.div
-										key="sso"
-										layout
-										className="min-w-fit"
-										initial={{ opacity: 0, y: 10 }}
-										animate={{ opacity: 1, y: 0, transition: { delay: 0.1 } }}
-										exit={{ opacity: 0, y: -10, transition: { duration: 0.1 } }}
-										transition={{ duration: 0.2, ease: "easeInOut" }}
-									>
-										<LoginWithSSO
-											handleOrganizationLookup={handleOrganizationLookup}
-											organizationId={organizationId}
-											setOrganizationId={setOrganizationId}
-											organizationName={organizationName}
-										/>
-									</motion.div>
-								) : (
-									<motion.form
-										key="email"
-										layout
-										initial={{ opacity: 0, y: 10 }}
-										animate={{
-											opacity: 1,
-											y: 0,
-											transition: { duration: 0.1 },
-										}}
-										exit={{
-											opacity: 0,
-											y: -10,
-											transition: { duration: 0.15 },
-										}}
-										transition={{
-											duration: 0.2,
-											ease: "easeInOut",
-											opacity: { delay: 0.05 },
-										}}
-										onSubmit={async (e) => {
-											e.preventDefault();
-											if (!email) return;
+				{isDark ? (
+					<Sun className="w-5 h-5 text-gray-12" />
+				) : (
+					<Moon className="w-5 h-5 text-gray-12" />
+				)}
+			</button>
 
-											// Check if we're rate limited on the client side
-											if (lastEmailSentTime) {
-												const timeSinceLastRequest =
-													Date.now() - lastEmailSentTime;
-												const waitTime = 30000; // 30 seconds
-												if (timeSinceLastRequest < waitTime) {
-													const remainingSeconds = Math.ceil(
-														(waitTime - timeSinceLastRequest) / 1000,
-													);
-													toast.error(
-														`Please wait ${remainingSeconds} seconds before requesting a new code`,
-													);
-													return;
-												}
-											}
+			{/* Login card - centered */}
+			<div className="w-full max-w-md mx-4">
+				<div className="login-card rounded-2xl shadow-xl p-8 text-center">
+					{/* Wallester Logo */}
+					<div className="mb-6 flex justify-center items-center gap-2">
+						<Image
+							src="https://cdn.brandfetch.io/idid01rD7k/w/400/h/400/theme/dark/icon.png"
+							alt=""
+							width={40}
+							height={40}
+							className="rounded-full"
+						/>
+						<span className="text-2xl font-bold text-gray-12">Wallester</span>
+					</div>
 
-											setLoading(true);
-											trackEvent("auth_started", {
-												method: "email",
-												is_signup: !oauthError,
-											});
-											signIn("email", {
-												email,
-												redirect: false,
-												...(next && next.length > 0
-													? { callbackUrl: next }
-													: {}),
-											})
-												.then((res) => {
-													setLoading(false);
+					{/* Title */}
+					<h1 className="text-2xl font-semibold text-gray-12 mb-2">
+						Welcome back
+					</h1>
+					<p className="text-gray-10 mb-6">
+						Beautiful screen recordings
+					</p>
 
-													if (res?.ok && !res?.error) {
-														setEmailSent(true);
-														setLastEmailSentTime(Date.now());
-														trackEvent("auth_email_sent", {
-															email_domain: email.split("@")[1],
-														});
-														const params = new URLSearchParams({
-															email,
-															...(next && { next }),
-															lastSent: Date.now().toString(),
-														});
-														router.push(`/verify-otp?${params.toString()}`);
-													} else {
-														// NextAuth always returns "EmailSignin" for all email provider errors
-														// Since we already check rate limiting on the client side before sending,
-														// if we get an error here, it's likely rate limiting from the server
-														toast.error(
-															"Please wait 30 seconds before requesting a new code",
-														);
-													}
-												})
-												.catch((_error) => {
-													setEmailSent(false);
-													setLoading(false);
-													// Catch block is rarely triggered with NextAuth
-													toast.error("Error sending email - try again?");
-												});
-										}}
-										className="flex flex-col space-y-3"
-									>
-										<NormalLogin
-											handleGoogleSignIn={handleGoogleSignIn}
-										/>
-									</motion.form>
-								)}
-							</motion.div>
-						</AnimatePresence>
-					</motion.div>
-				</Suspense>
-			</motion.div>
-		</motion.div>
+					{/* Login button */}
+					<button
+						onClick={handleGoogleSignIn}
+						disabled={isLoading}
+						className="w-full flex items-center justify-center gap-3 px-6 py-3.5 bg-transparent border border-gray-6 rounded-xl text-gray-12 font-medium hover:bg-gray-3 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+					>
+						{isLoading ? (
+							<Loader2 className="w-5 h-5 animate-spin" />
+						) : (
+							<>
+								<GoogleIcon className="w-5 h-5" />
+								Sign in with Google
+							</>
+						)}
+					</button>
+
+					{/* Divider */}
+					<div className="my-6 border-t border-gray-6" />
+
+					{/* Footer */}
+					<p className="text-sm text-gray-9">Powered by Wallester</p>
+				</div>
+			</div>
+		</div>
 	);
 }
-
-const LoginWithSSO = ({
-	handleOrganizationLookup,
-	organizationId,
-	setOrganizationId,
-	organizationName,
-}: {
-	handleOrganizationLookup: (e: React.FormEvent) => void;
-	organizationId: string;
-	setOrganizationId: (organizationId: string) => void;
-	organizationName: string | null;
-}) => {
-	return (
-		<motion.form
-			layout
-			onSubmit={handleOrganizationLookup}
-			className="relative space-y-2"
-		>
-			<MotionInput
-				id="organizationId"
-				placeholder="Enter your Organization ID..."
-				value={organizationId}
-				onChange={(e) => setOrganizationId(e.target.value)}
-				className="w-full max-w-full"
-			/>
-			{organizationName && (
-				<p className="text-sm text-gray-1">Signing in to: {organizationName}</p>
-			)}
-			<div>
-				<Button type="submit" variant="dark" className="w-full max-w-full">
-					Continue with SSO
-				</Button>
-			</div>
-		</motion.form>
-	);
-};
-
-const NormalLogin = ({
-	handleGoogleSignIn,
-}: {
-	handleGoogleSignIn: () => void;
-}) => {
-	return (
-		<motion.div>
-			{/* Google Sign-in - only option for Wallester */}
-			<motion.div layout className="flex flex-col space-y-3">
-				<MotionButton
-					variant="dark"
-					type="button"
-					className="flex gap-2 justify-center items-center w-full text-sm"
-					onClick={handleGoogleSignIn}
-				>
-					<Image src="/google.svg" alt="Google" width={18} height={18} />
-					Sign in with Google
-				</MotionButton>
-			</motion.div>
-		</motion.div>
-	);
-};
