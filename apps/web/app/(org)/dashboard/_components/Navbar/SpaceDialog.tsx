@@ -41,6 +41,7 @@ interface SpaceDialogProps {
 		members: string[];
 		iconUrl?: ImageUpload.ImageUrl;
 		privacy?: "Public" | "Private";
+		parentSpaceId?: string | null;
 	} | null;
 	onSpaceUpdated?: () => void;
 }
@@ -122,6 +123,7 @@ export interface NewSpaceFormProps {
 		members: string[];
 		iconUrl?: ImageUpload.ImageUrl;
 		privacy?: "Public" | "Private";
+		parentSpaceId?: string | null;
 	} | null;
 }
 
@@ -132,6 +134,7 @@ const formSchema = z.object({
 		.max(25, "Space name must be at most 25 characters"),
 	members: z.array(z.string()).optional(),
 	privacy: z.enum(["Public", "Private"]).default("Private"),
+	parentSpaceId: z.string().nullable().optional(),
 });
 
 export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
@@ -144,6 +147,7 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 			name: space?.name || "",
 			members: space?.members || [],
 			privacy: space?.privacy || "Private",
+			parentSpaceId: space?.parentSpaceId || null,
 		},
 		mode: "onChange",
 	});
@@ -154,15 +158,19 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 				name: space.name,
 				members: space.members,
 				privacy: space.privacy || "Private",
+				parentSpaceId: space.parentSpaceId || null,
 			});
 		} else {
-			form.reset({ name: "", members: [], privacy: "Private" });
+			form.reset({ name: "", members: [], privacy: "Private", parentSpaceId: null });
 		}
 	}, [space, form]);
 
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
 	const [isUploading, setIsUploading] = useState(false);
-	const { activeOrganization } = useDashboardContext();
+	const { activeOrganization, spacesData } = useDashboardContext();
+
+	// Filter out the current space from parent options (can't be its own parent)
+	const availableParentSpaces = spacesData?.filter(s => s.id !== space?.id && s.primary) || [];
 
 	const handleFileChange = (file: File | null) => {
 		if (file) {
@@ -195,6 +203,9 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 						const formData = new FormData();
 						formData.append("name", values.name);
 						formData.append("privacy", values.privacy);
+						if (values.parentSpaceId) {
+							formData.append("parentSpaceId", values.parentSpaceId);
+						}
 
 						if (selectedFile) {
 							formData.append("icon", selectedFile);
@@ -291,6 +302,37 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 							</div>
 						)}
 					/>
+
+					{/* Parent Space Selector */}
+					{availableParentSpaces.length > 0 && (
+						<FormField
+							control={form.control}
+							name="parentSpaceId"
+							render={({ field }) => (
+								<div className="space-y-1">
+									<Label htmlFor="parentSpace">Parent Space (optional)</Label>
+									<CardDescription className="text-xs">
+										Nest this space under another space
+									</CardDescription>
+									<FormControl>
+										<select
+											id="parentSpace"
+											className="w-full p-2 rounded-lg border border-gray-6 bg-gray-2 text-gray-12 text-sm"
+											value={field.value || ""}
+											onChange={(e) => field.onChange(e.target.value || null)}
+										>
+											<option value="">No parent (top-level)</option>
+											{availableParentSpaces.map((s) => (
+												<option key={s.id} value={s.id}>
+													{s.name}
+												</option>
+											))}
+										</select>
+									</FormControl>
+								</div>
+							)}
+						/>
+					)}
 
 					{/* Space Members Input */}
 					<div className="space-y-1">

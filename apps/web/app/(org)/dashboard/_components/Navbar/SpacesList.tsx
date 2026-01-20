@@ -75,11 +75,34 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 
 	if (!spacesData) return null;
 
+	// Build hierarchical structure: top-level spaces first, then their children
 	const { displayedSpaces, hasMoreSpaces, hiddenSpacesCount } = useMemo(() => {
+		// Separate parent spaces (no parentSpaceId) from child spaces
+		const parentSpaces = spacesData.filter(s => !s.parentSpaceId);
+		const childSpacesByParent = spacesData.reduce((acc, space) => {
+			if (space.parentSpaceId) {
+				if (!acc[space.parentSpaceId]) {
+					acc[space.parentSpaceId] = [];
+				}
+				acc[space.parentSpaceId].push(space);
+			}
+			return acc;
+		}, {} as Record<string, typeof spacesData>);
+
+		// Build flat list with hierarchy (parent followed by its children)
+		const hierarchicalSpaces: (typeof spacesData[0] & { isChild?: boolean })[] = [];
+		for (const parent of parentSpaces) {
+			hierarchicalSpaces.push(parent);
+			const children = childSpacesByParent[parent.id] || [];
+			for (const child of children) {
+				hierarchicalSpaces.push({ ...child, isChild: true });
+			}
+		}
+
 		return {
-			displayedSpaces: showAllSpaces ? spacesData : spacesData.slice(0, 3),
-			hasMoreSpaces: spacesData.length > 3,
-			hiddenSpacesCount: Math.max(0, spacesData.length - 3),
+			displayedSpaces: showAllSpaces ? hierarchicalSpaces : hierarchicalSpaces.slice(0, 5),
+			hasMoreSpaces: hierarchicalSpaces.length > 5,
+			hiddenSpacesCount: Math.max(0, hierarchicalSpaces.length - 5),
 		};
 	}, [spacesData, showAllSpaces]);
 
@@ -219,8 +242,9 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 						WebkitOverflowScrolling: "touch",
 					}}
 				>
-					{displayedSpaces.map((space: Spaces) => {
+					{displayedSpaces.map((space: Spaces & { isChild?: boolean }) => {
 						const isOwner = space.createdById === user?.id;
+						const isChild = space.isChild;
 						return (
 							<Tooltip
 								position="right"
@@ -234,6 +258,7 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 										activeSpaceParams(space.id)
 											? "hover:bg-gray-3 cursor-default"
 											: "cursor-pointer",
+										isChild && !sidebarCollapsed ? "ml-4" : "",
 									)}
 									onDragOver={(e) => handleDragOver(e, space.id)}
 									onDragLeave={handleDragLeave}
