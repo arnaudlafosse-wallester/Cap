@@ -323,6 +323,7 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 								isCollapsed={collapsedSpaces.has(space.id)}
 								onToggleCollapse={() => toggleSpaceCollapse(space.id)}
 								isOwner={space.createdById === user?.id}
+								isShared={true}
 								sidebarCollapsed={sidebarCollapsed}
 								activeSpaceParams={activeSpaceParams}
 								activeDropTarget={activeDropTarget}
@@ -363,6 +364,7 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 								isCollapsed={collapsedSpaces.has(space.id)}
 								onToggleCollapse={() => toggleSpaceCollapse(space.id)}
 								isOwner={space.createdById === user?.id}
+								isShared={false}
 								sidebarCollapsed={sidebarCollapsed}
 								activeSpaceParams={activeSpaceParams}
 								activeDropTarget={activeDropTarget}
@@ -414,6 +416,7 @@ const SpaceItem = ({
 	isCollapsed,
 	onToggleCollapse,
 	isOwner,
+	isShared,
 	sidebarCollapsed,
 	activeSpaceParams,
 	activeDropTarget,
@@ -428,6 +431,7 @@ const SpaceItem = ({
 	isCollapsed: boolean;
 	onToggleCollapse: () => void;
 	isOwner: boolean;
+	isShared: boolean;
 	sidebarCollapsed: boolean;
 	activeSpaceParams: (spaceId: Space.SpaceIdOrOrganisationId) => boolean;
 	activeDropTarget: string | null;
@@ -542,8 +546,8 @@ const SpaceItem = ({
 					</Link>
 					{!sidebarCollapsed && (
 						<>
-							{/* Hide delete button for 'All spaces' synthetic entry */}
-							{!space.primary && isOwner && (
+							{/* Hide delete button for Shared spaces and primary entry */}
+							{!space.primary && isOwner && !isShared && (
 								<div
 									onClick={(e) => handleDeleteSpace(e, space)}
 									className={

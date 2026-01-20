@@ -40,6 +40,7 @@ type SpaceData = {
 	name: string;
 	organizationId: Organisation.OrganisationId;
 	createdById: User.UserId;
+	privacy?: "Public" | "Private";
 };
 
 export const SharedCaps = ({
@@ -108,7 +109,8 @@ export const SharedCaps = ({
 	if (data.length === 0 && folders?.length === 0) {
 		return (
 			<div className="flex relative flex-col w-full h-full">
-				{spaceData && spaceMembers && (
+				{/* Only show MembersIndicator for Private spaces */}
+				{spaceData && spaceMembers && spaceData.privacy === "Private" && (
 					<MembersIndicator
 						memberCount={spaceMemberCount}
 						members={spaceMembers}
@@ -186,7 +188,8 @@ export const SharedCaps = ({
 				onOpenChange={setOpenNewFolderDialog}
 			/>
 			<div className="flex flex-wrap gap-3 mb-10">
-				{spaceData && spaceMembers && (
+				{/* Only show MembersIndicator for Private spaces */}
+				{spaceData && spaceMembers && spaceData.privacy === "Private" && (
 					<MembersIndicator
 						memberCount={spaceMemberCount}
 						members={spaceMembers}
