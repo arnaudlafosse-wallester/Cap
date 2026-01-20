@@ -50,7 +50,12 @@ export async function middleware(request: NextRequest) {
 				path.startsWith("/invite") ||
 				path.startsWith("/self-hosting") ||
 				path.startsWith("/terms") ||
-				path.startsWith("/verify-otp")
+				path.startsWith("/verify-otp") ||
+				path.startsWith("/download") ||
+				path.endsWith(".webmanifest") ||
+				path.endsWith(".json") ||
+				path.endsWith(".png") ||
+				path.endsWith(".ico")
 			) &&
 			process.env.NODE_ENV !== "development"
 		)
