@@ -409,11 +409,49 @@ const NormalLogin = ({
 
 	return (
 		<motion.div>
+			{/* Google Sign-in as PRIMARY method */}
+			{publicEnv.googleAuthAvailable && !oauthError && (
+				<motion.div layout className="flex flex-col space-y-3 mb-4">
+					<MotionButton
+						variant="dark"
+						type="button"
+						className="flex gap-2 justify-center items-center w-full text-sm"
+						onClick={handleGoogleSignIn}
+						disabled={loading || emailSent}
+					>
+						<Image src="/google.svg" alt="Google" width={18} height={18} />
+						Sign in with Google
+					</MotionButton>
+				</motion.div>
+			)}
+
+			{oauthError && (
+				<div className="flex gap-3 items-center p-3 mb-4 bg-red-400 rounded-xl border border-red-600">
+					<FontAwesomeIcon
+						className="text-gray-50 size-8"
+						icon={faExclamationCircle}
+					/>
+					<p className="text-xs leading-5 text-gray-50">
+						It looks like you've previously used this email to sign up via
+						email login. Please enter your email below.
+					</p>
+				</div>
+			)}
+
+			{/* Email login as secondary option */}
+			{publicEnv.googleAuthAvailable && (
+				<div className="flex gap-4 items-center mb-4">
+					<span className="flex-1 h-px bg-gray-5" />
+					<p className="text-sm text-center text-gray-10">or</p>
+					<span className="flex-1 h-px bg-gray-5" />
+				</div>
+			)}
+
 			<motion.div layout className="flex flex-col space-y-3">
 				<MotionInput
 					id="email"
 					name="email"
-					autoFocus
+					autoFocus={!publicEnv.googleAuthAvailable}
 					type="email"
 					placeholder={emailSent ? "" : "tim@apple.com"}
 					autoComplete="email"
@@ -425,24 +463,15 @@ const NormalLogin = ({
 					}}
 				/>
 				<MotionButton
-					variant="dark"
+					variant="gray"
 					type="submit"
 					disabled={loading || emailSent}
 					icon={<FontAwesomeIcon className="mr-1 size-4" icon={faEnvelope} />}
 				>
 					Login with email
 				</MotionButton>
-				{/* {NODE_ENV === "development" && (
-                  <div className="flex justify-center items-center px-6 py-3 mt-3 bg-red-600 rounded-xl">
-                    <p className="text-lg text-white">
-                      <span className="font-medium text-white">
-                        Development mode:
-                      </span>{" "}
-                      Auth URL will be logged to your dev console.
-                    </p>
-                  </div>
-                )} */}
 			</motion.div>
+
 			<motion.p
 				layout="position"
 				className="mt-3 mb-2 text-xs text-center text-gray-9"
@@ -456,7 +485,8 @@ const NormalLogin = ({
 				</Link>
 			</motion.p>
 
-			{(publicEnv.googleAuthAvailable || publicEnv.workosAuthAvailable) && (
+			{/* SAML SSO option */}
+			{publicEnv.workosAuthAvailable && (
 				<>
 					<div className="flex gap-4 items-center mt-4 mb-4">
 						<span className="flex-1 h-px bg-gray-5" />
@@ -467,44 +497,17 @@ const NormalLogin = ({
 						layout
 						className="flex flex-col gap-3 justify-center items-center"
 					>
-						{publicEnv.googleAuthAvailable && !oauthError && (
-							<MotionButton
-								variant="gray"
-								type="button"
-								className="flex gap-2 justify-center items-center w-full text-sm"
-								onClick={handleGoogleSignIn}
-								disabled={loading || emailSent}
-							>
-								<Image src="/google.svg" alt="Google" width={16} height={16} />
-								Login with Google
-							</MotionButton>
-						)}
-
-						{oauthError && (
-							<div className="flex gap-3 items-center p-3 bg-red-400 rounded-xl border border-red-600">
-								<FontAwesomeIcon
-									className="text-gray-50 size-8"
-									icon={faExclamationCircle}
-								/>
-								<p className="text-xs leading-5 text-gray-50">
-									It looks like you've previously used this email to sign up via
-									email login. Please enter your email.
-								</p>
-							</div>
-						)}
-						{publicEnv.workosAuthAvailable && (
-							<MotionButton
-								variant="gray"
-								type="button"
-								className="w-full"
-								layout
-								onClick={() => setShowOrgInput(true)}
-								disabled={loading || emailSent}
-							>
-								<LucideArrowUpRight size={20} />
-								Login with SAML SSO
-							</MotionButton>
-						)}
+						<MotionButton
+							variant="gray"
+							type="button"
+							className="w-full"
+							layout
+							onClick={() => setShowOrgInput(true)}
+							disabled={loading || emailSent}
+						>
+							<LucideArrowUpRight size={20} />
+							Login with SAML SSO
+						</MotionButton>
 					</motion.div>
 				</>
 			)}
