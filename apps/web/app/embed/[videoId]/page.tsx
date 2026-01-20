@@ -34,8 +34,8 @@ export async function generateMetadata(
 			Option.match({
 				onNone: () => notFound(),
 				onSome: ([video]) => ({
-					title: `${video.name} | Cap Recording`,
-					description: "Watch this video on Cap",
+					title: `${video.name} | Wallester Record`,
+					description: "Watch this video on Wallester Record",
 					openGraph: {
 						images: [
 							{
@@ -61,8 +61,8 @@ export async function generateMetadata(
 					},
 					twitter: {
 						card: "player",
-						title: `${video.name} | Cap Recording`,
-						description: "Watch this video on Cap",
+						title: `${video.name} | Wallester Record`,
+						description: "Watch this video on Wallester Record",
 						images: [
 							new URL(
 								`/api/video/og?videoId=${videoId}`,
@@ -89,13 +89,13 @@ export async function generateMetadata(
 		Effect.catchTags({
 			PolicyDenied: () =>
 				Effect.succeed({
-					title: "Cap: This video is private",
+					title: "Wallester Record: This video is private",
 					description: "This video is private and cannot be shared.",
 					robots: "noindex, nofollow",
 				}),
 			VerifyVideoPasswordError: () =>
 				Effect.succeed({
-					title: "Cap: Password Protected Video",
+					title: "Wallester Record: Password Protected Video",
 					description: "This video is password protected.",
 					robots: "noindex, nofollow",
 				}),
@@ -146,6 +146,14 @@ export default async function EmbedVideoPage(
 					height: videos.height,
 					duration: videos.duration,
 					fps: videos.fps,
+					// Video labeling columns
+					ragStatus: videos.ragStatus,
+					ragStatusUpdatedAt: videos.ragStatusUpdatedAt,
+					ragStatusUpdatedById: videos.ragStatusUpdatedById,
+					keepPermanently: videos.keepPermanently,
+					expiresAt: videos.expiresAt,
+					aiSuggestedLabels: videos.aiSuggestedLabels,
+					aiClassifiedAt: videos.aiClassifiedAt,
 					hasPassword: sql`${videos.password} IS NOT NULL`.mapWith(Boolean),
 					sharedOrganization: {
 						organizationId: sharedVideos.organizationId,

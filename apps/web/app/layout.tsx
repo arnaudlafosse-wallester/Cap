@@ -61,16 +61,16 @@ const defaultFont = localFont({
 });
 
 export const metadata: Metadata = {
-	title: "Cap — Beautiful screen recordings, owned by you.",
+	title: "Wallester Record — Beautiful screen recordings",
 	description:
-		"Cap is the open source alternative to Loom. Lightweight, powerful, and cross-platform. Record and share in seconds.",
+		"Wallester Record is the internal screen recording tool for Wallester. Lightweight, powerful, and cross-platform. Record and share in seconds.",
 	openGraph: {
-		title: "Cap — Beautiful screen recordings, owned by you.",
+		title: "Wallester Record — Beautiful screen recordings",
 		description:
-			"Cap is the open source alternative to Loom. Lightweight, powerful, and cross-platform. Record and share in seconds.",
+			"Wallester Record is the internal screen recording tool for Wallester. Lightweight, powerful, and cross-platform. Record and share in seconds.",
 		type: "website",
-		url: "https://cap.so",
-		images: ["https://cap.so/og.png"],
+		url: "https://wallester-record.com",
+		images: ["https://wallester-record.com/og.png"],
 	},
 };
 

@@ -1,26 +1,21 @@
 export const createOrganizationSchema = () => ({
 	"@context": "https://schema.org",
 	"@type": "Organization",
-	"@id": "https://cap.so/#organization",
-	name: "Cap",
-	url: "https://cap.so",
+	"@id": "https://wallester-record.com/#organization",
+	name: "Wallester Record",
+	url: "https://wallester-record.com",
 	logo: {
 		"@type": "ImageObject",
-		url: "https://cap.so/cap-logo.png",
-		width: 512,
-		height: 512,
+		url: "https://cdn.brandfetch.io/idid01rD7k/w/400/h/400/theme/dark/icon.png",
+		width: 400,
+		height: 400,
 	},
 	description:
-		"Cap is the open source alternative to Loom. Lightweight, powerful, and cross-platform screen recorder.",
-	sameAs: [
-		"https://github.com/capsoftware/cap",
-		"https://twitter.com/cap",
-		"https://x.com/cap",
-		"https://www.producthunt.com/products/cap-3",
-	],
+		"Wallester Record is the internal screen recording tool for Wallester. Lightweight, powerful, and cross-platform screen recorder.",
+	sameAs: [],
 	contactPoint: {
 		"@type": "ContactPoint",
-		email: "hello@cap.so",
+		email: "support@wallester.com",
 		contactType: "customer service",
 	},
 });
@@ -28,13 +23,13 @@ export const createOrganizationSchema = () => ({
 export const createWebSiteSchema = () => ({
 	"@context": "https://schema.org",
 	"@type": "WebSite",
-	"@id": "https://cap.so/#website",
-	url: "https://cap.so",
-	name: "Cap",
+	"@id": "https://wallester-record.com/#website",
+	url: "https://wallester-record.com",
+	name: "Wallester Record",
 	description:
-		"Beautiful screen recordings, owned by you. The open source alternative to Loom.",
+		"Beautiful screen recordings for Wallester internal use.",
 	publisher: {
-		"@id": "https://cap.so/#organization",
+		"@id": "https://wallester-record.com/#organization",
 	},
 });
 

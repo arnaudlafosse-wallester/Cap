@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { editDate } from "@/actions/videos/edit-date";
 import { editTitle } from "@/actions/videos/edit-title";
 import { Tooltip } from "@/components/Tooltip";
+import { VideoLabelsDisplay } from "@/app/(org)/dashboard/_components/VideoLabels";
 import type { CapCardProps } from "./CapCard";
 
 interface CapContentProps {
@@ -17,6 +18,7 @@ interface CapContentProps {
 	hideSharedStatus?: boolean;
 	isOwner: boolean;
 	setIsSharingDialogOpen: (isSharingDialogOpen: boolean) => void;
+	onLabelsChange?: () => void;
 }
 
 export const CapCardContent: React.FC<CapContentProps> = ({
@@ -26,6 +28,7 @@ export const CapCardContent: React.FC<CapContentProps> = ({
 	hideSharedStatus,
 	isOwner,
 	setIsSharingDialogOpen,
+	onLabelsChange,
 }) => {
 	const router = useRouter();
 	const effectiveDate = cap.metadata?.customCreatedAt
@@ -230,6 +233,18 @@ export const CapCardContent: React.FC<CapContentProps> = ({
 					</Tooltip>
 				)}
 			</div>
+
+			{/* Video Labels */}
+			<VideoLabelsDisplay
+				videoId={cap.id}
+				labels={cap.labels ?? []}
+				expiresAt={cap.expiresAt ?? null}
+				keepPermanently={cap.keepPermanently}
+				ragStatus={cap.ragStatus ?? undefined}
+				isOwner={isOwner}
+				maxDisplay={2}
+				onLabelsChange={onLabelsChange}
+			/>
 		</div>
 	);
 };

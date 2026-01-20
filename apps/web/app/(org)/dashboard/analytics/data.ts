@@ -1,7 +1,8 @@
 import { db } from "@cap/database";
-import { comments, spaceVideos, videos } from "@cap/database/schema";
+import { comments, spaceVideos, videoViews, videos } from "@cap/database/schema";
+import { serverEnv } from "@cap/env";
 import { Tinybird } from "@cap/web-backend";
-import { and, between, eq, inArray } from "drizzle-orm";
+import { and, between, eq, gte, inArray } from "drizzle-orm";
 import { sql } from "drizzle-orm/sql";
 import { Effect } from "effect";
 
@@ -16,6 +17,7 @@ import type {
 type VideoRow = typeof videos.$inferSelect;
 type OrgId = VideoRow["orgId"];
 type VideoId = VideoRow["id"];
+type UserId = VideoRow["ownerId"];
 type SpaceVideoRow = typeof spaceVideos.$inferSelect;
 type SpaceOrOrgId = SpaceVideoRow["spaceId"];
 
@@ -170,7 +172,7 @@ const getUserVideoIds = async (orgId: OrgId, userId: string): Promise<VideoId[]>
 	const rows = await db()
 		.select({ id: videos.id })
 		.from(videos)
-		.where(and(eq(videos.orgId, orgId), eq(videos.ownerId, userId)));
+		.where(and(eq(videos.orgId, orgId), eq(videos.ownerId, userId as UserId)));
 	return rows.map((row) => row.id);
 };
 
@@ -263,74 +265,97 @@ export const getOrgAnalyticsData = async (
 		queryCommentsSeries(typedOrgId, from, to, "emoji", bucket, videoIds),
 	]);
 
-	const tinybirdData = await runPromise(
-		Effect.gen(function* () {
-			const tinybird = yield* Tinybird;
+	// Check if Tinybird is configured
+	const useTinybird =
+		serverEnv().TINYBIRD_TOKEN && serverEnv().TINYBIRD_HOST;
 
-			const viewSeries = yield* queryViewSeries(
-				tinybird,
-				typedOrgId,
-				from,
-				to,
-				bucket,
-				videoIds,
-			);
+	let tinybirdData: TinybirdAnalyticsData;
 
-			const countries = yield* queryCountries(
-				tinybird,
-				typedOrgId,
-				from,
-				to,
-				videoIds,
-			);
+	if (useTinybird) {
+		// Use Tinybird for Cap.so SaaS
+		tinybirdData = await runPromise(
+			Effect.gen(function* () {
+				const tinybird = yield* Tinybird;
 
-			const cities = yield* queryCities(
-				tinybird,
-				typedOrgId,
-				from,
-				to,
-				videoIds,
-			);
+				const viewSeries = yield* queryViewSeries(
+					tinybird,
+					typedOrgId,
+					from,
+					to,
+					bucket,
+					videoIds,
+				);
 
-			const browsers = yield* queryBrowsers(
-				tinybird,
-				typedOrgId,
-				from,
-				to,
-				videoIds,
-			);
+				const countries = yield* queryCountries(
+					tinybird,
+					typedOrgId,
+					from,
+					to,
+					videoIds,
+				);
 
-			const devices = yield* queryDevices(
-				tinybird,
-				typedOrgId,
-				from,
-				to,
-				videoIds,
-			);
+				const cities = yield* queryCities(
+					tinybird,
+					typedOrgId,
+					from,
+					to,
+					videoIds,
+				);
 
-			const operatingSystems = yield* queryOperatingSystems(
-				tinybird,
-				typedOrgId,
-				from,
-				to,
-				videoIds,
-			);
+				const browsers = yield* queryBrowsers(
+					tinybird,
+					typedOrgId,
+					from,
+					to,
+					videoIds,
+				);
 
-			const topCapsRaw = capId
-				? []
-				: yield* queryTopCaps(tinybird, typedOrgId, from, to, videoIds);
+				const devices = yield* queryDevices(
+					tinybird,
+					typedOrgId,
+					from,
+					to,
+					videoIds,
+				);
 
-			return {
-				viewSeries,
-				countries,
-				cities,
-				browsers,
-				devices,
-				operatingSystems,
-				topCapsRaw,
-			} satisfies TinybirdAnalyticsData;
-		}),
-	);
+				const operatingSystems = yield* queryOperatingSystems(
+					tinybird,
+					typedOrgId,
+					from,
+					to,
+					videoIds,
+				);
+
+				const topCapsRaw = capId
+					? []
+					: yield* queryTopCaps(tinybird, typedOrgId, from, to, videoIds);
+
+				return {
+					viewSeries,
+					countries,
+					cities,
+					browsers,
+					devices,
+					operatingSystems,
+					topCapsRaw,
+				} satisfies TinybirdAnalyticsData;
+			}),
+		);
+	} else {
+		// Use local database for self-hosted instances (MVP: only total views)
+		const localViewCount = await queryLocalViewCount(typedOrgId, from, videoIds);
+		tinybirdData = {
+			viewSeries: localViewCount > 0
+				? [{ bucket: formatBucketTimestamp(to), views: localViewCount }]
+				: [],
+			countries: [],
+			cities: [],
+			browsers: [],
+			devices: [],
+			operatingSystems: [],
+			topCapsRaw: [],
+		};
+	}
 
 	const totalViews = tinybirdData.viewSeries.reduce(
 		(sum: number, row: ViewSeriesRow) => sum + row.views,
@@ -994,4 +1019,31 @@ const queryTopCaps = (
 				),
 		),
 	);
+};
+
+/**
+ * Query view count from local database (for self-hosted instances)
+ */
+const queryLocalViewCount = async (
+	orgId: OrgId,
+	from: Date,
+	spaceVideoIds?: VideoId[],
+): Promise<number> => {
+	const conditions = [
+		eq(videoViews.orgId, orgId),
+		gte(videoViews.viewedAt, from),
+	];
+
+	if (spaceVideoIds && spaceVideoIds.length > 0) {
+		conditions.push(inArray(videoViews.videoId, spaceVideoIds));
+	}
+
+	const result = await db()
+		.select({
+			count: sql<number>`COUNT(DISTINCT ${videoViews.sessionId})`,
+		})
+		.from(videoViews)
+		.where(and(...conditions));
+
+	return result[0]?.count ?? 0;
 };

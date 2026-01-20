@@ -9,6 +9,8 @@ import {
 	spaceVideos,
 	users,
 	videos,
+	videoLabelAssignments,
+	videoLabels,
 	videoUploads,
 } from "@cap/database/schema";
 import { serverEnv } from "@cap/env";
@@ -22,7 +24,7 @@ import { runPromise } from "@/lib/server";
 import { Caps } from "./Caps";
 
 export const metadata: Metadata = {
-	title: "My Caps — Cap",
+	title: "My Caps — Wallester Record",
 };
 
 // Helper function to fetch shared spaces data for videos
@@ -106,7 +108,63 @@ const getSharedSpacesForVideos = Effect.fn(function* (
 	return sharedSpacesMap;
 });
 
-export default async function CapsPage(props: PageProps<"/dashboard/caps">) {
+// Helper function to fetch labels for videos
+const getLabelsForVideos = async (videoIds: Video.VideoId[]) => {
+	if (videoIds.length === 0) return {};
+
+	const labelData = await db()
+		.select({
+			videoId: videoLabelAssignments.videoId,
+			labelId: videoLabels.id,
+			name: videoLabels.name,
+			displayName: videoLabels.displayName,
+			color: videoLabels.color,
+			category: videoLabels.category,
+			retentionDays: videoLabels.retentionDays,
+			isAiSuggested: videoLabelAssignments.isAiSuggested,
+			aiConfidence: videoLabelAssignments.aiConfidence,
+		})
+		.from(videoLabelAssignments)
+		.innerJoin(videoLabels, eq(videoLabelAssignments.labelId, videoLabels.id))
+		.where(inArray(videoLabelAssignments.videoId, videoIds));
+
+	// Group by videoId
+	const labelsMap: Record<
+		string,
+		Array<{
+			id: string;
+			name: string;
+			displayName: string;
+			color: string;
+			category: "content_type" | "department";
+			retentionDays: number | null;
+			isAiSuggested: boolean;
+			aiConfidence: number | null;
+		}>
+	> = {};
+
+	for (const label of labelData) {
+		if (!labelsMap[label.videoId]) {
+			labelsMap[label.videoId] = [];
+		}
+		labelsMap[label.videoId]?.push({
+			id: label.labelId,
+			name: label.name,
+			displayName: label.displayName,
+			color: label.color,
+			category: label.category as "content_type" | "department",
+			retentionDays: label.retentionDays,
+			isAiSuggested: label.isAiSuggested,
+			aiConfidence: label.aiConfidence,
+		});
+	}
+
+	return labelsMap;
+};
+
+export default async function CapsPage(props: {
+	searchParams: Promise<{ page?: string; limit?: string }>;
+}) {
 	const searchParams = await props.searchParams;
 	const user = await getCurrentUser();
 
@@ -170,6 +228,9 @@ export default async function CapsPage(props: PageProps<"/dashboard/caps">) {
 				Boolean,
 			),
 			settings: videos.settings,
+			ragStatus: videos.ragStatus,
+			expiresAt: videos.expiresAt,
+			keepPermanently: videos.keepPermanently,
 		})
 		.from(videos)
 		.leftJoin(comments, eq(videos.id, comments.videoId))
@@ -222,6 +283,9 @@ export default async function CapsPage(props: PageProps<"/dashboard/caps">) {
 	const sharedSpacesMap =
 		await getSharedSpacesForVideos(videoIds).pipe(runPromise);
 
+	// Fetch labels for all videos
+	const labelsMap = await getLabelsForVideos(videoIds as Video.VideoId[]);
+
 	const processedVideoData = await Effect.all(
 		videoData.map(
 			Effect.fn(function* (video) {
@@ -256,6 +320,10 @@ export default async function CapsPage(props: PageProps<"/dashboard/caps">) {
 								[key: string]: any;
 						  }
 						| undefined,
+					labels: labelsMap[video.id] ?? [],
+					ragStatus: video.ragStatus as "eligible" | "excluded" | "pending" | null,
+					expiresAt: video.expiresAt,
+					keepPermanently: video.keepPermanently,
 				};
 			}),
 		),

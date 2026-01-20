@@ -1,10 +1,11 @@
 "use server";
 
 import { db } from "@cap/database";
-import { videos } from "@cap/database/schema";
+import { videoViews, videos } from "@cap/database/schema";
+import { serverEnv } from "@cap/env";
 import { Tinybird } from "@cap/web-backend";
 import { Video } from "@cap/web-domain";
-import { eq } from "drizzle-orm";
+import { and, eq, gte, sql } from "drizzle-orm";
 import { Effect } from "effect";
 import { runPromise } from "@/lib/server";
 
@@ -43,6 +44,16 @@ export async function getVideoAnalytics(
 		.where(eq(videos.id, Video.VideoId.make(videoId)))
 		.limit(1);
 
+	// Check if Tinybird is configured
+	const useTinybird =
+		serverEnv().TINYBIRD_TOKEN && serverEnv().TINYBIRD_HOST;
+
+	if (!useTinybird) {
+		// Use local database for self-hosted instances
+		return getVideoAnalyticsFromLocalDb(videoId, options);
+	}
+
+	// Use Tinybird for Cap.so SaaS
 	return runPromise(
 		Effect.gen(function* () {
 			const tinybird = yield* Tinybird;
@@ -66,8 +77,8 @@ export async function getVideoAnalytics(
 			];
 			const rawSql = `SELECT coalesce(uniq(session_id), 0) AS views FROM analytics_events WHERE ${buildConditions(rawConditions)}`;
 
-			const querySql = (sql: string) =>
-				tinybird.querySql<{ views: number }>(sql).pipe(
+			const querySql = (sqlQuery: string) =>
+				tinybird.querySql<{ views: number }>(sqlQuery).pipe(
 					Effect.catchAll((e) => {
 						console.error("tinybird sql error", e);
 						return Effect.succeed({ data: [] });
@@ -93,4 +104,30 @@ export async function getVideoAnalytics(
 			return { count: Number.isFinite(count) ? count : 0 };
 		}),
 	);
+}
+
+/**
+ * Get video analytics from local database (for self-hosted instances)
+ */
+async function getVideoAnalyticsFromLocalDb(
+	videoId: string,
+	options?: GetVideoAnalyticsOptions,
+): Promise<{ count: number }> {
+	const rangeDays = normalizeRangeDays(options?.rangeDays);
+	const startDate = new Date();
+	startDate.setDate(startDate.getDate() - rangeDays);
+
+	const result = await db()
+		.select({
+			count: sql<number>`COUNT(DISTINCT ${videoViews.sessionId})`,
+		})
+		.from(videoViews)
+		.where(
+			and(
+				eq(videoViews.videoId, Video.VideoId.make(videoId)),
+				gte(videoViews.viewedAt, startDate),
+			),
+		);
+
+	return { count: result[0]?.count ?? 0 };
 }

@@ -55,12 +55,18 @@ export async function updateSpace(formData: FormData) {
 	}
 
 	// Update space name, privacy, and parentSpaceId
-	const updateData: { name: string; privacy?: "Public" | "Private"; parentSpaceId?: string | null } = { name };
+	const updateData: {
+		name: string;
+		privacy?: "Public" | "Private";
+		parentSpaceId?: Space.SpaceIdOrOrganisationId | null;
+	} = { name };
 	if (privacy) {
 		updateData.privacy = privacy;
 	}
 	if (parentSpaceId !== undefined) {
-		updateData.parentSpaceId = parentSpaceId;
+		updateData.parentSpaceId = parentSpaceId
+			? (parentSpaceId as Space.SpaceIdOrOrganisationId)
+			: null;
 	}
 	await db().update(spaces).set(updateData).where(eq(spaces.id, id));
 

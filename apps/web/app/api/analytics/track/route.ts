@@ -1,4 +1,9 @@
+import { db } from "@cap/database";
+import { nanoId } from "@cap/database/helpers";
+import { videoViews, type VideoViewId } from "@cap/database/schema";
+import { serverEnv } from "@cap/env";
 import { provideOptionalAuth, Tinybird } from "@cap/web-backend";
+import type { Organisation, User, Video } from "@cap/web-domain";
 import { CurrentUser } from "@cap/web-domain";
 import { Effect, Option } from "effect";
 import type { NextRequest } from "next/server";
@@ -62,6 +67,10 @@ export async function POST(request: NextRequest) {
 
 	const pathname = body.pathname ?? `/s/${body.videoId}`;
 
+	// Check if Tinybird is configured
+	const useTinybird =
+		serverEnv().TINYBIRD_TOKEN && serverEnv().TINYBIRD_HOST;
+
 	await runPromise(
 		Effect.gen(function* () {
 			const maybeUser = yield* Effect.serviceOption(CurrentUser);
@@ -77,29 +86,50 @@ export async function POST(request: NextRequest) {
 					return currentUser.id;
 				},
 			});
+			// Skip tracking if current user is the video owner
 			if (userId && body.ownerId && userId === body.ownerId) {
 				return;
 			}
 
-			const tinybird = yield* Tinybird;
-			yield* tinybird.appendEvents([
-				{
-					timestamp: timestamp.toISOString(),
-					session_id: sessionId,
-					action: "page_hit",
-					version: "1.0",
-					tenant_id: tenantId,
-					video_id: body.videoId,
-					pathname,
-					country,
-					region,
-					city,
-					browser: browserName,
-					device: deviceType,
-					os: osName,
-					user_id: userId,
-				},
-			]);
+			if (useTinybird) {
+				// Use Tinybird for Cap.so SaaS
+				const tinybird = yield* Tinybird;
+				yield* tinybird.appendEvents([
+					{
+						timestamp: timestamp.toISOString(),
+						session_id: sessionId,
+						action: "page_hit",
+						version: "1.0",
+						tenant_id: tenantId,
+						video_id: body.videoId,
+						pathname,
+						country,
+						region,
+						city,
+						browser: browserName,
+						device: deviceType,
+						os: osName,
+						user_id: userId,
+					},
+				]);
+			} else if (body.orgId) {
+				// Use local database for self-hosted instances
+				yield* Effect.tryPromise(() =>
+					db().insert(videoViews).values({
+						id: nanoId() as VideoViewId,
+						videoId: body.videoId as Video.VideoId,
+						orgId: body.orgId as Organisation.OrganisationId,
+						viewerId: (userId as User.UserId) || null,
+						sessionId,
+						country: country || null,
+						region: region || null,
+						city: city || null,
+						browser: browserName || null,
+						device: deviceType || null,
+						os: osName || null,
+					}),
+				);
+			}
 		}).pipe(provideOptionalAuth),
 	);
 

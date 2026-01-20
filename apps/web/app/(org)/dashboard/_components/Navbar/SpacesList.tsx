@@ -113,6 +113,7 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 			const result: SpaceWithDepth[] = [];
 			for (let i = 0; i < children.length; i++) {
 				const child = children[i];
+				if (!child) continue;
 				const hasChildren = spacesWithChildrenSet.has(child.id);
 				const isCollapsed = collapsedSpaces.has(child.id);
 				const isLastChild = i === children.length - 1;
@@ -135,6 +136,7 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 			const directChildren = childrenByParent.get(primarySpace.id) || [];
 			for (let i = 0; i < directChildren.length; i++) {
 				const child = directChildren[i];
+				if (!child) continue;
 				const hasChildren = spacesWithChildrenSet.has(child.id);
 				const isCollapsed = collapsedSpaces.has(child.id);
 				const isLastChild = i === directChildren.length - 1;
@@ -157,6 +159,7 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 
 		for (let i = 0; i < topLevelPrivate.length; i++) {
 			const space = topLevelPrivate[i];
+			if (!space) continue;
 			const hasChildren = spacesWithChildrenSet.has(space.id);
 			const isCollapsed = collapsedSpaces.has(space.id);
 			const isLastChild = i === topLevelPrivate.length - 1;

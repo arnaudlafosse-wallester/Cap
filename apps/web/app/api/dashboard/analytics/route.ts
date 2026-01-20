@@ -1,6 +1,8 @@
 import { db } from "@cap/database";
 import { getCurrentUser } from "@cap/database/auth/session";
 import { organizations } from "@cap/database/schema";
+import { serverEnv } from "@cap/env";
+import type { Organisation } from "@cap/web-domain";
 import { eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 
@@ -32,7 +34,7 @@ export async function GET(request: NextRequest) {
 	const org = await db()
 		.select({ ownerId: organizations.ownerId })
 		.from(organizations)
-		.where(eq(organizations.id, orgId))
+		.where(eq(organizations.id, orgId as Organisation.OrganisationId))
 		.limit(1);
 
 	const isOwner = org[0]?.ownerId === user.id;
@@ -45,9 +47,14 @@ export async function GET(request: NextRequest) {
 		? rangeParam
 		: "7d";
 
+	// Check if Tinybird is configured (for breakdowns display)
+	const tinybirdEnabled = Boolean(
+		serverEnv().TINYBIRD_TOKEN && serverEnv().TINYBIRD_HOST,
+	);
+
 	try {
 		const data = await getOrgAnalyticsData(orgId, range, spaceId, capId, filterByUserId);
-		return Response.json({ data, isOwner });
+		return Response.json({ data, isOwner, tinybirdEnabled });
 	} catch (error) {
 		console.error("Failed to load analytics", error);
 		return Response.json(

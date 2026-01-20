@@ -172,14 +172,14 @@ export function SignupForm() {
 					layout="position"
 					className="text-2xl font-semibold text-gray-12"
 				>
-					Sign up to Cap
+					Sign up to Wallester Record
 				</motion.h1>
 				<motion.p
 					key="subtitle"
 					layout="position"
 					className="text-[16px] text-gray-10"
 				>
-					Beautiful screen recordings, owned by you.
+					Beautiful screen recordings
 				</motion.p>
 			</motion.div>
 			<motion.div layout="position" className="flex flex-col space-y-3">

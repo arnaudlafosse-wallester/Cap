@@ -66,6 +66,17 @@ function getProgressStatusText(
 	}
 }
 
+export interface VideoLabel {
+	id: string;
+	name: string;
+	displayName: string;
+	color: string;
+	category: "content_type" | "department";
+	retentionDays: number | null;
+	isAiSuggested?: boolean;
+	aiConfidence?: number;
+}
+
 export interface CapCardProps extends PropsWithChildren {
 	cap: {
 		id: Video.VideoId;
@@ -99,6 +110,10 @@ export interface CapCardProps extends PropsWithChildren {
 			disableReactions?: boolean;
 			disableTranscript?: boolean;
 		};
+		labels?: VideoLabel[];
+		ragStatus?: "eligible" | "excluded" | "pending" | null;
+		expiresAt?: Date | null;
+		keepPermanently?: boolean;
 	};
 	analytics: number;
 	isLoadingAnalytics: boolean;
@@ -731,6 +746,7 @@ export const CapCard = ({
 						hideSharedStatus={hideSharedStatus}
 						isOwner={isOwner}
 						setIsSharingDialogOpen={setIsSharingDialogOpen}
+						onLabelsChange={() => router.refresh()}
 					/>
 					{children}
 					<CapCardAnalytics

@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 import { Organization } from "./Organization";
 
 export const metadata: Metadata = {
-	title: "Organization Settings — Cap",
+	title: "Organization Settings — Wallester Record",
 };
 
 export default async function OrganizationPage() {

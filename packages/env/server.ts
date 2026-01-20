@@ -130,6 +130,12 @@ function createServerEnv() {
 					"Base URL for media server webhooks (use host.docker.internal for Docker setups)",
 				),
 
+			/// Cron Jobs
+			CRON_SECRET: z
+				.string()
+				.optional()
+				.describe("Secret for authenticating cron job requests"),
+
 			/// Ignore
 			NODE_ENV: z.string(),
 			WORKFLOWS_RPC_URL: z.string().optional(),

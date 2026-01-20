@@ -251,6 +251,7 @@ export async function getDashboardData(user: typeof userSelectProps) {
 						memberCount: orgMemberCount,
 						createdById: activeOrgInfo.organization.ownerId,
 						videoCount: orgVideoCount,
+						parentSpaceId: null,
 					} as const;
 				}).pipe(runPromise);
 

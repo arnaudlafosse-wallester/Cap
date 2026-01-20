@@ -345,6 +345,24 @@ export const videos = mysqlTable(
 		jobId: varchar("jobId", { length: 255 }),
 		jobStatus: varchar("jobStatus", { length: 255 }),
 		skipProcessing: boolean("skipProcessing").notNull().default(false),
+
+		// RAG ELIGIBILITY
+		ragStatus: varchar("ragStatus", {
+			length: 10,
+			enum: ["eligible", "excluded", "pending"],
+		}).default("pending"),
+		ragStatusUpdatedAt: timestamp("ragStatusUpdatedAt"),
+		ragStatusUpdatedById: nanoIdNullable("ragStatusUpdatedById").$type<User.UserId>(),
+
+		// RETENTION
+		keepPermanently: boolean("keepPermanently").notNull().default(false),
+		expiresAt: timestamp("expiresAt"),
+
+		// AI CLASSIFICATION
+		aiSuggestedLabels: json("aiSuggestedLabels").$type<
+			Array<{ labelName: string; confidence: number }>
+		>(),
+		aiClassifiedAt: timestamp("aiClassifiedAt"),
 	},
 	(table) => [
 		index("owner_id_idx").on(table.ownerId),
@@ -359,6 +377,8 @@ export const videos = mysqlTable(
 			table.orgId,
 			table.effectiveCreatedAt,
 		),
+		index("expires_at_idx").on(table.expiresAt),
+		index("rag_status_idx").on(table.ragStatus),
 	],
 );
 
@@ -590,6 +610,7 @@ export const videosRelations = relations(videos, ({ one, many }) => ({
 	}),
 	sharedVideos: many(sharedVideos),
 	spaceVideos: many(spaceVideos),
+	labelAssignments: many(videoLabelAssignments),
 	folder: one(folders, {
 		fields: [videos.folderId],
 		references: [folders.id],
@@ -787,3 +808,161 @@ export const importedVideos = mysqlTable(
 		primaryKey({ columns: [table.orgId, table.source, table.sourceId] }),
 	],
 );
+
+// =============================================================================
+// VIDEO LABELS & RETENTION SYSTEM
+// =============================================================================
+
+export type VideoLabelId = string & { readonly __brand: "VideoLabelId" };
+
+export const videoLabels = mysqlTable(
+	"video_labels",
+	{
+		id: nanoId("id").notNull().primaryKey().$type<VideoLabelId>(),
+		organizationId: nanoId("organizationId")
+			.notNull()
+			.$type<Organisation.OrganisationId>(),
+
+		// Label info
+		name: varchar("name", { length: 100 }).notNull(),
+		displayName: varchar("displayName", { length: 100 }).notNull(),
+		description: varchar("description", { length: 500 }),
+		color: varchar("color", { length: 7 }).notNull().default("#6B7280"),
+		icon: varchar("icon", { length: 50 }),
+
+		// Category
+		category: varchar("category", {
+			length: 20,
+			enum: ["content_type", "department"],
+		})
+			.notNull()
+			.default("content_type"),
+
+		// Retention policy (NULL = permanent)
+		retentionDays: int("retentionDays"),
+
+		// RAG eligibility default
+		ragDefault: varchar("ragDefault", {
+			length: 10,
+			enum: ["eligible", "excluded", "pending"],
+		}).default("pending"),
+
+		// System flags
+		isSystem: boolean("isSystem").notNull().default(false),
+		isActive: boolean("isActive").notNull().default(true),
+
+		// Timestamps
+		createdAt: timestamp("createdAt").notNull().defaultNow(),
+		updatedAt: timestamp("updatedAt").notNull().defaultNow().onUpdateNow(),
+	},
+	(table) => ({
+		orgIdx: index("org_idx").on(table.organizationId),
+		categoryIdx: index("category_idx").on(table.category),
+		orgNameUnique: unique("org_name_unique").on(
+			table.organizationId,
+			table.name,
+		),
+	}),
+);
+
+export const videoLabelAssignments = mysqlTable(
+	"video_label_assignments",
+	{
+		id: nanoId("id").notNull().primaryKey(),
+		videoId: nanoId("videoId").notNull().$type<Video.VideoId>(),
+		labelId: nanoId("labelId").notNull().$type<VideoLabelId>(),
+
+		// Who assigned
+		assignedById: nanoId("assignedById").notNull().$type<User.UserId>(),
+		assignedAt: timestamp("assignedAt").notNull().defaultNow(),
+
+		// AI suggestion tracking
+		isAiSuggested: boolean("isAiSuggested").notNull().default(false),
+		aiConfidence: float("aiConfidence"),
+	},
+	(table) => ({
+		videoIdx: index("video_idx").on(table.videoId),
+		labelIdx: index("label_idx").on(table.labelId),
+		videoLabelUnique: unique("video_label_unique").on(
+			table.videoId,
+			table.labelId,
+		),
+	}),
+);
+
+// Relations for video labels
+export const videoLabelsRelations = relations(videoLabels, ({ one, many }) => ({
+	organization: one(organizations, {
+		fields: [videoLabels.organizationId],
+		references: [organizations.id],
+	}),
+	assignments: many(videoLabelAssignments),
+}));
+
+export const videoLabelAssignmentsRelations = relations(
+	videoLabelAssignments,
+	({ one }) => ({
+		video: one(videos, {
+			fields: [videoLabelAssignments.videoId],
+			references: [videos.id],
+		}),
+		label: one(videoLabels, {
+			fields: [videoLabelAssignments.labelId],
+			references: [videoLabels.id],
+		}),
+		assignedBy: one(users, {
+			fields: [videoLabelAssignments.assignedById],
+			references: [users.id],
+		}),
+	}),
+);
+
+// =============================================================================
+// VIDEO VIEWS ANALYTICS (LOCAL DB - replaces Tinybird)
+// =============================================================================
+
+export type VideoViewId = string & { readonly __brand: "VideoViewId" };
+
+export const videoViews = mysqlTable(
+	"video_views",
+	{
+		id: nanoId("id").notNull().primaryKey().$type<VideoViewId>(),
+		videoId: nanoId("videoId").notNull().$type<Video.VideoId>(),
+		orgId: nanoId("orgId").notNull().$type<Organisation.OrganisationId>(),
+		viewerId: nanoIdNullable("viewerId").$type<User.UserId>(), // null = anonymous
+		sessionId: varchar("sessionId", { length: 128 }).notNull(),
+
+		// Geo & Device (enriched at write time)
+		country: varchar("country", { length: 64 }),
+		region: varchar("region", { length: 64 }),
+		city: varchar("city", { length: 64 }),
+		browser: varchar("browser", { length: 64 }),
+		device: varchar("device", { length: 64 }),
+		os: varchar("os", { length: 64 }),
+
+		viewedAt: timestamp("viewedAt").notNull().defaultNow(),
+	},
+	(table) => ({
+		videoIdIdx: index("video_id_idx").on(table.videoId),
+		orgIdIdx: index("org_id_idx").on(table.orgId),
+		sessionIdx: index("session_idx").on(table.sessionId),
+		viewedAtIdx: index("viewed_at_idx").on(table.viewedAt),
+		// Composite for analytics queries
+		orgVideoDateIdx: index("org_video_date_idx").on(
+			table.orgId,
+			table.videoId,
+			table.viewedAt,
+		),
+	}),
+);
+
+export const videoViewsRelations = relations(videoViews, ({ one }) => ({
+	video: one(videos, {
+		fields: [videoViews.videoId],
+		references: [videos.id],
+	}),
+	viewer: one(users, {
+		fields: [videoViews.viewerId],
+		references: [users.id],
+	}),
+}));

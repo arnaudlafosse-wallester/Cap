@@ -128,7 +128,11 @@ export function AnalyticsDashboard() {
 					return yield* Effect.fail(new Error("Failed to load analytics"));
 				}
 				return yield* Effect.tryPromise({
-					try: () => response.json() as Promise<{ data: OrgAnalyticsResponse }>,
+					try: () =>
+						response.json() as Promise<{
+							data: OrgAnalyticsResponse;
+							tinybirdEnabled?: boolean;
+						}>,
 					catch: (cause: unknown) => cause as Error,
 				});
 			}),
@@ -136,8 +140,11 @@ export function AnalyticsDashboard() {
 		staleTime: 60 * 1000,
 	});
 
-	const analytics = (query.data as { data: OrgAnalyticsResponse } | undefined)
-		?.data;
+	const queryData = query.data as
+		| { data: OrgAnalyticsResponse; tinybirdEnabled?: boolean }
+		| undefined;
+	const analytics = queryData?.data;
+	const tinybirdEnabled = queryData?.tinybirdEnabled ?? false;
 
 	if (!orgId) {
 		return (
@@ -200,7 +207,9 @@ export function AnalyticsDashboard() {
 					isLoading={query.isLoading}
 					capId={capId}
 				/>
+				{tinybirdEnabled && (
 				<OtherStats data={otherStats} isLoading={query.isLoading} />
+			)}
 			</div>
 
 			<AnimatePresence>
