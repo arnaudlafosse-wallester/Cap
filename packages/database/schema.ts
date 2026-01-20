@@ -624,6 +624,7 @@ export const spaces = mysqlTable(
 			.notNull()
 			.$type<Organisation.OrganisationId>(),
 		createdById: nanoId("createdById").notNull().$type<User.UserId>(),
+		parentSpaceId: nanoIdNullable("parentSpaceId").$type<Space.SpaceIdOrOrganisationId>(),
 		iconUrl: varchar("iconUrl", {
 			length: 255,
 		}).$type<ImageUpload.ImageUrlOrKey>(),
@@ -637,6 +638,7 @@ export const spaces = mysqlTable(
 	(table) => ({
 		organizationIdIndex: index("organization_id_idx").on(table.organizationId),
 		createdByIdIndex: index("created_by_id_idx").on(table.createdById),
+		parentSpaceIdIndex: index("parent_space_id_idx").on(table.parentSpaceId),
 	}),
 );
 
@@ -695,6 +697,14 @@ export const spacesRelations = relations(spaces, ({ one, many }) => ({
 	createdBy: one(users, {
 		fields: [spaces.createdById],
 		references: [users.id],
+	}),
+	parentSpace: one(spaces, {
+		fields: [spaces.parentSpaceId],
+		references: [spaces.id],
+		relationName: "spaceHierarchy",
+	}),
+	childSpaces: many(spaces, {
+		relationName: "spaceHierarchy",
 	}),
 	spaceMembers: many(spaceMembers),
 	spaceVideos: many(spaceVideos),

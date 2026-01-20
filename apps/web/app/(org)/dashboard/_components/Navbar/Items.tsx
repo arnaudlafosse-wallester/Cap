@@ -1,5 +1,4 @@
 "use client";
-import { buildEnv } from "@cap/env";
 import {
 	Button,
 	Command,
@@ -33,7 +32,7 @@ import { cloneElement, type RefObject, useRef, useState } from "react";
 import { NewOrganization } from "@/components/forms/NewOrganization";
 import { SignedImageUrl } from "@/components/SignedImageUrl";
 import { Tooltip } from "@/components/Tooltip";
-import { UsageButton } from "@/components/UsageButton";
+// UsageButton removed for self-hosted version
 import { useDashboardContext } from "../../Contexts";
 import { CapIcon, ChartLineIcon, CogIcon, RecordIcon } from "../AnimatedIcons";
 import type { CogIconHandle } from "../AnimatedIcons/Cog";
@@ -48,6 +47,10 @@ const AdminNavItems = ({ toggleMobileNav }: Props) => {
 	const pathname = usePathname();
 	const [open, setOpen] = useState(false);
 	const { user, sidebarCollapsed, userCapsCount } = useDashboardContext();
+
+	// Admin email that can access Organization Settings
+	const adminEmail = "arnaud.lafosse@wallester.com";
+	const isAdmin = user.email === adminEmail;
 
 	const manageNavigation = [
 		{
@@ -73,7 +76,7 @@ const AdminNavItems = ({ toggleMobileNav }: Props) => {
 		{
 			name: "Organization Settings",
 			href: `/dashboard/settings/organization`,
-			ownerOnly: true,
+			adminOnly: true,
 			icon: <CogIcon />,
 			subNav: [],
 		},
@@ -85,7 +88,6 @@ const AdminNavItems = ({ toggleMobileNav }: Props) => {
 	const formRef = useRef<HTMLFormElement | null>(null);
 	const [createLoading, setCreateLoading] = useState(false);
 	const [organizationName, setOrganizationName] = useState("");
-	const isOwner = activeOrg?.organization.ownerId === user.id;
 	const [_openAIDialog, _setOpenAIDialog] = useState(false);
 	const router = useRouter();
 
@@ -279,7 +281,7 @@ const AdminNavItems = ({ toggleMobileNav }: Props) => {
 					)}
 				>
 					{manageNavigation
-						.filter((item) => !item.ownerOnly || isOwner)
+						.filter((item) => !item.adminOnly || isAdmin)
 						.map((item) => (
 							<div
 								key={item.name}
@@ -321,25 +323,7 @@ const AdminNavItems = ({ toggleMobileNav }: Props) => {
 
 					<SpacesList toggleMobileNav={() => toggleMobileNav?.()} />
 				</div>
-				<div className="pb-4 mt-auto w-full">
-					<UsageButton
-						toggleMobileNav={() => toggleMobileNav?.()}
-						subscribed={user.isPro}
-					/>
-					{buildEnv.NEXT_PUBLIC_IS_CAP && (
-						<div className="flex justify-center items-center mt-2">
-							<Link
-								href="/dashboard/refer"
-								className="text-sm underline text-gray-10 hover:text-gray-12"
-							>
-								Earn 40% Referral
-							</Link>
-						</div>
-					)}
-					<p className="mt-2 text-xs text-center truncate text-gray-10">
-						Cap Software, Inc. {new Date().getFullYear()}.
-					</p>
-				</div>
+				{/* Footer removed for self-hosted version */}
 			</nav>
 			<DialogContent className="p-0 w-full max-w-md rounded-xl bg-gray-2">
 				<DialogHeader
