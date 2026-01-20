@@ -195,7 +195,7 @@ export default function BrowseSpacesPage() {
 							<Switch
 								checked={showPrivate}
 								onCheckedChange={setShowPrivate}
-								className="data-[state=checked]:bg-gray-600"
+								className="data-[state=checked]:bg-blue-500"
 							/>
 							<span className="text-sm text-gray-11">Private</span>
 						</label>
