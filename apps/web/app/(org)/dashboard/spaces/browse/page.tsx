@@ -88,7 +88,7 @@ export default function BrowseSpacesPage() {
 
 			const children = childrenByParent.get(parentId) || [];
 			const result: SpaceWithDepth[] = [];
-			for (const child of children.sort((a, b) => a.name.localeCompare(b.name))) {
+			for (const child of children.sort((a, b) => (a.displayOrder - b.displayOrder) || a.name.localeCompare(b.name))) {
 				const hasChildren = spacesWithChildrenSet.has(child.id);
 				const isCollapsed = collapsedSpaces.has(child.id);
 				result.push({ ...child, depth, hasChildren, isShared });
@@ -103,7 +103,7 @@ export default function BrowseSpacesPage() {
 		// SHARED section: Children of primary space directly (without showing "Shared" itself)
 		if (primarySpace) {
 			const directChildren = childrenByParent.get(primarySpace.id) || [];
-			for (const child of directChildren.sort((a, b) => a.name.localeCompare(b.name))) {
+			for (const child of directChildren.sort((a, b) => (a.displayOrder - b.displayOrder) || a.name.localeCompare(b.name))) {
 				const hasChildren = spacesWithChildrenSet.has(child.id);
 				const isCollapsed = collapsedSpaces.has(child.id);
 				result.push({ ...child, depth: 0, hasChildren, isShared: true });
@@ -115,7 +115,7 @@ export default function BrowseSpacesPage() {
 		// PRIVATE section: top-level spaces not under Shared
 		const topLevelPrivate = spacesData.filter(s =>
 			!s.primary && !s.parentSpaceId && !sharedSpaceIds.has(s.id)
-		).sort((a, b) => a.name.localeCompare(b.name));
+		).sort((a, b) => (a.displayOrder - b.displayOrder) || a.name.localeCompare(b.name));
 
 		for (const space of topLevelPrivate) {
 			const hasChildren = spacesWithChildrenSet.has(space.id);
