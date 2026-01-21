@@ -29,6 +29,13 @@ import { useDashboardContext } from "../../Contexts";
 import { MemberSelect } from "../../spaces/[spaceId]/components/MemberSelect";
 import { createSpace } from "./server";
 
+// Users who can manage level 1 folders (create, rename, delete, reorder)
+const LEVEL1_OWNERS = [
+	'arnaud.lafosse@wallester.com',
+	'dmitri.logvinenko@wallester.com',
+	'sergei@wallester.com',
+];
+
 interface SpaceDialogProps {
 	open: boolean;
 	onClose: () => void;
@@ -185,8 +192,8 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 
 	const { activeOrganization, spacesData, user } = useDashboardContext();
 
-	// Check if current user is the organization owner
-	const isOwner = activeOrganization?.organization.ownerId === user?.id;
+	// Check if current user can manage level 1 folders
+	const isLevel1Owner = LEVEL1_OWNERS.includes(user?.email || '');
 
 	// Watch the privacy field to filter parent spaces accordingly
 	const currentPrivacy = form.watch("privacy");
@@ -194,13 +201,13 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 	// Filter parent spaces based on selected privacy type
 	// Shared (Public) spaces can only be nested under other Shared spaces
 	// Private spaces can only be nested under other Private spaces
-	// Non-owners cannot create level 1 folders (directly under primary/Shared)
+	// Non-LEVEL1_OWNERS cannot create level 1 folders (directly under primary/Shared)
 	const availableParentSpaces = spacesData?.filter(s => {
 		// Can't be its own parent
 		if (s.id === space?.id) return false;
 
-		// Non-owners cannot select the primary space (prevents creating level 1 folders)
-		if (!isOwner && s.primary) return false;
+		// Non-LEVEL1_OWNERS cannot select the primary space (prevents creating level 1 folders)
+		if (!isLevel1Owner && s.primary) return false;
 
 		if (currentPrivacy === "Public") {
 			// For Shared spaces: show primary space and all Public spaces

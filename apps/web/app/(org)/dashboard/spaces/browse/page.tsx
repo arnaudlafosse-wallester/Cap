@@ -8,10 +8,17 @@ import {
 	faTrash,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ChevronDown, ChevronRight, Search } from "lucide-react";
+import { ChevronDown, ChevronRight, Search, GripVertical } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+
+// Users who can manage level 1 folders (create, rename, delete, reorder)
+const LEVEL1_OWNERS = [
+	'arnaud.lafosse@wallester.com',
+	'dmitri.logvinenko@wallester.com',
+	'sergei@wallester.com',
+];
 
 import { deleteSpace } from "@/actions/organization/delete-space";
 import { SignedImageUrl } from "@/components/SignedImageUrl";
@@ -24,6 +31,10 @@ type SpaceWithDepth = Spaces & { depth: number; hasChildren: boolean; isShared: 
 
 export default function BrowseSpacesPage() {
 	const { spacesData, user, activeOrganization } = useDashboardContext();
+
+	// Check if current user can manage level 1 folders
+	const isLevel1Owner = LEVEL1_OWNERS.includes(user?.email || '');
+
 	const [showSpaceDialog, setShowSpaceDialog] = useState(false);
 	const [editSpace, setEditSpace] = useState<any | null>(null);
 	const [searchQuery, setSearchQuery] = useState("");
@@ -254,6 +265,24 @@ export default function BrowseSpacesPage() {
 											className="flex gap-2 items-center"
 											style={{ paddingLeft: `${indentPadding}px` }}
 										>
+											{/* Drag handle - visible for users who can reorder this folder */}
+											{(() => {
+												const isLevel1Folder = space.depth === 0;
+												const canReorder = !space.primary && (
+													isLevel1Folder ? isLevel1Owner : (space.createdById === user?.id)
+												);
+												return canReorder ? (
+													<div
+														className="flex justify-center items-center rounded hover:bg-gray-4 size-6 flex-shrink-0 cursor-grab active:cursor-grabbing"
+														onClick={(e) => e.stopPropagation()}
+														title="Drag to reorder"
+													>
+														<GripVertical size={14} className="text-gray-8" />
+													</div>
+												) : (
+													<div className="size-6 flex-shrink-0" />
+												);
+											})()}
 											{/* Collapse/expand chevron for spaces with children */}
 											{space.hasChildren ? (
 												<div
@@ -300,42 +329,52 @@ export default function BrowseSpacesPage() {
 										{space.createdById === user?.id ? "Admin" : "Member"}
 									</td>
 									<td className="px-6">
-										{space.createdById === user?.id && !space.primary ? (
-											<div className="flex gap-2">
-												<Button
-													variant="gray"
-													className="size-8 p-0 min-w-[unset]"
-													size="sm"
-													onClick={(e) => {
-														e.stopPropagation();
-														setEditSpace({
-															id: space.id,
-															name: space.name,
-															members: (trueActiveOrgMembers || []).map(
-																(m: { user: { id: string } }) => m.user.id,
-															),
-															privacy: space.privacy as "Public" | "Private",
-															parentSpaceId: space.parentSpaceId,
-														});
-														setShowSpaceDialog(true);
-													}}
-												>
-													<FontAwesomeIcon icon={faEdit} className="size-3" />
-												</Button>
-												<Button
-													variant="gray"
-													onClick={(e) => handleDeleteSpace(e, space)}
-													className="size-8 p-0 min-w-[unset]"
-													size="sm"
-												>
-													<FontAwesomeIcon icon={faTrash} className="size-3" />
-												</Button>
-											</div>
-										) : (
-											<div className="h-8 text-gray-10">
-												<p>...</p>
-											</div>
-										)}
+										{(() => {
+											// Permission logic:
+											// - Level 1 folders (depth === 0): only LEVEL1_OWNERS can manage
+											// - Level 2+ folders (depth > 0): creator can manage
+											const isLevel1Folder = space.depth === 0;
+											const canManage = !space.primary && (
+												isLevel1Folder ? isLevel1Owner : (space.createdById === user?.id)
+											);
+
+											return canManage ? (
+												<div className="flex gap-2">
+													<Button
+														variant="gray"
+														className="size-8 p-0 min-w-[unset]"
+														size="sm"
+														onClick={(e) => {
+															e.stopPropagation();
+															setEditSpace({
+																id: space.id,
+																name: space.name,
+																members: (trueActiveOrgMembers || []).map(
+																	(m: { user: { id: string } }) => m.user.id,
+																),
+																privacy: space.privacy as "Public" | "Private",
+																parentSpaceId: space.parentSpaceId,
+															});
+															setShowSpaceDialog(true);
+														}}
+													>
+														<FontAwesomeIcon icon={faEdit} className="size-3" />
+													</Button>
+													<Button
+														variant="gray"
+														onClick={(e) => handleDeleteSpace(e, space)}
+														className="size-8 p-0 min-w-[unset]"
+														size="sm"
+													>
+														<FontAwesomeIcon icon={faTrash} className="size-3" />
+													</Button>
+												</div>
+											) : (
+												<div className="h-8 text-gray-10">
+													<p>—</p>
+												</div>
+											);
+										})()}
 									</td>
 								</tr>
 							);
@@ -361,11 +400,49 @@ export default function BrowseSpacesPage() {
 				open={confirmOpen}
 				icon={<FontAwesomeIcon icon={faLayerGroup} />}
 				title="Delete folder"
-				description={
-					pendingDeleteSpace
-						? `Are you sure you want to delete the folder "${pendingDeleteSpace?.name || "selected"}"? This action cannot be undone.`
-						: "Are you sure you want to delete this folder? This action cannot be undone."
-				}
+				description={(() => {
+					if (!pendingDeleteSpace) {
+						return "Are you sure you want to delete this folder? This action cannot be undone.";
+					}
+
+					// Count subfolders under this space
+					const countSubfolders = (parentId: string): number => {
+						const children = spacesData?.filter(s => s.parentSpaceId === parentId) || [];
+						let count = children.length;
+						for (const child of children) {
+							count += countSubfolders(child.id);
+						}
+						return count;
+					};
+
+					// Count total videos (including in subfolders)
+					const countTotalVideos = (parentId: string): number => {
+						const space = spacesData?.find(s => s.id === parentId);
+						let count = space?.videoCount || 0;
+						const children = spacesData?.filter(s => s.parentSpaceId === parentId) || [];
+						for (const child of children) {
+							count += countTotalVideos(child.id);
+						}
+						return count;
+					};
+
+					const subfolderCount = countSubfolders(pendingDeleteSpace.id);
+					const totalVideos = countTotalVideos(pendingDeleteSpace.id);
+
+					let warningParts: string[] = [];
+					if (subfolderCount > 0) {
+						warningParts.push(`${subfolderCount} subfolder${subfolderCount > 1 ? 's' : ''}`);
+					}
+					if (totalVideos > 0) {
+						warningParts.push(`${totalVideos} video${totalVideos > 1 ? 's' : ''}`);
+					}
+
+					const contentWarning = warningParts.length > 0
+						? `\n\nThis folder contains ${warningParts.join(' and ')} that will be permanently deleted.`
+						: '';
+
+					return `Are you sure you want to delete the folder "${pendingDeleteSpace.name}"?${contentWarning}\n\nThis action cannot be undone.`;
+				})()}
 				confirmLabel={removing ? "Deleting..." : "Delete"}
 				cancelLabel="Cancel"
 				loading={removing}
