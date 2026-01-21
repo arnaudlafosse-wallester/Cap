@@ -37,13 +37,12 @@ export type OrganizationSettings = NonNullable<
 
 export type Spaces = Omit<
 	typeof spaces.$inferSelect,
-	"createdAt" | "updatedAt" | "iconUrl" | "displayOrder"
+	"createdAt" | "updatedAt" | "iconUrl"
 > & {
 	memberCount: number;
 	videoCount: number;
 	iconUrl: ImageUpload.ImageUrl | null;
 	parentSpaceId?: string | null;
-	displayOrder?: number; // Optional until migration is applied
 };
 
 export type UserPreferences = (typeof users.$inferSelect)["preferences"];
@@ -149,8 +148,7 @@ export async function getDashboardData(user: typeof userSelectProps) {
 								createdById: spaces.createdById,
 								iconUrl: spaces.iconUrl,
 								parentSpaceId: spaces.parentSpaceId,
-								// displayOrder temporarily removed - migration needs to be applied manually
-								// displayOrder: spaces.displayOrder,
+								displayOrder: spaces.displayOrder,
 								memberCount: sql<number>`(
           SELECT COUNT(*) FROM space_members WHERE space_members.spaceId = spaces.id
         )`.as("memberCount"),
@@ -255,7 +253,7 @@ export async function getDashboardData(user: typeof userSelectProps) {
 						createdById: activeOrgInfo.organization.ownerId,
 						videoCount: orgVideoCount,
 						parentSpaceId: null,
-						// displayOrder: 0, // Temporarily removed
+						displayOrder: 0,
 					} as const;
 				}).pipe(runPromise);
 
