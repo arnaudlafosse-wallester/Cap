@@ -1,2 +1,6 @@
 [build]
 dockerfilePath = "apps/web/Dockerfile"
+builder = "DOCKERFILE"
+
+[deploy]
+startCommand = "HOSTNAME=0.0.0.0 node apps/web/server.js"
