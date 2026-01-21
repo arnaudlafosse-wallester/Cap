@@ -253,6 +253,7 @@ export async function getDashboardData(user: typeof userSelectProps) {
 						createdById: activeOrgInfo.organization.ownerId,
 						videoCount: orgVideoCount,
 						parentSpaceId: null,
+						displayOrder: 0, // Primary space always first
 					} as const;
 				}).pipe(runPromise);
 

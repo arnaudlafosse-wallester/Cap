@@ -10,8 +10,25 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ChevronDown, ChevronRight, Search, GripVertical } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { toast } from "sonner";
+import {
+	DndContext,
+	closestCenter,
+	KeyboardSensor,
+	PointerSensor,
+	useSensor,
+	useSensors,
+	type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+	arrayMove,
+	SortableContext,
+	sortableKeyboardCoordinates,
+	useSortable,
+	verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 // Users who can manage level 1 folders (create, rename, delete, reorder)
 const LEVEL1_OWNERS = [
@@ -21,6 +38,7 @@ const LEVEL1_OWNERS = [
 ];
 
 import { deleteSpace } from "@/actions/organization/delete-space";
+import { reorderSpaces } from "@/actions/organization/reorder-spaces";
 import { SignedImageUrl } from "@/components/SignedImageUrl";
 import { ConfirmationDialog } from "../../_components/ConfirmationDialog";
 import SpaceDialog from "../../_components/Navbar/SpaceDialog";
@@ -28,6 +46,173 @@ import { useDashboardContext } from "../../Contexts";
 import type { Spaces } from "../../dashboard-data";
 
 type SpaceWithDepth = Spaces & { depth: number; hasChildren: boolean; isShared: boolean };
+
+// Sortable table row component for drag & drop
+function SortableTableRow({
+	space,
+	isLevel1Owner,
+	user,
+	collapsedSpaces,
+	toggleSpaceCollapse,
+	setEditSpace,
+	setShowSpaceDialog,
+	handleDeleteSpace,
+	trueActiveOrgMembers,
+	router,
+}: {
+	space: SpaceWithDepth;
+	isLevel1Owner: boolean;
+	user: { id: string; email?: string } | null;
+	collapsedSpaces: Set<string>;
+	toggleSpaceCollapse: (id: string) => void;
+	setEditSpace: (space: any) => void;
+	setShowSpaceDialog: (show: boolean) => void;
+	handleDeleteSpace: (e: React.MouseEvent, space: Spaces) => void;
+	trueActiveOrgMembers: any[] | undefined;
+	router: ReturnType<typeof useRouter>;
+}) {
+	const isLevel1Folder = space.depth === 0;
+	const canReorder = !space.primary && (
+		isLevel1Folder ? isLevel1Owner : (space.createdById === user?.id)
+	);
+
+	const {
+		attributes,
+		listeners,
+		setNodeRef,
+		transform,
+		transition,
+		isDragging,
+	} = useSortable({
+		id: space.id,
+		disabled: !canReorder,
+	});
+
+	const style = {
+		transform: CSS.Transform.toString(transform),
+		transition,
+		opacity: isDragging ? 0.5 : 1,
+		zIndex: isDragging ? 1 : 0,
+	};
+
+	const indentPadding = space.depth * 24;
+	const isCollapsed = collapsedSpaces.has(space.id);
+	const canManage = !space.primary && (
+		isLevel1Folder ? isLevel1Owner : (space.createdById === user?.id)
+	);
+
+	return (
+		<tr
+			ref={setNodeRef}
+			style={style}
+			onClick={() => router.push(`/dashboard/spaces/${space.id}`)}
+			className={`border-t transition-colors cursor-pointer hover:bg-gray-2 border-gray-3 ${isDragging ? 'bg-gray-3' : ''}`}
+		>
+			<td className="px-6 py-4">
+				<div
+					className="flex gap-2 items-center"
+					style={{ paddingLeft: `${indentPadding}px` }}
+				>
+					{/* Drag handle - visible for users who can reorder this folder */}
+					{canReorder ? (
+						<div
+							{...attributes}
+							{...listeners}
+							className="flex justify-center items-center rounded hover:bg-gray-4 size-6 flex-shrink-0 cursor-grab active:cursor-grabbing"
+							onClick={(e) => e.stopPropagation()}
+							title="Drag to reorder"
+						>
+							<GripVertical size={14} className="text-gray-8" />
+						</div>
+					) : (
+						<div className="size-6 flex-shrink-0" />
+					)}
+					{/* Collapse/expand chevron for spaces with children */}
+					{space.hasChildren ? (
+						<div
+							onClick={(e) => {
+								e.stopPropagation();
+								toggleSpaceCollapse(space.id);
+							}}
+							className="flex justify-center items-center rounded hover:bg-gray-4 size-6 flex-shrink-0 cursor-pointer"
+						>
+							{isCollapsed ? (
+								<ChevronRight size={16} className="text-gray-10" />
+							) : (
+								<ChevronDown size={16} className="text-gray-10" />
+							)}
+						</div>
+					) : (
+						<div className="size-6 flex-shrink-0" />
+					)}
+					<SignedImageUrl
+						image={space.iconUrl}
+						name={space.name}
+						className="relative flex-shrink-0 size-7"
+						letterClass="text-sm"
+					/>
+					<span className="text-sm font-semibold text-gray-12">
+						{space.name}
+					</span>
+				</div>
+			</td>
+			<td className="px-6 py-4">
+				<span className={`text-xs px-2 py-1 rounded-full ${
+					space.isShared
+						? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+						: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
+				}`}>
+					{space.isShared ? "Shared" : "Private"}
+				</span>
+			</td>
+			<td className="px-6 py-4 text-sm text-gray-12">
+				{space.videoCount} video
+				{space.videoCount === 1 ? "" : "s"}
+			</td>
+			<td className="px-6 py-4 text-sm text-gray-12">
+				{space.createdById === user?.id ? "Admin" : "Member"}
+			</td>
+			<td className="px-6">
+				{canManage ? (
+					<div className="flex gap-2">
+						<Button
+							variant="gray"
+							className="size-8 p-0 min-w-[unset]"
+							size="sm"
+							onClick={(e) => {
+								e.stopPropagation();
+								setEditSpace({
+									id: space.id,
+									name: space.name,
+									members: (trueActiveOrgMembers || []).map(
+										(m: { user: { id: string } }) => m.user.id,
+									),
+									privacy: space.privacy as "Public" | "Private",
+									parentSpaceId: space.parentSpaceId,
+								});
+								setShowSpaceDialog(true);
+							}}
+						>
+							<FontAwesomeIcon icon={faEdit} className="size-3" />
+						</Button>
+						<Button
+							variant="gray"
+							onClick={(e) => handleDeleteSpace(e, space)}
+							className="size-8 p-0 min-w-[unset]"
+							size="sm"
+						>
+							<FontAwesomeIcon icon={faTrash} className="size-3" />
+						</Button>
+					</div>
+				) : (
+					<div className="h-8 text-gray-10">
+						<p>—</p>
+					</div>
+				)}
+			</td>
+		</tr>
+	);
+}
 
 export default function BrowseSpacesPage() {
 	const { spacesData, user, activeOrganization } = useDashboardContext();
@@ -53,6 +238,21 @@ export default function BrowseSpacesPage() {
 			return next;
 		});
 	};
+
+	// DnD sensors for drag and drop reordering
+	const sensors = useSensors(
+		useSensor(PointerSensor, {
+			activationConstraint: {
+				distance: 8, // Require 8px movement before drag starts
+			},
+		}),
+		useSensor(KeyboardSensor, {
+			coordinateGetter: sortableKeyboardCoordinates,
+		})
+	);
+
+	// Get the primary space ID (organizationId) for level 1 folders
+	const primarySpaceId = spacesData?.find(s => s.primary)?.id;
 
 	const trueActiveOrgMembers = activeOrganization?.members.filter(
 		(m) => m.user?.id !== user?.id,
@@ -180,6 +380,64 @@ export default function BrowseSpacesPage() {
 		}
 	};
 
+	// Handle drag end for reordering folders
+	const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+		const { active, over } = event;
+
+		if (!over || active.id === over.id || !filteredSpaces) {
+			return;
+		}
+
+		const activeSpace = filteredSpaces.find(s => s.id === active.id);
+		const overSpace = filteredSpaces.find(s => s.id === over.id);
+
+		if (!activeSpace || !overSpace) {
+			return;
+		}
+
+		// Only allow reordering within the same depth and same parent
+		if (activeSpace.depth !== overSpace.depth || activeSpace.parentSpaceId !== overSpace.parentSpaceId) {
+			toast.error("You can only reorder folders at the same level");
+			return;
+		}
+
+		// Get siblings at the same level with the same parent
+		const parentId = activeSpace.parentSpaceId;
+		const siblings = filteredSpaces.filter(
+			s => s.depth === activeSpace.depth && s.parentSpaceId === parentId
+		);
+
+		const oldIndex = siblings.findIndex(s => s.id === active.id);
+		const newIndex = siblings.findIndex(s => s.id === over.id);
+
+		if (oldIndex === -1 || newIndex === -1) {
+			return;
+		}
+
+		// Reorder the siblings
+		const reorderedSiblings = arrayMove(siblings, oldIndex, newIndex);
+		const newOrderedIds = reorderedSiblings.map(s => s.id);
+
+		// Call server action to persist the order
+		try {
+			const result = await reorderSpaces(newOrderedIds, parentId);
+			if (result.success) {
+				toast.success("Folder order updated");
+				router.refresh();
+			} else {
+				toast.error(result.error || "Failed to reorder folders");
+			}
+		} catch (error) {
+			console.error("Error reordering spaces:", error);
+			toast.error("Failed to reorder folders");
+		}
+	}, [filteredSpaces, router]);
+
+	// Get IDs for sortable context - only include items that can be reordered
+	const sortableIds = useMemo(() => {
+		return filteredSpaces?.map(s => s.id) || [];
+	}, [filteredSpaces]);
+
 	return (
 		<>
 			<div className="flex flex-wrap gap-3 justify-between items-start w-full">
@@ -236,150 +494,48 @@ export default function BrowseSpacesPage() {
 							<th className="px-6 py-3 font-medium">Actions</th>
 						</tr>
 					</thead>
-					<tbody>
-						{!spacesData && (
-							<tr>
-								<td colSpan={5} className="px-6 py-6 text-center text-gray-8">
-									Loading Spaces…
-								</td>
-							</tr>
-						)}
-						{spacesData && filteredSpaces && filteredSpaces.length === 0 && (
-							<tr>
-								<td colSpan={5} className="px-6 py-6 text-center text-gray-8">
-									No folders found.
-								</td>
-							</tr>
-						)}
-						{filteredSpaces?.map((space: SpaceWithDepth) => {
-							const indentPadding = space.depth * 24; // 24px per level
-							const isCollapsed = collapsedSpaces.has(space.id);
-							return (
-								<tr
-									key={space.id}
-									onClick={() => router.push(`/dashboard/spaces/${space.id}`)}
-									className="border-t transition-colors cursor-pointer hover:bg-gray-2 border-gray-3"
-								>
-									<td className="px-6 py-4">
-										<div
-											className="flex gap-2 items-center"
-											style={{ paddingLeft: `${indentPadding}px` }}
-										>
-											{/* Drag handle - visible for users who can reorder this folder */}
-											{(() => {
-												const isLevel1Folder = space.depth === 0;
-												const canReorder = !space.primary && (
-													isLevel1Folder ? isLevel1Owner : (space.createdById === user?.id)
-												);
-												return canReorder ? (
-													<div
-														className="flex justify-center items-center rounded hover:bg-gray-4 size-6 flex-shrink-0 cursor-grab active:cursor-grabbing"
-														onClick={(e) => e.stopPropagation()}
-														title="Drag to reorder"
-													>
-														<GripVertical size={14} className="text-gray-8" />
-													</div>
-												) : (
-													<div className="size-6 flex-shrink-0" />
-												);
-											})()}
-											{/* Collapse/expand chevron for spaces with children */}
-											{space.hasChildren ? (
-												<div
-													onClick={(e) => {
-														e.stopPropagation();
-														toggleSpaceCollapse(space.id);
-													}}
-													className="flex justify-center items-center rounded hover:bg-gray-4 size-6 flex-shrink-0 cursor-pointer"
-												>
-													{isCollapsed ? (
-														<ChevronRight size={16} className="text-gray-10" />
-													) : (
-														<ChevronDown size={16} className="text-gray-10" />
-													)}
-												</div>
-											) : (
-												<div className="size-6 flex-shrink-0" />
-											)}
-											<SignedImageUrl
-												image={space.iconUrl}
-												name={space.name}
-												className="relative flex-shrink-0 size-7"
-												letterClass="text-sm"
-											/>
-											<span className="text-sm font-semibold text-gray-12">
-												{space.name}
-											</span>
-										</div>
-									</td>
-									<td className="px-6 py-4">
-										<span className={`text-xs px-2 py-1 rounded-full ${
-											space.isShared
-												? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-												: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
-										}`}>
-											{space.isShared ? "Shared" : "Private"}
-										</span>
-									</td>
-									<td className="px-6 py-4 text-sm text-gray-12">
-										{space.videoCount} video
-										{space.videoCount === 1 ? "" : "s"}
-									</td>
-									<td className="px-6 py-4 text-sm text-gray-12">
-										{space.createdById === user?.id ? "Admin" : "Member"}
-									</td>
-									<td className="px-6">
-										{(() => {
-											// Permission logic:
-											// - Level 1 folders (depth === 0): only LEVEL1_OWNERS can manage
-											// - Level 2+ folders (depth > 0): creator can manage
-											const isLevel1Folder = space.depth === 0;
-											const canManage = !space.primary && (
-												isLevel1Folder ? isLevel1Owner : (space.createdById === user?.id)
-											);
-
-											return canManage ? (
-												<div className="flex gap-2">
-													<Button
-														variant="gray"
-														className="size-8 p-0 min-w-[unset]"
-														size="sm"
-														onClick={(e) => {
-															e.stopPropagation();
-															setEditSpace({
-																id: space.id,
-																name: space.name,
-																members: (trueActiveOrgMembers || []).map(
-																	(m: { user: { id: string } }) => m.user.id,
-																),
-																privacy: space.privacy as "Public" | "Private",
-																parentSpaceId: space.parentSpaceId,
-															});
-															setShowSpaceDialog(true);
-														}}
-													>
-														<FontAwesomeIcon icon={faEdit} className="size-3" />
-													</Button>
-													<Button
-														variant="gray"
-														onClick={(e) => handleDeleteSpace(e, space)}
-														className="size-8 p-0 min-w-[unset]"
-														size="sm"
-													>
-														<FontAwesomeIcon icon={faTrash} className="size-3" />
-													</Button>
-												</div>
-											) : (
-												<div className="h-8 text-gray-10">
-													<p>—</p>
-												</div>
-											);
-										})()}
-									</td>
-								</tr>
-							);
-						})}
-					</tbody>
+					<DndContext
+						sensors={sensors}
+						collisionDetection={closestCenter}
+						onDragEnd={handleDragEnd}
+					>
+						<SortableContext
+							items={sortableIds}
+							strategy={verticalListSortingStrategy}
+						>
+							<tbody>
+								{!spacesData && (
+									<tr>
+										<td colSpan={5} className="px-6 py-6 text-center text-gray-8">
+											Loading Spaces…
+										</td>
+									</tr>
+								)}
+								{spacesData && filteredSpaces && filteredSpaces.length === 0 && (
+									<tr>
+										<td colSpan={5} className="px-6 py-6 text-center text-gray-8">
+											No folders found.
+										</td>
+									</tr>
+								)}
+								{filteredSpaces?.map((space: SpaceWithDepth) => (
+									<SortableTableRow
+										key={space.id}
+										space={space}
+										isLevel1Owner={isLevel1Owner}
+										user={user}
+										collapsedSpaces={collapsedSpaces}
+										toggleSpaceCollapse={toggleSpaceCollapse}
+										setEditSpace={setEditSpace}
+										setShowSpaceDialog={setShowSpaceDialog}
+										handleDeleteSpace={handleDeleteSpace}
+										trueActiveOrgMembers={trueActiveOrgMembers}
+										router={router}
+									/>
+								))}
+							</tbody>
+						</SortableContext>
+					</DndContext>
 				</table>
 			</div>
 			<SpaceDialog
