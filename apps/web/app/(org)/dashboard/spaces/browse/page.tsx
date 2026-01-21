@@ -27,7 +27,7 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ChevronDown, ChevronRight, GripVertical, Search } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 // Users who can manage level 1 folders (create, rename, delete, reorder)
@@ -232,6 +232,17 @@ export default function BrowseSpacesPage() {
 	const [collapsedSpaces, setCollapsedSpaces] = useState<Set<string>>(
 		new Set(),
 	);
+	const [displayOrderOverrides, setDisplayOrderOverrides] = useState<
+		Map<string, number>
+	>(new Map());
+
+	const prevSpacesDataRef = useRef(spacesData);
+	useEffect(() => {
+		if (spacesData !== prevSpacesDataRef.current) {
+			prevSpacesDataRef.current = spacesData;
+			setDisplayOrderOverrides(new Map());
+		}
+	}, [spacesData]);
 
 	const toggleSpaceCollapse = (spaceId: string) => {
 		setCollapsedSpaces((prev) => {
@@ -268,6 +279,9 @@ export default function BrowseSpacesPage() {
 	const hierarchicalSpaces: SpaceWithDepth[] = useMemo(() => {
 		if (!spacesData) return [];
 
+		const getDisplayOrder = (space: Spaces) =>
+			displayOrderOverrides.get(space.id) ?? space.displayOrder ?? 0;
+
 		// Build children map and track which spaces have children
 		const childrenByParent = new Map<string, Spaces[]>();
 		const spacesWithChildrenSet = new Set<string>();
@@ -301,7 +315,7 @@ export default function BrowseSpacesPage() {
 			const result: SpaceWithDepth[] = [];
 			for (const child of children.sort(
 				(a, b) =>
-					(a.displayOrder ?? 0) - (b.displayOrder ?? 0) ||
+					getDisplayOrder(a) - getDisplayOrder(b) ||
 					a.name.localeCompare(b.name),
 			)) {
 				const hasChildren = spacesWithChildrenSet.has(child.id);
@@ -320,7 +334,7 @@ export default function BrowseSpacesPage() {
 			const directChildren = childrenByParent.get(primarySpace.id) || [];
 			for (const child of directChildren.sort(
 				(a, b) =>
-					(a.displayOrder ?? 0) - (b.displayOrder ?? 0) ||
+					getDisplayOrder(a) - getDisplayOrder(b) ||
 					a.name.localeCompare(b.name),
 			)) {
 				const hasChildren = spacesWithChildrenSet.has(child.id);
@@ -338,7 +352,7 @@ export default function BrowseSpacesPage() {
 			)
 			.sort(
 				(a, b) =>
-					(a.displayOrder ?? 0) - (b.displayOrder ?? 0) ||
+					getDisplayOrder(a) - getDisplayOrder(b) ||
 					a.name.localeCompare(b.name),
 			);
 
@@ -350,7 +364,7 @@ export default function BrowseSpacesPage() {
 		}
 
 		return result;
-	}, [spacesData, collapsedSpaces]);
+	}, [spacesData, collapsedSpaces, displayOrderOverrides]);
 
 	// Apply search and type filters
 	const filteredSpaces = useMemo(() => {
@@ -450,6 +464,13 @@ export default function BrowseSpacesPage() {
 			const reorderedSiblings = arrayMove(siblings, oldIndex, newIndex);
 			const newOrderedIds = reorderedSiblings.map((s) => s.id);
 
+			// Optimistic update: immediately update displayOrder in local state
+			const newOverrides = new Map(displayOrderOverrides);
+			reorderedSiblings.forEach((s, index) => {
+				newOverrides.set(s.id, index + 1);
+			});
+			setDisplayOrderOverrides(newOverrides);
+
 			// Call server action to persist the order
 			try {
 				const result = await reorderSpaces(newOrderedIds, parentId);
@@ -458,13 +479,15 @@ export default function BrowseSpacesPage() {
 					router.refresh();
 				} else {
 					toast.error(result.error || "Failed to reorder folders");
+					setDisplayOrderOverrides(new Map());
 				}
 			} catch (error) {
 				console.error("Error reordering spaces:", error);
 				toast.error("Failed to reorder folders");
+				setDisplayOrderOverrides(new Map());
 			}
 		},
-		[filteredSpaces, router],
+		[filteredSpaces, router, displayOrderOverrides],
 	);
 
 	// Get IDs for sortable context - only include items that can be reordered
@@ -517,26 +540,27 @@ export default function BrowseSpacesPage() {
 					/>
 				</div>
 			</div>
-			<div className="overflow-x-auto rounded-xl border border-gray-3 mt-6">
-				<table className="min-w-full bg-gray-1">
-					<thead>
-						<tr className="text-sm text-left text-gray-10">
-							<th className="px-6 py-3 font-medium">Name</th>
-							<th className="px-6 py-3 font-medium">Type</th>
-							<th className="px-6 py-3 font-medium">Videos</th>
-							<th className="px-6 py-3 font-medium">Role</th>
-							<th className="px-6 py-3 font-medium">Actions</th>
-						</tr>
-					</thead>
-					<DndContext
-						sensors={sensors}
-						collisionDetection={closestCenter}
-						onDragEnd={handleDragEnd}
-					>
-						<SortableContext
-							items={sortableIds}
-							strategy={verticalListSortingStrategy}
-						>
+			<DndContext
+				id="browse-folders-dnd"
+				sensors={sensors}
+				collisionDetection={closestCenter}
+				onDragEnd={handleDragEnd}
+			>
+				<SortableContext
+					items={sortableIds}
+					strategy={verticalListSortingStrategy}
+				>
+					<div className="overflow-x-auto rounded-xl border border-gray-3 mt-6">
+						<table className="min-w-full bg-gray-1">
+							<thead>
+								<tr className="text-sm text-left text-gray-10">
+									<th className="px-6 py-3 font-medium">Name</th>
+									<th className="px-6 py-3 font-medium">Type</th>
+									<th className="px-6 py-3 font-medium">Videos</th>
+									<th className="px-6 py-3 font-medium">Role</th>
+									<th className="px-6 py-3 font-medium">Actions</th>
+								</tr>
+							</thead>
 							<tbody>
 								{!spacesData && (
 									<tr>
@@ -576,10 +600,10 @@ export default function BrowseSpacesPage() {
 									/>
 								))}
 							</tbody>
-						</SortableContext>
-					</DndContext>
-				</table>
-			</div>
+						</table>
+					</div>
+				</SortableContext>
+			</DndContext>
 			<SpaceDialog
 				open={showSpaceDialog}
 				onClose={() => {
