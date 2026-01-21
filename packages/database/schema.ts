@@ -655,6 +655,7 @@ export const spaces = mysqlTable(
 		privacy: varchar("privacy", { length: 255, enum: ["Public", "Private"] })
 			.notNull()
 			.default("Private"),
+		displayOrder: int("displayOrder").notNull().default(0),
 	},
 	(table) => ({
 		organizationIdIndex: index("organization_id_idx").on(table.organizationId),
