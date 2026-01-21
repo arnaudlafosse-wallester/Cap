@@ -151,10 +151,10 @@ export async function getDashboardData(user: typeof userSelectProps) {
 								displayOrder: spaces.displayOrder,
 								memberCount: sql<number>`(
           SELECT COUNT(*) FROM space_members WHERE space_members.spaceId = spaces.id
-        )`,
+        )`.as("memberCount"),
 								videoCount: sql<number>`(
           SELECT COUNT(*) FROM space_videos WHERE space_videos.spaceId = spaces.id
-        )`,
+        )`.as("videoCount"),
 							})
 							.from(spaces)
 							.where(
