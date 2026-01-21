@@ -335,10 +335,7 @@ export const SharingDialog: React.FC<SharingDialogProps> = ({
 										onCheckedChange={setPublicToggle}
 									/>
 								</div>
-								<PublicLinkSection
-									isPublic={publicToggle}
-									capId={capId}
-								/>
+								<PublicLinkSection isPublic={publicToggle} capId={capId} />
 							</div>
 
 							<div className="relative mb-3">

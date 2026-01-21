@@ -26,8 +26,7 @@ export const createWebSiteSchema = () => ({
 	"@id": "https://wallester-record.com/#website",
 	url: "https://wallester-record.com",
 	name: "Wallester Record",
-	description:
-		"Beautiful screen recordings for Wallester internal use.",
+	description: "Beautiful screen recordings for Wallester internal use.",
 	publisher: {
 		"@id": "https://wallester-record.com/#organization",
 	},

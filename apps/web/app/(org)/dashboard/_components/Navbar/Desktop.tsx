@@ -48,7 +48,10 @@ export const DesktopNav = () => {
 		>
 			<div className="flex flex-col mx-auto w-full h-full">
 				<div className="flex justify-between items-center px-3 pt-5 mb-3.5 w-full truncate min-h-8">
-					<Link href="/dashboard" className={clsx(sidebarCollapsed ? "mx-auto" : "")}>
+					<Link
+						href="/dashboard"
+						className={clsx(sidebarCollapsed ? "mx-auto" : "")}
+					>
 						<Image
 							src="/wallester-logo.svg"
 							alt="Wallester"
@@ -56,9 +59,15 @@ export const DesktopNav = () => {
 							height={sidebarCollapsed ? 28 : 28}
 							className={clsx(
 								"transition-all duration-200",
-								sidebarCollapsed ? "object-cover object-left w-[40px]" : "w-[140px]",
+								sidebarCollapsed
+									? "object-cover object-left w-[40px]"
+									: "w-[140px]",
 							)}
-							style={sidebarCollapsed ? { clipPath: "inset(0 100px 0 0)" } : undefined}
+							style={
+								sidebarCollapsed
+									? { clipPath: "inset(0 100px 0 0)" }
+									: undefined
+							}
 							priority
 						/>
 					</Link>

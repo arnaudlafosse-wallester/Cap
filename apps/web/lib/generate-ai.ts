@@ -103,7 +103,9 @@ export async function startAiGeneration(
 			})
 			.where(eq(videos.id, videoId));
 
-		console.log(`[generateAi] Starting direct AI generation for video ${videoId}`);
+		console.log(
+			`[generateAi] Starting direct AI generation for video ${videoId}`,
+		);
 
 		// Fetch transcript
 		const bucketId = (bucket?.id ?? null) as S3Bucket.S3BucketId | null;
@@ -166,7 +168,10 @@ export async function startAiGeneration(
 			message: "AI generation completed successfully",
 		};
 	} catch (error) {
-		console.error(`[generateAi] Error generating AI for video ${videoId}:`, error);
+		console.error(
+			`[generateAi] Error generating AI for video ${videoId}:`,
+			error,
+		);
 
 		await db()
 			.update(videos)

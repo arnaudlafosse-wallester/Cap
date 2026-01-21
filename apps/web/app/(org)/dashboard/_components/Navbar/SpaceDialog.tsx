@@ -31,9 +31,9 @@ import { createSpace } from "./server";
 
 // Users who can manage level 1 folders (create, rename, delete, reorder)
 const LEVEL1_OWNERS = [
-	'arnaud.lafosse@wallester.com',
-	'dmitri.logvinenko@wallester.com',
-	'sergei@wallester.com',
+	"arnaud.lafosse@wallester.com",
+	"dmitri.logvinenko@wallester.com",
+	"sergei@wallester.com",
 ];
 
 interface SpaceDialogProps {
@@ -193,7 +193,7 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 	const { activeOrganization, spacesData, user } = useDashboardContext();
 
 	// Check if current user can manage level 1 folders
-	const isLevel1Owner = LEVEL1_OWNERS.includes(user?.email || '');
+	const isLevel1Owner = LEVEL1_OWNERS.includes(user?.email || "");
 
 	// Watch the privacy field to filter parent spaces accordingly
 	const currentPrivacy = form.watch("privacy");
@@ -202,21 +202,22 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 	// Shared (Public) spaces can only be nested under other Shared spaces
 	// Private spaces can only be nested under other Private spaces
 	// Non-LEVEL1_OWNERS cannot create level 1 folders (directly under primary/Shared)
-	const availableParentSpaces = spacesData?.filter(s => {
-		// Can't be its own parent
-		if (s.id === space?.id) return false;
+	const availableParentSpaces =
+		spacesData?.filter((s) => {
+			// Can't be its own parent
+			if (s.id === space?.id) return false;
 
-		// Non-LEVEL1_OWNERS cannot select the primary space (prevents creating level 1 folders)
-		if (!isLevel1Owner && s.primary) return false;
+			// Non-LEVEL1_OWNERS cannot select the primary space (prevents creating level 1 folders)
+			if (!isLevel1Owner && s.primary) return false;
 
-		if (currentPrivacy === "Public") {
-			// For Shared spaces: show primary space and all Public spaces
-			return s.primary || s.privacy === "Public";
-		} else {
-			// For Private spaces: show only Private spaces (excluding primary)
-			return !s.primary && s.privacy === "Private";
-		}
-	}) || [];
+			if (currentPrivacy === "Public") {
+				// For Shared spaces: show primary space and all Public spaces
+				return s.primary || s.privacy === "Public";
+			} else {
+				// For Private spaces: show only Private spaces (excluding primary)
+				return !s.primary && s.privacy === "Private";
+			}
+		}) || [];
 
 	// Build hierarchical list of parent spaces with depth for indentation
 	const buildHierarchicalOptions = () => {
@@ -230,7 +231,10 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 		}
 
 		// Build flat list with depth
-		const result: { space: (typeof availableParentSpaces)[0]; depth: number }[] = [];
+		const result: {
+			space: (typeof availableParentSpaces)[0];
+			depth: number;
+		}[] = [];
 
 		const addChildren = (parentId: string | null, depth: number) => {
 			const children = childrenMap.get(parentId) || [];
@@ -241,7 +245,7 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 		};
 
 		// For Shared: start with primary space (organizationId)
-		const primary = availableParentSpaces.find(s => s.primary);
+		const primary = availableParentSpaces.find((s) => s.primary);
 		if (primary) {
 			result.push({ space: primary, depth: 0 });
 			addChildren(primary.id, 1);
@@ -255,7 +259,7 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 
 	// Auto-set parentSpaceId when privacy changes
 	useEffect(() => {
-		const primarySpace = spacesData?.find(s => s.primary);
+		const primarySpace = spacesData?.find((s) => s.primary);
 		const currentParentId = form.getValues("parentSpaceId");
 
 		if (currentPrivacy === "Public") {
@@ -264,8 +268,12 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 				form.setValue("parentSpaceId", primarySpace.id);
 			} else if (currentParentId) {
 				// Validate existing parent is still valid for Public
-				const parentSpace = spacesData?.find(s => s.id === currentParentId);
-				if (parentSpace && !parentSpace.primary && parentSpace.privacy !== "Public") {
+				const parentSpace = spacesData?.find((s) => s.id === currentParentId);
+				if (
+					parentSpace &&
+					!parentSpace.primary &&
+					parentSpace.privacy !== "Public"
+				) {
 					form.setValue("parentSpaceId", primarySpace?.id || null);
 				}
 			}
@@ -275,8 +283,11 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 				form.setValue("parentSpaceId", null);
 			} else if (currentParentId) {
 				// Validate existing parent is still valid for Private
-				const parentSpace = spacesData?.find(s => s.id === currentParentId);
-				if (parentSpace && (parentSpace.primary || parentSpace.privacy !== "Private")) {
+				const parentSpace = spacesData?.find((s) => s.id === currentParentId);
+				if (
+					parentSpace &&
+					(parentSpace.primary || parentSpace.privacy !== "Private")
+				) {
 					form.setValue("parentSpaceId", null);
 				}
 			}
@@ -299,7 +310,7 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 						// Auto-set parentSpaceId for Shared folders without explicit parent
 						let parentSpaceIdToSave = values.parentSpaceId;
 						if (values.privacy === "Public" && !values.parentSpaceId) {
-							const primarySpace = spacesData?.find(s => s.primary);
+							const primarySpace = spacesData?.find((s) => s.primary);
 							if (primarySpace) {
 								parentSpaceIdToSave = primarySpace.id;
 							}
@@ -376,8 +387,10 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 							<div className="flex items-center justify-between p-3 rounded-lg bg-gray-3">
 								<div className="space-y-0.5">
 									<Label htmlFor="privacy">
-									{field.value === "Public" ? "Shared Folder" : "Private Folder"}
-								</Label>
+										{field.value === "Public"
+											? "Shared Folder"
+											: "Private Folder"}
+									</Label>
 									<CardDescription className="text-xs">
 										{field.value === "Public"
 											? "All organization members can see this folder"
@@ -422,7 +435,9 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 											)}
 											{buildHierarchicalOptions().map(({ space, depth }) => (
 												<option key={space.id} value={space.id}>
-													{'\u00A0'.repeat(depth * 4)}{depth > 0 ? '└─ ' : ''}{space.name}
+													{"\u00A0".repeat(depth * 4)}
+													{depth > 0 ? "└─ " : ""}
+													{space.name}
 												</option>
 											))}
 										</select>
@@ -452,7 +467,9 @@ export const NewSpaceForm: React.FC<NewSpaceFormProps> = (props) => {
 												showEmptyIfNoMembers={false}
 												canManageMembers={true}
 												selected={(activeOrganization?.members ?? [])
-													.filter((m) => (field.value ?? []).includes(m.user.id))
+													.filter((m) =>
+														(field.value ?? []).includes(m.user.id),
+													)
 													.map((m) => ({
 														value: m.user.id,
 														label: m.user.name || m.user.email,

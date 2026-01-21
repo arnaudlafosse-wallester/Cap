@@ -72,6 +72,15 @@ cd apps/desktop && pnpm dev      # Start SolidStart + Tauri dev
 pnpm tauri:build                 # Build desktop app (release)
 ```
 
+### Local Development URLs
+When running `cd apps/web && pnpm dev`, the web app is available at:
+- **Dashboard**: http://localhost:3000/dashboard
+- **Browse Folders**: http://localhost:3000/dashboard/spaces/browse
+- **Analytics**: http://localhost:3000/dashboard/analytics
+- **Organization Settings**: http://localhost:3000/dashboard/settings
+
+**Note**: Requires `.env.local` file in `apps/web/` with proper environment variables (DATABASE_URL, NEXTAUTH_SECRET, etc.)
+
 ## Development Environment Guidelines
 
 ### Server Management

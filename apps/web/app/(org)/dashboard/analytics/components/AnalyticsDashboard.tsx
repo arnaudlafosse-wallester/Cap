@@ -208,8 +208,8 @@ export function AnalyticsDashboard() {
 					capId={capId}
 				/>
 				{tinybirdEnabled && (
-				<OtherStats data={otherStats} isLoading={query.isLoading} />
-			)}
+					<OtherStats data={otherStats} isLoading={query.isLoading} />
+				)}
 			</div>
 
 			<AnimatePresence>

@@ -1,6 +1,6 @@
 import { db } from "@cap/database";
 import { nanoId } from "@cap/database/helpers";
-import { videoViews, type VideoViewId } from "@cap/database/schema";
+import { type VideoViewId, videoViews } from "@cap/database/schema";
 import { serverEnv } from "@cap/env";
 import { provideOptionalAuth, Tinybird } from "@cap/web-backend";
 import type { Organisation, User, Video } from "@cap/web-domain";
@@ -68,8 +68,7 @@ export async function POST(request: NextRequest) {
 	const pathname = body.pathname ?? `/s/${body.videoId}`;
 
 	// Check if Tinybird is configured
-	const useTinybird =
-		serverEnv().TINYBIRD_TOKEN && serverEnv().TINYBIRD_HOST;
+	const useTinybird = serverEnv().TINYBIRD_TOKEN && serverEnv().TINYBIRD_HOST;
 
 	await runPromise(
 		Effect.gen(function* () {
@@ -115,19 +114,21 @@ export async function POST(request: NextRequest) {
 			} else if (body.orgId) {
 				// Use local database for self-hosted instances
 				yield* Effect.tryPromise(() =>
-					db().insert(videoViews).values({
-						id: nanoId() as VideoViewId,
-						videoId: body.videoId as Video.VideoId,
-						orgId: body.orgId as Organisation.OrganisationId,
-						viewerId: (userId as User.UserId) || null,
-						sessionId,
-						country: country || null,
-						region: region || null,
-						city: city || null,
-						browser: browserName || null,
-						device: deviceType || null,
-						os: osName || null,
-					}),
+					db()
+						.insert(videoViews)
+						.values({
+							id: nanoId() as VideoViewId,
+							videoId: body.videoId as Video.VideoId,
+							orgId: body.orgId as Organisation.OrganisationId,
+							viewerId: (userId as User.UserId) || null,
+							sessionId,
+							country: country || null,
+							region: region || null,
+							city: city || null,
+							browser: browserName || null,
+							device: deviceType || null,
+							os: osName || null,
+						}),
 				);
 			}
 		}).pipe(provideOptionalAuth),

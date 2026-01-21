@@ -16,8 +16,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useDashboardContext } from "../../Contexts";
-import type { VideoLabel } from "./VideoLabelsDisplay";
 import { VideoLabelBadge } from "./VideoLabelBadge";
+import type { VideoLabel } from "./VideoLabelsDisplay";
 
 interface LabelSelectorDialogProps {
 	open: boolean;

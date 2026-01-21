@@ -53,7 +53,13 @@ export async function GET(request: NextRequest) {
 	);
 
 	try {
-		const data = await getOrgAnalyticsData(orgId, range, spaceId, capId, filterByUserId);
+		const data = await getOrgAnalyticsData(
+			orgId,
+			range,
+			spaceId,
+			capId,
+			filterByUserId,
+		);
 		return Response.json({ data, isOwner, tinybirdEnabled });
 	} catch (error) {
 		console.error("Failed to load analytics", error);

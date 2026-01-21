@@ -7,6 +7,7 @@
 
 import { db } from "@cap/database";
 import { getCurrentUser } from "@cap/database/auth/session";
+import { nanoId } from "@cap/database/helpers";
 import {
 	videoLabelAssignments,
 	videoLabels,
@@ -14,7 +15,6 @@ import {
 } from "@cap/database/schema";
 import type { Video } from "@cap/web-domain";
 import { and, eq, inArray, notInArray } from "drizzle-orm";
-import { nanoId } from "@cap/database/helpers";
 import type { NextRequest } from "next/server";
 import { updateVideoExpiration } from "@/lib/classify-video-labels";
 
@@ -50,10 +50,7 @@ export async function GET(
 				label: videoLabels,
 			})
 			.from(videoLabelAssignments)
-			.innerJoin(
-				videoLabels,
-				eq(videoLabelAssignments.labelId, videoLabels.id),
-			)
+			.innerJoin(videoLabels, eq(videoLabelAssignments.labelId, videoLabels.id))
 			.where(eq(videoLabelAssignments.videoId, videoId as Video.VideoId));
 
 		const labels = assignments.map((a) => ({
@@ -137,7 +134,9 @@ export async function POST(
 		const currentLabelIds = currentAssignments.map((a) => a.labelId);
 
 		// Determine labels to add and remove
-		const labelsToAdd = labelIds.filter((id) => !currentLabelIds.includes(id as any));
+		const labelsToAdd = labelIds.filter(
+			(id) => !currentLabelIds.includes(id as any),
+		);
 		const labelsToRemove = currentLabelIds.filter(
 			(id) => !labelIds.includes(id as string),
 		);

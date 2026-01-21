@@ -31,14 +31,16 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 	const [showSpaceDialog, setShowSpaceDialog] = useState(false);
 	const [showAllSpaces, setShowAllSpaces] = useState(false);
 	const [activeDropTarget, setActiveDropTarget] = useState<string | null>(null);
-	const [collapsedSpaces, setCollapsedSpaces] = useState<Set<string>>(new Set());
+	const [collapsedSpaces, setCollapsedSpaces] = useState<Set<string>>(
+		new Set(),
+	);
 	const router = useRouter();
 	const params = useParams();
 	const pathname = usePathname();
 	const layersIconRef = useRef<LayersIconHandle>(null);
 
 	const toggleSpaceCollapse = (spaceId: string) => {
-		setCollapsedSpaces(prev => {
+		setCollapsedSpaces((prev) => {
 			const next = new Set(prev);
 			if (next.has(spaceId)) {
 				next.delete(spaceId);
@@ -89,9 +91,21 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 	if (!spacesData) return null;
 
 	// Build hierarchical structure with multi-level support and SHARED/PRIVATE sections
-	type SpaceWithDepth = Spaces & { depth: number; hasChildren: boolean; isLastChild: boolean };
+	type SpaceWithDepth = Spaces & {
+		depth: number;
+		hasChildren: boolean;
+		isLastChild: boolean;
+	};
 
-	const { sharedSpaces, privateSpaces, hasMoreShared, hiddenSharedCount, hasMorePrivate, hiddenPrivateCount, spacesWithChildren } = useMemo(() => {
+	const {
+		sharedSpaces,
+		privateSpaces,
+		hasMoreShared,
+		hiddenSharedCount,
+		hasMorePrivate,
+		hiddenPrivateCount,
+		spacesWithChildren,
+	} = useMemo(() => {
 		// Build children map for quick lookup
 		const childrenByParent = new Map<string, Spaces[]>();
 		const spacesWithChildrenSet = new Set<string>();
@@ -106,7 +120,11 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 		}
 
 		// Recursively build tree with depth, respecting collapsed state
-		const buildTree = (parentId: string, depth: number, isParentCollapsed: boolean): SpaceWithDepth[] => {
+		const buildTree = (
+			parentId: string,
+			depth: number,
+			isParentCollapsed: boolean,
+		): SpaceWithDepth[] => {
 			if (isParentCollapsed) return [];
 
 			const children = childrenByParent.get(parentId) || [];
@@ -124,7 +142,7 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 		};
 
 		// Find "Shared" (primary space) - we don't display it, but use it as the root for shared spaces
-		const primarySpace = spacesData.find(s => s.primary);
+		const primarySpace = spacesData.find((s) => s.primary);
 
 		// SHARED section: Children of primary space directly (without showing "Shared" itself)
 		const sharedTree: SpaceWithDepth[] = [];
@@ -153,8 +171,8 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 
 		// PRIVATE section: top-level spaces not under Shared (and their children)
 		const privateTree: SpaceWithDepth[] = [];
-		const topLevelPrivate = spacesData.filter(s =>
-			!s.primary && !s.parentSpaceId && !sharedSpaceIds.has(s.id)
+		const topLevelPrivate = spacesData.filter(
+			(s) => !s.primary && !s.parentSpaceId && !sharedSpaceIds.has(s.id),
 		);
 
 		for (let i = 0; i < topLevelPrivate.length; i++) {
@@ -324,23 +342,23 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 							}}
 						>
 							{sharedSpaces.map((space) => (
-							<SpaceItem
-								key={space.id}
-								space={space}
-								depth={space.depth}
-								hasChildren={space.hasChildren}
-								isLastChild={space.isLastChild}
-								isCollapsed={collapsedSpaces.has(space.id)}
-								onToggleCollapse={() => toggleSpaceCollapse(space.id)}
-								isOwner={space.createdById === user?.id}
-								isShared={true}
-								sidebarCollapsed={sidebarCollapsed}
-								activeSpaceParams={activeSpaceParams}
-								activeDropTarget={activeDropTarget}
-								handleDragOver={handleDragOver}
-								handleDragLeave={handleDragLeave}
-								handleDrop={handleDrop}
-								handleDeleteSpace={handleDeleteSpace}
+								<SpaceItem
+									key={space.id}
+									space={space}
+									depth={space.depth}
+									hasChildren={space.hasChildren}
+									isLastChild={space.isLastChild}
+									isCollapsed={collapsedSpaces.has(space.id)}
+									onToggleCollapse={() => toggleSpaceCollapse(space.id)}
+									isOwner={space.createdById === user?.id}
+									isShared={true}
+									sidebarCollapsed={sidebarCollapsed}
+									activeSpaceParams={activeSpaceParams}
+									activeDropTarget={activeDropTarget}
+									handleDragOver={handleDragOver}
+									handleDragLeave={handleDragLeave}
+									handleDrop={handleDrop}
+									handleDeleteSpace={handleDeleteSpace}
 								/>
 							))}
 						</div>
@@ -469,15 +487,14 @@ const SpaceItem = ({
 	activeDropTarget: string | null;
 	handleDragOver: (e: React.DragEvent, spaceId: string) => void;
 	handleDragLeave: () => void;
-	handleDrop: (e: React.DragEvent, spaceId: Space.SpaceIdOrOrganisationId) => void;
+	handleDrop: (
+		e: React.DragEvent,
+		spaceId: Space.SpaceIdOrOrganisationId,
+	) => void;
 	handleDeleteSpace: (e: React.MouseEvent, space: Spaces) => void;
 }) => {
 	return (
-		<Tooltip
-			position="right"
-			disable={!sidebarCollapsed}
-			content={space.name}
-		>
+		<Tooltip position="right" disable={!sidebarCollapsed} content={space.name}>
 			<div
 				className={clsx(
 					"relative transition-colors border border-transparent overflow-visible duration-150 rounded-xl mb-1 flex items-stretch",
@@ -496,9 +513,7 @@ const SpaceItem = ({
 							layoutId="navlinks"
 							className={clsx(
 								"absolute rounded-xl bg-gray-3",
-								sidebarCollapsed
-									? "inset-0 right-0 left-0 mx-auto"
-									: "inset-0",
+								sidebarCollapsed ? "inset-0 right-0 left-0 mx-auto" : "inset-0",
 							)}
 							style={{ willChange: "transform" }}
 							transition={{

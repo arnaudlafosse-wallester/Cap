@@ -1,7 +1,7 @@
 "use client";
 
 import Cookies from "js-cookie";
-import { Moon, Sun, Loader2 } from "lucide-react";
+import { Loader2, Moon, Sun } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useEffect, useState } from "react";
@@ -44,7 +44,9 @@ export function LoginForm() {
 			setIsDark(savedTheme === "dark");
 			document.body.className = savedTheme;
 		} else {
-			const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+			const prefersDark = window.matchMedia(
+				"(prefers-color-scheme: dark)",
+			).matches;
 			setIsDark(prefersDark);
 			document.body.className = prefersDark ? "dark" : "light";
 		}
@@ -101,9 +103,7 @@ export function LoginForm() {
 					<h1 className="text-2xl font-semibold text-gray-12 mb-2">
 						Welcome back
 					</h1>
-					<p className="text-gray-10 mb-6">
-						Beautiful screen recordings
-					</p>
+					<p className="text-gray-10 mb-6">Beautiful screen recordings</p>
 
 					{/* Login button */}
 					<button

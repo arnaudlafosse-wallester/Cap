@@ -15,9 +15,16 @@
  */
 
 import { db } from "@cap/database";
-import { s3Buckets, spaceVideos, comments, sharedVideos, videoLabelAssignments, videos } from "@cap/database/schema";
-import { S3Buckets } from "@cap/web-backend";
+import {
+	comments,
+	s3Buckets,
+	sharedVideos,
+	spaceVideos,
+	videoLabelAssignments,
+	videos,
+} from "@cap/database/schema";
 import { serverEnv } from "@cap/env";
+import { S3Buckets } from "@cap/web-backend";
 import type { S3Bucket, Video } from "@cap/web-domain";
 import { and, eq, isNotNull, lte } from "drizzle-orm";
 import { Effect, Option } from "effect";
@@ -88,7 +95,9 @@ async function cleanupExpiredVideos(): Promise<CleanupResult> {
 			),
 		);
 
-	console.log(`[cleanup-expired-videos] Found ${expiredVideos.length} expired videos`);
+	console.log(
+		`[cleanup-expired-videos] Found ${expiredVideos.length} expired videos`,
+	);
 
 	for (const { video, bucket } of expiredVideos) {
 		try {
@@ -124,7 +133,9 @@ async function cleanupExpiredVideos(): Promise<CleanupResult> {
 				status: "deleted",
 			});
 
-			console.log(`[cleanup-expired-videos] Deleted video: ${video.id} (${video.name})`);
+			console.log(
+				`[cleanup-expired-videos] Deleted video: ${video.id} (${video.name})`,
+			);
 		} catch (error) {
 			result.errors++;
 			result.details.push({
@@ -171,7 +182,10 @@ async function deleteVideoFiles(
 		}
 	}).pipe(
 		Effect.catchAll((error) => {
-			console.error(`[cleanup-expired-videos] S3 deletion error for ${videoId}:`, error);
+			console.error(
+				`[cleanup-expired-videos] S3 deletion error for ${videoId}:`,
+				error,
+			);
 			return Effect.succeed(undefined);
 		}),
 		runPromise,

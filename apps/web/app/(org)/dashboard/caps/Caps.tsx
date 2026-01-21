@@ -320,9 +320,7 @@ export const Caps = ({
 								className="size-3.5 text-white opacity-50"
 								icon={faInfoCircle}
 							/>
-							<p className="text-white">
-								Drag to a folder to share or move
-							</p>
+							<p className="text-white">Drag to a folder to share or move</p>
 						</div>
 					</div>
 				</div>

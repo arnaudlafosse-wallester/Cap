@@ -352,7 +352,9 @@ export const videos = mysqlTable(
 			enum: ["eligible", "excluded", "pending"],
 		}).default("pending"),
 		ragStatusUpdatedAt: timestamp("rag_status_updated_at"),
-		ragStatusUpdatedById: nanoIdNullable("rag_status_updated_by_id").$type<User.UserId>(),
+		ragStatusUpdatedById: nanoIdNullable(
+			"rag_status_updated_by_id",
+		).$type<User.UserId>(),
 
 		// RETENTION
 		keepPermanently: boolean("keep_permanently").notNull().default(false),
@@ -645,7 +647,8 @@ export const spaces = mysqlTable(
 			.notNull()
 			.$type<Organisation.OrganisationId>(),
 		createdById: nanoId("createdById").notNull().$type<User.UserId>(),
-		parentSpaceId: nanoIdNullable("parentSpaceId").$type<Space.SpaceIdOrOrganisationId>(),
+		parentSpaceId:
+			nanoIdNullable("parentSpaceId").$type<Space.SpaceIdOrOrganisationId>(),
 		iconUrl: varchar("iconUrl", {
 			length: 255,
 		}).$type<ImageUpload.ImageUrlOrKey>(),

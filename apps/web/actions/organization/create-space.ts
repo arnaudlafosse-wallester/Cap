@@ -37,7 +37,8 @@ export async function createSpace(
 		}
 
 		const name = formData.get("name") as string;
-		const privacy = (formData.get("privacy") as "Public" | "Private") || "Private";
+		const privacy =
+			(formData.get("privacy") as "Public" | "Private") || "Private";
 		const parentSpaceId = (formData.get("parentSpaceId") as string) || null;
 
 		if (!name) {

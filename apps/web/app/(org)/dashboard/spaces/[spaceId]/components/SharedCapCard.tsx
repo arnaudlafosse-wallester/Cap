@@ -83,7 +83,10 @@ export const SharedCapCard: React.FC<SharedCapCardProps> = ({
 					<div className="mb-2 space-y-1">
 						{cap.ownerName && (
 							<div className="flex gap-2 items-center">
-								<FontAwesomeIcon icon={faUser} className="text-gray-10 size-3" />
+								<FontAwesomeIcon
+									icon={faUser}
+									className="text-gray-10 size-3"
+								/>
 								<span className="text-sm text-gray-10">{cap.ownerName}</span>
 							</div>
 						)}

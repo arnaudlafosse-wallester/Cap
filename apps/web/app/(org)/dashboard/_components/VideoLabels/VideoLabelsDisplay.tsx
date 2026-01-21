@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { VideoLabelBadge } from "./VideoLabelBadge";
-import { RetentionBadge } from "./RetentionBadge";
 import { LabelSelectorDialog } from "./LabelSelectorDialog";
+import { RetentionBadge } from "./RetentionBadge";
+import { VideoLabelBadge } from "./VideoLabelBadge";
 
 export interface VideoLabel {
 	id: string;

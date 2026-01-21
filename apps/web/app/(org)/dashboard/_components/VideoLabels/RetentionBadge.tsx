@@ -30,23 +30,28 @@ export function RetentionBadge({
 
 	if (daysLeft < 0 || hoursLeft < 0) {
 		// Already expired
-		urgencyClass = "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-800";
+		urgencyClass =
+			"bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-800";
 		displayText = "Expired";
 	} else if (hoursLeft < 24) {
 		// Less than 24 hours
-		urgencyClass = "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-800";
+		urgencyClass =
+			"bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-800";
 		displayText = hoursLeft <= 1 ? "< 1h" : `${hoursLeft}h`;
 	} else if (daysLeft <= 3) {
 		// 1-3 days - critical
-		urgencyClass = "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-800";
+		urgencyClass =
+			"bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-800";
 		displayText = `${daysLeft}j`;
 	} else if (daysLeft <= 7) {
 		// 4-7 days - warning
-		urgencyClass = "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border-amber-200 dark:border-amber-800";
+		urgencyClass =
+			"bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border-amber-200 dark:border-amber-800";
 		displayText = `${daysLeft}j`;
 	} else {
 		// More than 7 days - info
-		urgencyClass = "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-700";
+		urgencyClass =
+			"bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-700";
 		displayText = `${daysLeft}j`;
 	}
 

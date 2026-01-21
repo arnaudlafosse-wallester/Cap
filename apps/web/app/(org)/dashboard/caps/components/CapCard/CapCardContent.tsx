@@ -7,8 +7,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { editDate } from "@/actions/videos/edit-date";
 import { editTitle } from "@/actions/videos/edit-title";
-import { Tooltip } from "@/components/Tooltip";
 import { VideoLabelsDisplay } from "@/app/(org)/dashboard/_components/VideoLabels";
+import { Tooltip } from "@/components/Tooltip";
 import type { CapCardProps } from "./CapCard";
 
 interface CapContentProps {

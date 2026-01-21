@@ -3,9 +3,9 @@ import { faDownload, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useRive } from "@rive-app/react-canvas";
 import { PlayCircle } from "lucide-react";
+import { useTheme } from "../../../Contexts";
 import { useCapDesktopDetection } from "../../../caps/components/useCapDesktopDetection";
 import { WebRecorderDialog } from "../../../caps/components/web-recorder-dialog/web-recorder-dialog";
-import { useTheme } from "../../../Contexts";
 
 interface EmptySharedCapStateProps {
 	organizationName: string;

@@ -174,22 +174,25 @@ export async function transcribeVideo(
 			.putObject(audioKey, audioBuffer, { contentType: "audio/mpeg" })
 			.pipe(runPromise);
 
-		const audioSignedUrl = await bucket.getSignedObjectUrl(audioKey).pipe(runPromise);
+		const audioSignedUrl = await bucket
+			.getSignedObjectUrl(audioKey)
+			.pipe(runPromise);
 
 		// Transcribe with Deepgram
 		console.log(`[transcribeVideo] Calling Deepgram for video ${videoId}`);
 		const deepgram = createClient(serverEnv().DEEPGRAM_API_KEY as string);
 
-		const { result: dgResult, error: dgError } = await deepgram.listen.prerecorded.transcribeUrl(
-			{ url: audioSignedUrl },
-			{
-				model: "nova-3",
-				smart_format: true,
-				detect_language: true,
-				utterances: true,
-				mime_type: "audio/mpeg",
-			},
-		);
+		const { result: dgResult, error: dgError } =
+			await deepgram.listen.prerecorded.transcribeUrl(
+				{ url: audioSignedUrl },
+				{
+					model: "nova-3",
+					smart_format: true,
+					detect_language: true,
+					utterances: true,
+					mime_type: "audio/mpeg",
+				},
+			);
 
 		if (dgError) {
 			throw new Error(`Deepgram transcription failed: ${dgError.message}`);
@@ -215,7 +218,9 @@ export async function transcribeVideo(
 			await bucket.deleteObject(audioKey).pipe(runPromise);
 		} catch {}
 
-		console.log(`[transcribeVideo] Transcription completed for video ${videoId}`);
+		console.log(
+			`[transcribeVideo] Transcription completed for video ${videoId}`,
+		);
 
 		return {
 			success: true,

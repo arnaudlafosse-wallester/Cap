@@ -8,7 +8,11 @@
 
 import { db } from "@cap/database";
 import { nanoId } from "@cap/database/helpers";
-import { videoLabelAssignments, videoLabels, videos } from "@cap/database/schema";
+import {
+	videoLabelAssignments,
+	videoLabels,
+	videos,
+} from "@cap/database/schema";
 import type { VideoMetadata } from "@cap/database/types";
 import { serverEnv } from "@cap/env";
 import type { Video } from "@cap/web-domain";
@@ -383,14 +387,16 @@ export async function autoAssignLabels(
 		}
 
 		// Assign label
-		await db().insert(videoLabelAssignments).values({
-			id: nanoId(),
-			videoId,
-			labelId: label.id,
-			assignedById: systemUserId as any,
-			isAiSuggested: true,
-			aiConfidence: suggestion.confidence,
-		});
+		await db()
+			.insert(videoLabelAssignments)
+			.values({
+				id: nanoId(),
+				videoId,
+				labelId: label.id,
+				assignedById: systemUserId as any,
+				isAiSuggested: true,
+				aiConfidence: suggestion.confidence,
+			});
 
 		assigned.push(suggestion.labelName);
 	}
@@ -451,10 +457,7 @@ export async function updateVideoExpiration(
 	const expiresAt = new Date(video[0].createdAt);
 	expiresAt.setDate(expiresAt.getDate() + minRetention);
 
-	await db()
-		.update(videos)
-		.set({ expiresAt })
-		.where(eq(videos.id, videoId));
+	await db().update(videos).set({ expiresAt }).where(eq(videos.id, videoId));
 
 	return expiresAt;
 }
@@ -477,45 +480,53 @@ export async function seedSystemLabels(organizationId: string): Promise<void> {
 		.limit(1);
 
 	if (existing.length > 0) {
-		console.log(`[seedSystemLabels] Labels already seeded for org ${organizationId}`);
+		console.log(
+			`[seedSystemLabels] Labels already seeded for org ${organizationId}`,
+		);
 		return;
 	}
 
 	// Insert content type labels
 	for (const label of SYSTEM_LABELS.content_type) {
-		await db().insert(videoLabels).values({
-			id: nanoId() as any,
-			organizationId: organizationId as any,
-			name: label.name,
-			displayName: label.displayName,
-			description: label.description,
-			color: label.color,
-			category: "content_type",
-			retentionDays: label.retentionDays,
-			ragDefault: label.ragDefault,
-			isSystem: true,
-			isActive: true,
-		});
+		await db()
+			.insert(videoLabels)
+			.values({
+				id: nanoId() as any,
+				organizationId: organizationId as any,
+				name: label.name,
+				displayName: label.displayName,
+				description: label.description,
+				color: label.color,
+				category: "content_type",
+				retentionDays: label.retentionDays,
+				ragDefault: label.ragDefault,
+				isSystem: true,
+				isActive: true,
+			});
 	}
 
 	// Insert department labels
 	for (const label of SYSTEM_LABELS.department) {
-		await db().insert(videoLabels).values({
-			id: nanoId() as any,
-			organizationId: organizationId as any,
-			name: label.name,
-			displayName: label.displayName,
-			description: null,
-			color: label.color,
-			category: "department",
-			retentionDays: null,
-			ragDefault: "pending",
-			isSystem: true,
-			isActive: true,
-		});
+		await db()
+			.insert(videoLabels)
+			.values({
+				id: nanoId() as any,
+				organizationId: organizationId as any,
+				name: label.name,
+				displayName: label.displayName,
+				description: null,
+				color: label.color,
+				category: "department",
+				retentionDays: null,
+				ragDefault: "pending",
+				isSystem: true,
+				isActive: true,
+			});
 	}
 
-	console.log(`[seedSystemLabels] Seeded ${SYSTEM_LABELS.content_type.length + SYSTEM_LABELS.department.length} labels for org ${organizationId}`);
+	console.log(
+		`[seedSystemLabels] Seeded ${SYSTEM_LABELS.content_type.length + SYSTEM_LABELS.department.length} labels for org ${organizationId}`,
+	);
 }
 
 // =============================================================================
@@ -598,10 +609,12 @@ export async function evaluateLabelForPromotion(
 		};
 	}
 
-	const prompt = LABEL_EVALUATION_PROMPT
-		.replace("{{LABEL_NAME}}", labelName)
+	const prompt = LABEL_EVALUATION_PROMPT.replace("{{LABEL_NAME}}", labelName)
 		.replace("{{LABEL_DISPLAY_NAME}}", labelDisplayName)
-		.replace("{{LABEL_DESCRIPTION}}", labelDescription || "No description provided")
+		.replace(
+			"{{LABEL_DESCRIPTION}}",
+			labelDescription || "No description provided",
+		)
 		.replace("{{LABEL_CATEGORY}}", labelCategory);
 
 	try {
@@ -616,7 +629,8 @@ export async function evaluateLabelForPromotion(
 				messages: [
 					{
 						role: "system",
-						content: "You are a label taxonomy expert. Output valid JSON only, no markdown.",
+						content:
+							"You are a label taxonomy expert. Output valid JSON only, no markdown.",
 					},
 					{ role: "user", content: prompt },
 				],
@@ -626,7 +640,10 @@ export async function evaluateLabelForPromotion(
 		});
 
 		if (!response.ok) {
-			console.error("[evaluateLabelForPromotion] OpenAI API error:", response.status);
+			console.error(
+				"[evaluateLabelForPromotion] OpenAI API error:",
+				response.status,
+			);
 			return {
 				shouldPromote: false,
 				reason: "API error",
@@ -656,11 +673,14 @@ export async function evaluateLabelForPromotion(
 		// Parse JSON response
 		const parsed = JSON.parse(content.replace(/```json\n?|\n?```/g, "").trim());
 
-		console.log(`[evaluateLabelForPromotion] Evaluated "${labelDisplayName}":`, {
-			shouldPromote: parsed.should_promote,
-			reason: parsed.reason,
-			duplicateOf: parsed.duplicate_of,
-		});
+		console.log(
+			`[evaluateLabelForPromotion] Evaluated "${labelDisplayName}":`,
+			{
+				shouldPromote: parsed.should_promote,
+				reason: parsed.reason,
+				duplicateOf: parsed.duplicate_of,
+			},
+		);
 
 		return {
 			shouldPromote: parsed.should_promote === true,
@@ -738,19 +758,21 @@ export async function promoteLabelToSystem(
 			.limit(1);
 
 		if (existingForOrg.length === 0) {
-			await db().insert(videoLabels).values({
-				id: nanoId() as any,
-				organizationId,
-				name: evaluation.englishName!,
-				displayName: evaluation.englishDisplayName!,
-				description: evaluation.englishDescription,
-				color: originalColor,
-				category: evaluation.suggestedCategory,
-				retentionDays,
-				ragDefault: "pending",
-				isSystem: true,
-				isActive: true,
-			});
+			await db()
+				.insert(videoLabels)
+				.values({
+					id: nanoId() as any,
+					organizationId,
+					name: evaluation.englishName!,
+					displayName: evaluation.englishDisplayName!,
+					description: evaluation.englishDescription,
+					color: originalColor,
+					category: evaluation.suggestedCategory,
+					retentionDays,
+					ragDefault: "pending",
+					isSystem: true,
+					isActive: true,
+				});
 		}
 	}
 

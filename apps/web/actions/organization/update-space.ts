@@ -23,8 +23,11 @@ export async function updateSpace(formData: FormData) {
 
 	const id = Space.SpaceId.make(formData.get("id") as string);
 	const name = formData.get("name") as string;
-	const privacy = (formData.get("privacy") as "Public" | "Private") || undefined;
-	const parentSpaceId = formData.has("parentSpaceId") ? (formData.get("parentSpaceId") as string) || null : undefined;
+	const privacy =
+		(formData.get("privacy") as "Public" | "Private") || undefined;
+	const parentSpaceId = formData.has("parentSpaceId")
+		? (formData.get("parentSpaceId") as string) || null
+		: undefined;
 	const members = formData.getAll("members[]") as User.UserId[];
 	const iconFile = formData.get("icon") as File | null;
 

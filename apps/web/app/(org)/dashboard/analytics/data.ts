@@ -1,5 +1,10 @@
 import { db } from "@cap/database";
-import { comments, spaceVideos, videoViews, videos } from "@cap/database/schema";
+import {
+	comments,
+	spaceVideos,
+	videos,
+	videoViews,
+} from "@cap/database/schema";
 import { serverEnv } from "@cap/env";
 import { Tinybird } from "@cap/web-backend";
 import { and, between, eq, gte, inArray } from "drizzle-orm";
@@ -168,7 +173,10 @@ const getSpaceVideoIds = async (spaceId: SpaceOrOrgId): Promise<VideoId[]> => {
 	return rows.map((row) => row.videoId);
 };
 
-const getUserVideoIds = async (orgId: OrgId, userId: string): Promise<VideoId[]> => {
+const getUserVideoIds = async (
+	orgId: OrgId,
+	userId: string,
+): Promise<VideoId[]> => {
 	const rows = await db()
 		.select({ id: videos.id })
 		.from(videos)
@@ -199,7 +207,7 @@ export const getOrgAnalyticsData = async (
 	let videoIds: VideoId[] | undefined;
 	if (capVideoIds) {
 		// If viewing a specific cap, check if user owns it (for non-owners)
-		if (userVideoIds && !userVideoIds.some(id => capVideoIds.includes(id))) {
+		if (userVideoIds && !userVideoIds.some((id) => capVideoIds.includes(id))) {
 			// User doesn't own this cap, return empty data
 			videoIds = [];
 		} else {
@@ -208,7 +216,7 @@ export const getOrgAnalyticsData = async (
 	} else if (spaceVideoIds) {
 		// If viewing a space, filter to user's videos in that space (for non-owners)
 		if (userVideoIds) {
-			videoIds = spaceVideoIds.filter(id => userVideoIds.includes(id));
+			videoIds = spaceVideoIds.filter((id) => userVideoIds.includes(id));
 		} else {
 			videoIds = spaceVideoIds;
 		}
@@ -266,8 +274,7 @@ export const getOrgAnalyticsData = async (
 	]);
 
 	// Check if Tinybird is configured
-	const useTinybird =
-		serverEnv().TINYBIRD_TOKEN && serverEnv().TINYBIRD_HOST;
+	const useTinybird = serverEnv().TINYBIRD_TOKEN && serverEnv().TINYBIRD_HOST;
 
 	let tinybirdData: TinybirdAnalyticsData;
 
@@ -343,11 +350,16 @@ export const getOrgAnalyticsData = async (
 		);
 	} else {
 		// Use local database for self-hosted instances (MVP: only total views)
-		const localViewCount = await queryLocalViewCount(typedOrgId, from, videoIds);
+		const localViewCount = await queryLocalViewCount(
+			typedOrgId,
+			from,
+			videoIds,
+		);
 		tinybirdData = {
-			viewSeries: localViewCount > 0
-				? [{ bucket: formatBucketTimestamp(to), views: localViewCount }]
-				: [],
+			viewSeries:
+				localViewCount > 0
+					? [{ bucket: formatBucketTimestamp(to), views: localViewCount }]
+					: [],
 			countries: [],
 			cities: [],
 			browsers: [],

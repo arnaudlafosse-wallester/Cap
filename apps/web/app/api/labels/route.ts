@@ -7,14 +7,14 @@
 
 import { db } from "@cap/database";
 import { getCurrentUser } from "@cap/database/auth/session";
+import { nanoId } from "@cap/database/helpers";
 import { videoLabels } from "@cap/database/schema";
 import { and, eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
-import { nanoId } from "@cap/database/helpers";
 import {
-	seedSystemLabels,
 	evaluateLabelForPromotion,
 	promoteLabelToSystem,
+	seedSystemLabels,
 } from "@/lib/classify-video-labels";
 
 export const dynamic = "force-dynamic";
@@ -53,10 +53,7 @@ export async function GET(request: NextRequest) {
 		return Response.json({ labels });
 	} catch (error) {
 		console.error("[labels GET] Error:", error);
-		return Response.json(
-			{ error: "Failed to fetch labels" },
-			{ status: 500 },
-		);
+		return Response.json({ error: "Failed to fetch labels" }, { status: 500 });
 	}
 }
 
@@ -120,19 +117,21 @@ export async function POST(request: NextRequest) {
 		const labelColor = color || "#6B7280";
 		const labelRetention = retentionDays || null;
 
-		await db().insert(videoLabels).values({
-			id: id as any,
-			organizationId: orgId,
-			name,
-			displayName,
-			description: description || null,
-			color: labelColor,
-			category: labelCategory,
-			retentionDays: labelRetention,
-			ragDefault: "pending",
-			isSystem: false,
-			isActive: true,
-		});
+		await db()
+			.insert(videoLabels)
+			.values({
+				id: id as any,
+				organizationId: orgId,
+				name,
+				displayName,
+				description: description || null,
+				color: labelColor,
+				category: labelCategory,
+				retentionDays: labelRetention,
+				ragDefault: "pending",
+				isSystem: false,
+				isActive: true,
+			});
 
 		// Evaluate label for promotion to system labels (async, non-blocking)
 		// This runs in the background and doesn't affect the response
@@ -165,9 +164,6 @@ export async function POST(request: NextRequest) {
 		});
 	} catch (error) {
 		console.error("[labels POST] Error:", error);
-		return Response.json(
-			{ error: "Failed to create label" },
-			{ status: 500 },
-		);
+		return Response.json({ error: "Failed to create label" }, { status: 500 });
 	}
 }

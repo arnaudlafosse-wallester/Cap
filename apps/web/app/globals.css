@@ -923,7 +923,11 @@ footer a {
 }
 
 .login-gradient {
-	background: radial-gradient(ellipse at center, var(--login-gradient-center) 0%, var(--login-gradient-edge) 100%);
+	background: radial-gradient(
+		ellipse at center,
+		var(--login-gradient-center) 0%,
+		var(--login-gradient-edge) 100%
+	);
 }
 
 .login-card {

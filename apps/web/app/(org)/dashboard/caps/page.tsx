@@ -8,9 +8,9 @@ import {
 	spaces,
 	spaceVideos,
 	users,
-	videos,
 	videoLabelAssignments,
 	videoLabels,
+	videos,
 	videoUploads,
 } from "@cap/database/schema";
 import { serverEnv } from "@cap/env";
@@ -321,7 +321,11 @@ export default async function CapsPage(props: {
 						  }
 						| undefined,
 					labels: labelsMap[video.id] ?? [],
-					ragStatus: video.ragStatus as "eligible" | "excluded" | "pending" | null,
+					ragStatus: video.ragStatus as
+						| "eligible"
+						| "excluded"
+						| "pending"
+						| null,
 					expiresAt: video.expiresAt,
 					keepPermanently: video.keepPermanently,
 				};

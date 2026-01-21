@@ -55,7 +55,9 @@ export function VideoLabelBadge({
 			onClick={onClick}
 		>
 			{isAiSuggested && (
-				<span title={`AI suggested (${Math.round((confidence || 0) * 100)}% confidence)`}>
+				<span
+					title={`AI suggested (${Math.round((confidence || 0) * 100)}% confidence)`}
+				>
 					✨
 				</span>
 			)}

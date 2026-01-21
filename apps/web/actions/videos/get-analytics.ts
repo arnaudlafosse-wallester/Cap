@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@cap/database";
-import { videoViews, videos } from "@cap/database/schema";
+import { videos, videoViews } from "@cap/database/schema";
 import { serverEnv } from "@cap/env";
 import { Tinybird } from "@cap/web-backend";
 import { Video } from "@cap/web-domain";
@@ -45,8 +45,7 @@ export async function getVideoAnalytics(
 		.limit(1);
 
 	// Check if Tinybird is configured
-	const useTinybird =
-		serverEnv().TINYBIRD_TOKEN && serverEnv().TINYBIRD_HOST;
+	const useTinybird = serverEnv().TINYBIRD_TOKEN && serverEnv().TINYBIRD_HOST;
 
 	if (!useTinybird) {
 		// Use local database for self-hosted instances

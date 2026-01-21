@@ -39,10 +39,7 @@ export async function POST(
 		}
 
 		if (!videoId) {
-			return Response.json(
-				{ error: "Video ID not provided" },
-				{ status: 400 },
-			);
+			return Response.json({ error: "Video ID not provided" }, { status: 400 });
 		}
 
 		// Get video with bucket info
