@@ -2,24 +2,13 @@
 
 import { Button, Input, Switch } from "@cap/ui";
 import {
-	faEdit,
-	faLayerGroup,
-	faPlus,
-	faTrash,
-} from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ChevronDown, ChevronRight, Search, GripVertical } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
-import { useMemo, useState, useCallback } from "react";
-import { toast } from "sonner";
-import {
-	DndContext,
 	closestCenter,
+	DndContext,
+	type DragEndEvent,
 	KeyboardSensor,
 	PointerSensor,
 	useSensor,
 	useSensors,
-	type DragEndEvent,
 } from "@dnd-kit/core";
 import {
 	arrayMove,
@@ -29,12 +18,23 @@ import {
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import {
+	faEdit,
+	faLayerGroup,
+	faPlus,
+	faTrash,
+} from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { ChevronDown, ChevronRight, GripVertical, Search } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { useCallback, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 // Users who can manage level 1 folders (create, rename, delete, reorder)
 const LEVEL1_OWNERS = [
-	'arnaud.lafosse@wallester.com',
-	'dmitri.logvinenko@wallester.com',
-	'sergei@wallester.com',
+	"arnaud.lafosse@wallester.com",
+	"dmitri.logvinenko@wallester.com",
+	"sergei@wallester.com",
 ];
 
 import { deleteSpace } from "@/actions/organization/delete-space";
@@ -45,7 +45,11 @@ import SpaceDialog from "../../_components/Navbar/SpaceDialog";
 import { useDashboardContext } from "../../Contexts";
 import type { Spaces } from "../../dashboard-data";
 
-type SpaceWithDepth = Spaces & { depth: number; hasChildren: boolean; isShared: boolean };
+type SpaceWithDepth = Spaces & {
+	depth: number;
+	hasChildren: boolean;
+	isShared: boolean;
+};
 
 // Sortable table row component for drag & drop
 function SortableTableRow({
@@ -72,9 +76,7 @@ function SortableTableRow({
 	router: ReturnType<typeof useRouter>;
 }) {
 	const isLevel1Folder = space.depth === 0;
-	const canReorder = !space.primary && (
-		isLevel1Folder ? isLevel1Owner : (space.createdById === user?.id)
-	);
+	const canReorder = !space.primary && (isLevel1Folder ? isLevel1Owner : true);
 
 	const {
 		attributes,
@@ -97,16 +99,16 @@ function SortableTableRow({
 
 	const indentPadding = space.depth * 24;
 	const isCollapsed = collapsedSpaces.has(space.id);
-	const canManage = !space.primary && (
-		isLevel1Folder ? isLevel1Owner : (space.createdById === user?.id)
-	);
+	const canManage =
+		!space.primary &&
+		(isLevel1Folder ? isLevel1Owner : space.createdById === user?.id);
 
 	return (
 		<tr
 			ref={setNodeRef}
 			style={style}
 			onClick={() => router.push(`/dashboard/spaces/${space.id}`)}
-			className={`border-t transition-colors cursor-pointer hover:bg-gray-2 border-gray-3 ${isDragging ? 'bg-gray-3' : ''}`}
+			className={`border-t transition-colors cursor-pointer hover:bg-gray-2 border-gray-3 ${isDragging ? "bg-gray-3" : ""}`}
 		>
 			<td className="px-6 py-4">
 				<div
@@ -157,11 +159,13 @@ function SortableTableRow({
 				</div>
 			</td>
 			<td className="px-6 py-4">
-				<span className={`text-xs px-2 py-1 rounded-full ${
-					space.isShared
-						? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-						: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
-				}`}>
+				<span
+					className={`text-xs px-2 py-1 rounded-full ${
+						space.isShared
+							? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+							: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
+					}`}
+				>
 					{space.isShared ? "Shared" : "Private"}
 				</span>
 			</td>
@@ -218,17 +222,19 @@ export default function BrowseSpacesPage() {
 	const { spacesData, user, activeOrganization } = useDashboardContext();
 
 	// Check if current user can manage level 1 folders
-	const isLevel1Owner = LEVEL1_OWNERS.includes(user?.email || '');
+	const isLevel1Owner = LEVEL1_OWNERS.includes(user?.email || "");
 
 	const [showSpaceDialog, setShowSpaceDialog] = useState(false);
 	const [editSpace, setEditSpace] = useState<any | null>(null);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [showShared, setShowShared] = useState(true);
 	const [showPrivate, setShowPrivate] = useState(true);
-	const [collapsedSpaces, setCollapsedSpaces] = useState<Set<string>>(new Set());
+	const [collapsedSpaces, setCollapsedSpaces] = useState<Set<string>>(
+		new Set(),
+	);
 
 	const toggleSpaceCollapse = (spaceId: string) => {
-		setCollapsedSpaces(prev => {
+		setCollapsedSpaces((prev) => {
 			const next = new Set(prev);
 			if (next.has(spaceId)) {
 				next.delete(spaceId);
@@ -248,11 +254,11 @@ export default function BrowseSpacesPage() {
 		}),
 		useSensor(KeyboardSensor, {
 			coordinateGetter: sortableKeyboardCoordinates,
-		})
+		}),
 	);
 
 	// Get the primary space ID (organizationId) for level 1 folders
-	const primarySpaceId = spacesData?.find(s => s.primary)?.id;
+	const primarySpaceId = spacesData?.find((s) => s.primary)?.id;
 
 	const trueActiveOrgMembers = activeOrganization?.members.filter(
 		(m) => m.user?.id !== user?.id,
@@ -276,19 +282,28 @@ export default function BrowseSpacesPage() {
 		}
 
 		// Find primary space (Shared) - we don't display it, but use it as root for shared spaces
-		const primarySpace = spacesData.find(s => s.primary);
+		const primarySpace = spacesData.find((s) => s.primary);
 		const sharedSpaceIds = new Set<string>();
 		if (primarySpace) {
 			sharedSpaceIds.add(primarySpace.id);
 		}
 
 		// Recursively build tree with collapse support
-		const buildTree = (parentId: string, depth: number, isShared: boolean, isParentCollapsed: boolean): SpaceWithDepth[] => {
+		const buildTree = (
+			parentId: string,
+			depth: number,
+			isShared: boolean,
+			isParentCollapsed: boolean,
+		): SpaceWithDepth[] => {
 			if (isParentCollapsed) return [];
 
 			const children = childrenByParent.get(parentId) || [];
 			const result: SpaceWithDepth[] = [];
-			for (const child of children.sort((a, b) => ((a.displayOrder ?? 0) - (b.displayOrder ?? 0)) || a.name.localeCompare(b.name))) {
+			for (const child of children.sort(
+				(a, b) =>
+					(a.displayOrder ?? 0) - (b.displayOrder ?? 0) ||
+					a.name.localeCompare(b.name),
+			)) {
 				const hasChildren = spacesWithChildrenSet.has(child.id);
 				const isCollapsed = collapsedSpaces.has(child.id);
 				result.push({ ...child, depth, hasChildren, isShared });
@@ -303,7 +318,11 @@ export default function BrowseSpacesPage() {
 		// SHARED section: Children of primary space directly (without showing "Shared" itself)
 		if (primarySpace) {
 			const directChildren = childrenByParent.get(primarySpace.id) || [];
-			for (const child of directChildren.sort((a, b) => ((a.displayOrder ?? 0) - (b.displayOrder ?? 0)) || a.name.localeCompare(b.name))) {
+			for (const child of directChildren.sort(
+				(a, b) =>
+					(a.displayOrder ?? 0) - (b.displayOrder ?? 0) ||
+					a.name.localeCompare(b.name),
+			)) {
 				const hasChildren = spacesWithChildrenSet.has(child.id);
 				const isCollapsed = collapsedSpaces.has(child.id);
 				result.push({ ...child, depth: 0, hasChildren, isShared: true });
@@ -313,9 +332,15 @@ export default function BrowseSpacesPage() {
 		}
 
 		// PRIVATE section: top-level spaces not under Shared
-		const topLevelPrivate = spacesData.filter(s =>
-			!s.primary && !s.parentSpaceId && !sharedSpaceIds.has(s.id)
-		).sort((a, b) => ((a.displayOrder ?? 0) - (b.displayOrder ?? 0)) || a.name.localeCompare(b.name));
+		const topLevelPrivate = spacesData
+			.filter(
+				(s) => !s.primary && !s.parentSpaceId && !sharedSpaceIds.has(s.id),
+			)
+			.sort(
+				(a, b) =>
+					(a.displayOrder ?? 0) - (b.displayOrder ?? 0) ||
+					a.name.localeCompare(b.name),
+			);
 
 		for (const space of topLevelPrivate) {
 			const hasChildren = spacesWithChildrenSet.has(space.id);
@@ -331,7 +356,10 @@ export default function BrowseSpacesPage() {
 	const filteredSpaces = useMemo(() => {
 		return hierarchicalSpaces.filter((space: SpaceWithDepth) => {
 			// Search filter
-			if (searchQuery && !space.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+			if (
+				searchQuery &&
+				!space.name.toLowerCase().includes(searchQuery.toLowerCase())
+			) {
 				return false;
 			}
 			// Type filter
@@ -381,61 +409,67 @@ export default function BrowseSpacesPage() {
 	};
 
 	// Handle drag end for reordering folders
-	const handleDragEnd = useCallback(async (event: DragEndEvent) => {
-		const { active, over } = event;
+	const handleDragEnd = useCallback(
+		async (event: DragEndEvent) => {
+			const { active, over } = event;
 
-		if (!over || active.id === over.id || !filteredSpaces) {
-			return;
-		}
-
-		const activeSpace = filteredSpaces.find(s => s.id === active.id);
-		const overSpace = filteredSpaces.find(s => s.id === over.id);
-
-		if (!activeSpace || !overSpace) {
-			return;
-		}
-
-		// Only allow reordering within the same depth and same parent
-		if (activeSpace.depth !== overSpace.depth || activeSpace.parentSpaceId !== overSpace.parentSpaceId) {
-			toast.error("You can only reorder folders at the same level");
-			return;
-		}
-
-		// Get siblings at the same level with the same parent
-		const parentId = activeSpace.parentSpaceId;
-		const siblings = filteredSpaces.filter(
-			s => s.depth === activeSpace.depth && s.parentSpaceId === parentId
-		);
-
-		const oldIndex = siblings.findIndex(s => s.id === active.id);
-		const newIndex = siblings.findIndex(s => s.id === over.id);
-
-		if (oldIndex === -1 || newIndex === -1) {
-			return;
-		}
-
-		// Reorder the siblings
-		const reorderedSiblings = arrayMove(siblings, oldIndex, newIndex);
-		const newOrderedIds = reorderedSiblings.map(s => s.id);
-
-		// Call server action to persist the order
-		try {
-			const result = await reorderSpaces(newOrderedIds, parentId);
-			if (result.success) {
-				toast.success("Folder order updated");
-				router.refresh();
-			} else {
-				toast.error(result.error || "Failed to reorder folders");
+			if (!over || active.id === over.id || !filteredSpaces) {
+				return;
 			}
-		} catch (error) {
-			console.error("Error reordering spaces:", error);
-			toast.error("Failed to reorder folders");
-		}
-	}, [filteredSpaces, router]);
+
+			const activeSpace = filteredSpaces.find((s) => s.id === active.id);
+			const overSpace = filteredSpaces.find((s) => s.id === over.id);
+
+			if (!activeSpace || !overSpace) {
+				return;
+			}
+
+			// Only allow reordering within the same depth and same parent
+			if (
+				activeSpace.depth !== overSpace.depth ||
+				activeSpace.parentSpaceId !== overSpace.parentSpaceId
+			) {
+				toast.error("You can only reorder folders at the same level");
+				return;
+			}
+
+			// Get siblings at the same level with the same parent
+			const parentId = activeSpace.parentSpaceId;
+			const siblings = filteredSpaces.filter(
+				(s) => s.depth === activeSpace.depth && s.parentSpaceId === parentId,
+			);
+
+			const oldIndex = siblings.findIndex((s) => s.id === active.id);
+			const newIndex = siblings.findIndex((s) => s.id === over.id);
+
+			if (oldIndex === -1 || newIndex === -1) {
+				return;
+			}
+
+			// Reorder the siblings
+			const reorderedSiblings = arrayMove(siblings, oldIndex, newIndex);
+			const newOrderedIds = reorderedSiblings.map((s) => s.id);
+
+			// Call server action to persist the order
+			try {
+				const result = await reorderSpaces(newOrderedIds, parentId);
+				if (result.success) {
+					toast.success("Folder order updated");
+					router.refresh();
+				} else {
+					toast.error(result.error || "Failed to reorder folders");
+				}
+			} catch (error) {
+				console.error("Error reordering spaces:", error);
+				toast.error("Failed to reorder folders");
+			}
+		},
+		[filteredSpaces, router],
+	);
 
 	// Get IDs for sortable context - only include items that can be reordered
 	const sortableIds = useMemo(() => {
-		return filteredSpaces?.map(s => s.id) || [];
+		return filteredSpaces?.map((s) => s.id) || [];
 	}, [filteredSpaces]);
 
 	return (
@@ -506,18 +540,26 @@ export default function BrowseSpacesPage() {
 							<tbody>
 								{!spacesData && (
 									<tr>
-										<td colSpan={5} className="px-6 py-6 text-center text-gray-8">
+										<td
+											colSpan={5}
+											className="px-6 py-6 text-center text-gray-8"
+										>
 											Loading Spaces…
 										</td>
 									</tr>
 								)}
-								{spacesData && filteredSpaces && filteredSpaces.length === 0 && (
-									<tr>
-										<td colSpan={5} className="px-6 py-6 text-center text-gray-8">
-											No folders found.
-										</td>
-									</tr>
-								)}
+								{spacesData &&
+									filteredSpaces &&
+									filteredSpaces.length === 0 && (
+										<tr>
+											<td
+												colSpan={5}
+												className="px-6 py-6 text-center text-gray-8"
+											>
+												No folders found.
+											</td>
+										</tr>
+									)}
 								{filteredSpaces?.map((space: SpaceWithDepth) => (
 									<SortableTableRow
 										key={space.id}
@@ -563,7 +605,8 @@ export default function BrowseSpacesPage() {
 
 					// Count subfolders under this space
 					const countSubfolders = (parentId: string): number => {
-						const children = spacesData?.filter(s => s.parentSpaceId === parentId) || [];
+						const children =
+							spacesData?.filter((s) => s.parentSpaceId === parentId) || [];
 						let count = children.length;
 						for (const child of children) {
 							count += countSubfolders(child.id);
@@ -573,9 +616,10 @@ export default function BrowseSpacesPage() {
 
 					// Count total videos (including in subfolders)
 					const countTotalVideos = (parentId: string): number => {
-						const space = spacesData?.find(s => s.id === parentId);
+						const space = spacesData?.find((s) => s.id === parentId);
 						let count = space?.videoCount || 0;
-						const children = spacesData?.filter(s => s.parentSpaceId === parentId) || [];
+						const children =
+							spacesData?.filter((s) => s.parentSpaceId === parentId) || [];
 						for (const child of children) {
 							count += countTotalVideos(child.id);
 						}
@@ -585,17 +629,22 @@ export default function BrowseSpacesPage() {
 					const subfolderCount = countSubfolders(pendingDeleteSpace.id);
 					const totalVideos = countTotalVideos(pendingDeleteSpace.id);
 
-					let warningParts: string[] = [];
+					const warningParts: string[] = [];
 					if (subfolderCount > 0) {
-						warningParts.push(`${subfolderCount} subfolder${subfolderCount > 1 ? 's' : ''}`);
+						warningParts.push(
+							`${subfolderCount} subfolder${subfolderCount > 1 ? "s" : ""}`,
+						);
 					}
 					if (totalVideos > 0) {
-						warningParts.push(`${totalVideos} video${totalVideos > 1 ? 's' : ''}`);
+						warningParts.push(
+							`${totalVideos} video${totalVideos > 1 ? "s" : ""}`,
+						);
 					}
 
-					const contentWarning = warningParts.length > 0
-						? `\n\nThis folder contains ${warningParts.join(' and ')} that will be permanently deleted.`
-						: '';
+					const contentWarning =
+						warningParts.length > 0
+							? `\n\nThis folder contains ${warningParts.join(" and ")} that will be permanently deleted.`
+							: "";
 
 					return `Are you sure you want to delete the folder "${pendingDeleteSpace.name}"?${contentWarning}\n\nThis action cannot be undone.`;
 				})()}

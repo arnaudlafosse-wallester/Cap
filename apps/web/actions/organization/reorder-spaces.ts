@@ -2,52 +2,76 @@
 
 import { db } from "@cap/database";
 import { getCurrentUser } from "@cap/database/auth/session";
-import { spaces } from "@cap/database/schema";
-import { Space } from "@cap/web-domain";
-import { eq } from "drizzle-orm";
+import { spaceMembers, spaces } from "@cap/database/schema";
+import type { Space } from "@cap/web-domain";
+import { and, eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
-// Users who can manage level 1 folders (create, rename, delete, reorder)
 const LEVEL1_OWNERS = [
-	'arnaud.lafosse@wallester.com',
-	'dmitri.logvinenko@wallester.com',
-	'sergei@wallester.com',
+	"arnaud.lafosse@wallester.com",
+	"dmitri.logvinenko@wallester.com",
+	"sergei@wallester.com",
 ];
 
 export async function reorderSpaces(
 	orderedIds: string[],
-	parentSpaceId: string | null
+	parentSpaceId: string | null,
 ) {
 	const user = await getCurrentUser();
 	if (!user) return { success: false, error: "Unauthorized" };
 
-	// For level 1 folders (parentSpaceId is the organizationId), check if user is LEVEL1_OWNER
-	// For deeper levels, any member can reorder their own folders
 	const isLevel1 = parentSpaceId && !parentSpaceId.startsWith("space_");
 
-	if (isLevel1 && !LEVEL1_OWNERS.includes(user.email || '')) {
-		return { success: false, error: "Only admins can reorder top-level folders" };
+	if (isLevel1 && !LEVEL1_OWNERS.includes(user.email || "")) {
+		return {
+			success: false,
+			error: "Only admins can reorder top-level folders",
+		};
 	}
 
 	try {
-		// Update displayOrder for each space
-		for (let i = 0; i < orderedIds.length; i++) {
-			const spaceId = orderedIds[i] as Space.SpaceIdOrOrganisationId;
-			const displayOrder = i + 1; // 1-based ordering
+		if (!isLevel1 && orderedIds.length > 0) {
+			const spaceRecords = await db()
+				.select({
+					id: spaces.id,
+					createdById: spaces.createdById,
+					privacy: spaces.privacy,
+				})
+				.from(spaces)
+				.where(
+					inArray(spaces.id, orderedIds as Space.SpaceIdOrOrganisationId[]),
+				);
 
-			// For non-level1, verify the user has permission (is creator)
-			if (!isLevel1) {
-				const [space] = await db()
-					.select({ createdById: spaces.createdById })
-					.from(spaces)
-					.where(eq(spaces.id, spaceId))
-					.limit(1);
+			for (const space of spaceRecords) {
+				const isCreator = space.createdById === user.id;
+				const isPublic = space.privacy === "Public";
 
-				if (!space || space.createdById !== user.id) {
-					// Skip spaces the user doesn't own
-					continue;
+				if (!isCreator && !isPublic) {
+					const [membership] = await db()
+						.select({ id: spaceMembers.id })
+						.from(spaceMembers)
+						.where(
+							and(
+								eq(spaceMembers.spaceId, space.id),
+								eq(spaceMembers.userId, user.id),
+							),
+						)
+						.limit(1);
+
+					if (!membership) {
+						return {
+							success: false,
+							error:
+								"You don't have permission to reorder some of these folders",
+						};
+					}
 				}
 			}
+		}
+
+		for (let i = 0; i < orderedIds.length; i++) {
+			const spaceId = orderedIds[i] as Space.SpaceIdOrOrganisationId;
+			const displayOrder = i + 1;
 
 			await db()
 				.update(spaces)
