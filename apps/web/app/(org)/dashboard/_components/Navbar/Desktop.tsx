@@ -1,9 +1,10 @@
 "use client";
-import { Button, Logo } from "@cap/ui";
+import { Button } from "@cap/ui";
 import clsx from "clsx";
 import { motion } from "framer-motion";
 import { useDetectPlatform } from "hooks/useDetectPlatform";
 import { ChevronRight } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect } from "react";
 import { Tooltip } from "@/components/Tooltip";
@@ -47,14 +48,18 @@ export const DesktopNav = () => {
 		>
 			<div className="flex flex-col mx-auto w-full h-full">
 				<div className="flex justify-between items-center px-3 pt-5 mb-3.5 w-full truncate min-h-8">
-					<Link href="/dashboard">
-						<Logo
-							hideLogoName={sidebarCollapsed}
-							viewBoxDimensions={sidebarCollapsed ? "0 0 40 40" : "0 0 120 40"}
+					<Link href="/dashboard" className={clsx(sidebarCollapsed ? "mx-auto" : "")}>
+						<Image
+							src="/wallester-logo.svg"
+							alt="Wallester"
+							width={sidebarCollapsed ? 40 : 140}
+							height={sidebarCollapsed ? 28 : 28}
 							className={clsx(
-								"w-[120px] h-[40px]",
-								sidebarCollapsed ? "mx-auto" : "",
+								"transition-all duration-200",
+								sidebarCollapsed ? "object-cover object-left w-[40px]" : "w-[140px]",
 							)}
+							style={sidebarCollapsed ? { clipPath: "inset(0 100px 0 0)" } : undefined}
+							priority
 						/>
 					</Link>
 					<Tooltip

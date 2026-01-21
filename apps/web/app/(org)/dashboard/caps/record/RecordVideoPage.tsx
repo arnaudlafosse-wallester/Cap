@@ -3,38 +3,14 @@
 import { Button } from "@cap/ui";
 import { faDownload } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, PlayCircle } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useId, useRef, useState } from "react";
+import { useId, useState } from "react";
+import { useCapDesktopDetection } from "../components/useCapDesktopDetection";
 import { WebRecorderDialog } from "../components/web-recorder-dialog/web-recorder-dialog";
 
 export const RecordVideoPage = () => {
-	const checkingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-	const openDesktop = useCallback(() => {
-		let handled = false;
-		const onChange = () => {
-			handled = true;
-			document.removeEventListener("visibilitychange", onChange);
-			window.removeEventListener("pagehide", onChange);
-			window.removeEventListener("blur", onChange);
-		};
-		document.addEventListener("visibilitychange", onChange, { once: true });
-		window.addEventListener("pagehide", onChange, { once: true });
-		window.addEventListener("blur", onChange, { once: true });
-
-		window.location.href = "cap-desktop://";
-
-		if (checkingRef.current) clearTimeout(checkingRef.current);
-		checkingRef.current = setTimeout(() => {
-			if (!handled && document.visibilityState === "visible") {
-				document.removeEventListener("visibilitychange", onChange);
-				window.removeEventListener("pagehide", onChange);
-				window.removeEventListener("blur", onChange);
-				window.location.assign("/download");
-			}
-		}, 1500);
-	}, []);
+	const { isInstalled, isChecking, openDesktop } = useCapDesktopDetection();
 
 	return (
 		<div
@@ -50,14 +26,26 @@ export const RecordVideoPage = () => {
 							</p>
 						</div>
 						<div className="flex flex-wrap gap-3 justify-center items-center mt-4">
-							<Button
-								onClick={openDesktop}
-								className="flex relative gap-2 justify-center items-center"
-								variant="primary"
-							>
-								<FontAwesomeIcon className="size-3.5" icon={faDownload} />
-								Open Cap Desktop
-							</Button>
+							{isInstalled === true ? (
+								<Button
+									onClick={openDesktop}
+									disabled={isChecking}
+									className="flex relative gap-2 justify-center items-center"
+									variant="primary"
+								>
+									<PlayCircle className="size-3.5" />
+									{isChecking ? "Opening..." : "Open Cap Desktop"}
+								</Button>
+							) : (
+								<Button
+									href="/download"
+									className="flex relative gap-2 justify-center items-center"
+									variant="primary"
+								>
+									<FontAwesomeIcon className="size-3.5" icon={faDownload} />
+									Download Cap
+								</Button>
+							)}
 							<p className="text-sm text-gray-10">or</p>
 							<WebRecorderDialog />
 						</div>

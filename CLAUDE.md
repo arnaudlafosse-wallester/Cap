@@ -266,6 +266,42 @@ const updateMutation = useMutation({
 - **Connection errors**: Verify Docker containers are running
 - **Schema drift**: Run `pnpm --dir packages/database db:check`
 
+### Direct Database Connection (Production - Railway MySQL)
+
+When migrations fail or you need to run manual SQL queries on the production database:
+
+**Connection Details:**
+| Parameter | Value |
+|-----------|-------|
+| Host | `mainline.proxy.rlwy.net` |
+| Port | `43544` |
+| User | `root` |
+| Password | `CpjSRnbtYZcDXVYVcVoWmEKwZuyaqhSg` |
+| Database | `railway` |
+
+**Node.js Script (using mysql2):**
+```javascript
+import mysql from 'mysql2/promise';
+
+const connection = await mysql.createConnection({
+  host: 'mainline.proxy.rlwy.net',
+  user: 'root',
+  password: 'CpjSRnbtYZcDXVYVcVoWmEKwZuyaqhSg',
+  database: 'railway',
+  port: 43544
+});
+
+const [rows] = await connection.execute('SELECT * FROM spaces LIMIT 5');
+console.log(rows);
+
+await connection.end();
+```
+
+**IMPORTANT:** Use with extreme caution. Always:
+1. Test queries with SELECT first
+2. Back up data before UPDATE/DELETE
+3. Use transactions for critical operations
+
 ### Desktop App Issues
 - **IPC binding errors**: Restart dev server to regenerate `tauri.ts`
 - **Rust compile errors**: Check Cargo.toml dependencies

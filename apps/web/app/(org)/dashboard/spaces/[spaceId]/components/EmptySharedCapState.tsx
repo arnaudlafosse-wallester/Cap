@@ -1,7 +1,10 @@
 import { Button } from "@cap/ui";
-import { faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faDownload, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useRive } from "@rive-app/react-canvas";
+import { PlayCircle } from "lucide-react";
+import { useCapDesktopDetection } from "../../../caps/components/useCapDesktopDetection";
+import { WebRecorderDialog } from "../../../caps/components/web-recorder-dialog/web-recorder-dialog";
 import { useTheme } from "../../../Contexts";
 
 interface EmptySharedCapStateProps {
@@ -27,6 +30,7 @@ export const EmptySharedCapState: React.FC<EmptySharedCapStateProps> = ({
 	headerActions,
 }) => {
 	const { theme } = useTheme();
+	const { isInstalled, isChecking, openDesktop } = useCapDesktopDetection();
 	const { RiveComponent: EmptyCap } = useRive({
 		src: "/rive/main.riv",
 		artboard: theme === "light" ? "emptyshared" : "darkemptyshared",
@@ -39,7 +43,7 @@ export const EmptySharedCapState: React.FC<EmptySharedCapStateProps> = ({
 		(type === "organization" && onAddVideos);
 
 	return (
-		<div className="flex flex-col flex-1 justify-center items-center w-full h-full min-h-[calc(100vh-200px)]">
+		<div className="flex flex-col flex-1 justify-center items-center w-full h-full">
 			<div className="mx-auto mb-6 w-full max-w-sm">
 				<EmptyCap
 					key={`${theme}empty-shared-cap`}
@@ -60,16 +64,43 @@ export const EmptySharedCapState: React.FC<EmptySharedCapStateProps> = ({
 				<div className="flex flex-wrap gap-3 justify-center items-center">
 					{headerActions}
 					{showAddButton && (
+						<>
+							<Button
+								onClick={onAddVideos}
+								variant="dark"
+								size="lg"
+								className="flex gap-2 items-center"
+							>
+								<FontAwesomeIcon icon={faPlus} className="size-3.5" />
+								Add videos to {type === "space" ? "Folder" : "Organization"}
+							</Button>
+							<p className="text-sm text-gray-10">or</p>
+						</>
+					)}
+					{isInstalled === true ? (
 						<Button
-							onClick={onAddVideos}
-							variant="dark"
+							onClick={openDesktop}
+							disabled={isChecking}
+							variant="primary"
 							size="lg"
 							className="flex gap-2 items-center"
 						>
-							<FontAwesomeIcon icon={faPlus} className="size-3.5" />
-							Add videos to {type === "space" ? "Folder" : "Organization"}
+							<PlayCircle className="size-3.5" />
+							{isChecking ? "Opening..." : "Open Cap Desktop"}
+						</Button>
+					) : (
+						<Button
+							href="/download"
+							variant="primary"
+							size="lg"
+							className="flex gap-2 items-center"
+						>
+							<FontAwesomeIcon className="size-3.5" icon={faDownload} />
+							Download Cap
 						</Button>
 					)}
+					<p className="text-sm text-gray-10">or</p>
+					<WebRecorderDialog />
 				</div>
 			</div>
 		</div>

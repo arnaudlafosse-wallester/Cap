@@ -108,7 +108,7 @@ export const SharedCaps = ({
 
 	if (data.length === 0 && folders?.length === 0) {
 		return (
-			<div className="flex relative flex-col w-full h-full">
+			<div className="flex relative flex-col flex-1 w-full h-full">
 				<EmptySharedCapState
 					organizationName={activeOrganization?.organization.name || ""}
 					type={spaceData ? "space" : "organization"}

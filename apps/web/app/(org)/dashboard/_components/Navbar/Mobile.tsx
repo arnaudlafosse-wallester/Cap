@@ -1,9 +1,9 @@
 "use client";
 
-import { LogoBadge } from "@cap/ui";
 import { useClickAway } from "@uidotdev/usehooks";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { type MutableRefObject, useState } from "react";
 
@@ -51,7 +51,14 @@ export const AdminMobileNav = () => {
 			<div className="flex fixed z-[51] justify-between w-full h-16 border-b border-gray-3 bg-gray-1 lg:border-none lg:hidden">
 				<div className="flex flex-shrink-0 items-center px-4 h-full lg:hidden">
 					<Link className="block" href="/dashboard">
-						<LogoBadge className="block w-auto h-8" />
+						<Image
+							src="/wallester-logo.svg"
+							alt="Wallester"
+							width={120}
+							height={24}
+							className="block w-auto h-6"
+							priority
+						/>
 					</Link>
 				</div>
 				<div className="flex gap-4 items-center px-4 h-full">

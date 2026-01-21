@@ -2,8 +2,10 @@ import { Button } from "@cap/ui";
 import { faDownload } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useRive } from "@rive-app/react-canvas";
+import { PlayCircle } from "lucide-react";
 import { useTheme } from "../../Contexts";
 import { UploadCapButton } from "./UploadCapButton";
+import { useCapDesktopDetection } from "./useCapDesktopDetection";
 import { WebRecorderDialog } from "./web-recorder-dialog/web-recorder-dialog";
 
 interface EmptyCapStateProps {
@@ -12,6 +14,7 @@ interface EmptyCapStateProps {
 
 export const EmptyCapState: React.FC<EmptyCapStateProps> = ({ userName }) => {
 	const { theme } = useTheme();
+	const { isInstalled, isChecking, openDesktop } = useCapDesktopDetection();
 	const { RiveComponent: EmptyCap } = useRive({
 		src: "/rive/main.riv",
 		artboard: theme === "light" ? "empty" : "darkempty",
@@ -32,14 +35,26 @@ export const EmptyCapState: React.FC<EmptyCapStateProps> = ({ userName }) => {
 					</p>
 				</div>
 				<div className="flex flex-wrap gap-3 justify-center items-center mt-4">
-					<Button
-						href="/download"
-						className="flex relative gap-2 justify-center items-center"
-						variant="primary"
-					>
-						<FontAwesomeIcon className="size-3.5" icon={faDownload} />
-						Download Cap
-					</Button>
+					{isInstalled === true ? (
+						<Button
+							onClick={openDesktop}
+							disabled={isChecking}
+							className="flex relative gap-2 justify-center items-center"
+							variant="primary"
+						>
+							<PlayCircle className="size-3.5" />
+							{isChecking ? "Opening..." : "Open Cap Desktop"}
+						</Button>
+					) : (
+						<Button
+							href="/download"
+							className="flex relative gap-2 justify-center items-center"
+							variant="primary"
+						>
+							<FontAwesomeIcon className="size-3.5" icon={faDownload} />
+							Download Cap
+						</Button>
+					)}
 					<p className="text-sm text-gray-10">or</p>
 					<WebRecorderDialog />
 					<p className="text-sm text-gray-10">or</p>

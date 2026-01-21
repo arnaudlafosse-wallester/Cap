@@ -21,7 +21,7 @@ export default function DashboardInner({
 				/>
 				{/* Scrolling content area shares border/background; top border removed to meet cap */}
 				<div className="flex overflow-y-auto overscroll-contain flex-col flex-1 p-5 border border-t-0 bg-gray-2 border-gray-3 lg:p-8 relative">
-					<div className="flex flex-col gap-4">{children}</div>
+					<div className="flex flex-col flex-1 gap-4">{children}</div>
 				</div>
 			</main>
 		</div>
