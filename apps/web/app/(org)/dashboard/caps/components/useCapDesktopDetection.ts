@@ -52,7 +52,7 @@ export function useCapDesktopDetection() {
 				setIsChecking(false);
 				window.location.assign("/download");
 			}
-		}, 1500);
+		}, 3000);
 	}, []);
 
 	const resetDetection = useCallback(() => {

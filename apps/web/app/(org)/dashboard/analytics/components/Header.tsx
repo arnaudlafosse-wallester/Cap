@@ -242,7 +242,7 @@ export default function Header({
 	const displayIconName = selectedSpace
 		? selectedSpace.name
 		: isMyCapsSelected
-			? user?.name || selectedOrg?.organization.name || "My Caps"
+			? user?.name || selectedOrg?.organization.name || "Recordings"
 			: selectedOrg?.organization.name || "Select organization";
 
 	if (!activeOrganization) {

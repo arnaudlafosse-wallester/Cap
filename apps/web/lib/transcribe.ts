@@ -105,6 +105,21 @@ export async function transcribeVideo(
 		};
 	}
 
+	const MIN_DURATION_FOR_TRANSCRIPTION = 3;
+	if (video.duration && video.duration < MIN_DURATION_FOR_TRANSCRIPTION) {
+		console.log(
+			`[transcribeVideo] Video ${videoId} too short (${video.duration}s < ${MIN_DURATION_FOR_TRANSCRIPTION}s), skipping transcription`,
+		);
+		await db()
+			.update(videos)
+			.set({ transcriptionStatus: "SKIPPED" })
+			.where(eq(videos.id, videoId));
+		return {
+			success: true,
+			message: "Video too short for transcription",
+		};
+	}
+
 	try {
 		console.log(
 			`[transcribeVideo] Starting direct transcription for video ${videoId}`,
@@ -231,7 +246,7 @@ export async function transcribeVideo(
 
 		await db()
 			.update(videos)
-			.set({ transcriptionStatus: null })
+			.set({ transcriptionStatus: "SKIPPED" })
 			.where(eq(videos.id, videoId));
 
 		return {
