@@ -1,4 +1,5 @@
 export * from "./CapPagination";
+export * from "./CreateCapCard";
 export * from "./EmptyCapState";
 export * from "./Folder";
 export * from "./NewFolderDialog";

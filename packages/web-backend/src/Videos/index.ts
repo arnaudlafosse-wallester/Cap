@@ -498,14 +498,7 @@ export class Videos extends Effect.Service<Videos>()("Videos", {
 				const [video] = maybeVideo.value;
 
 				const [bucket] = yield* s3Buckets.getBucketAccess(video.bucketId);
-				const listResponse = yield* bucket.listObjects({
-					prefix: `${video.ownerId}/${video.id}/`,
-				});
-				const contents = listResponse.Contents || [];
-				const thumbnailKey = contents.find((item) =>
-					item.Key?.endsWith("screen-capture.jpg"),
-				)?.Key;
-				if (!thumbnailKey) return Option.none();
+				const thumbnailKey = `${video.ownerId}/${video.id}/screenshot/screen-capture.jpg`;
 				const url = yield* bucket.getSignedObjectUrl(thumbnailKey);
 				return Option.some(url);
 			}),

@@ -43,33 +43,12 @@ export async function GET(request: NextRequest) {
 			},
 		);
 
-	const prefix = `${query.video.ownerId}/${query.video.id}/`;
+	const thumbnailKey = `${query.video.ownerId}/${query.video.id}/screenshot/screen-capture.jpg`;
 
 	try {
 		const [bucket] = await S3Buckets.getBucketAccess(
 			Option.fromNullable(query.bucket?.id),
 		).pipe(runPromise);
-
-		const listResponse = await bucket
-			.listObjects({ prefix: prefix })
-			.pipe(runPromise);
-		const contents = listResponse.Contents || [];
-
-		const thumbnailKey = contents.find((item) =>
-			item.Key?.endsWith("screen-capture.jpg"),
-		)?.Key;
-
-		if (!thumbnailKey)
-			return new Response(
-				JSON.stringify({
-					error: true,
-					message: "No thumbnail found for this video",
-				}),
-				{
-					status: 404,
-					headers: getHeaders(origin),
-				},
-			);
 
 		const thumbnailUrl = await bucket
 			.getSignedObjectUrl(thumbnailKey)
