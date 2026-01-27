@@ -55,7 +55,12 @@ export async function middleware(request: NextRequest) {
 				path.endsWith(".webmanifest") ||
 				path.endsWith(".json") ||
 				path.endsWith(".png") ||
-				path.endsWith(".ico")
+				path.endsWith(".ico") ||
+				path.endsWith(".svg") ||
+				path.endsWith(".jpg") ||
+				path.endsWith(".jpeg") ||
+				path.endsWith(".gif") ||
+				path.endsWith(".webp")
 			) &&
 			process.env.NODE_ENV !== "development"
 		)
