@@ -1008,6 +1008,17 @@ html.wally-embed .rounded-2xl {
 	border-radius: 0.75rem; /* 12px */
 }
 
+/* --- Main content: remove card inset effect, flat like Wallesterpedia --- */
+html.wally-embed .rounded-tl-xl.border {
+	display: none; /* Remove rounded corner cap */
+}
+
+html.wally-embed .border.border-t-0.bg-gray-2 {
+	border: none;
+	border-radius: 0;
+	padding: 1.5rem; /* p-6 like Wallesterpedia */
+}
+
 /* --- Page background --- */
 html.wally-embed body {
 	background-color: #f9fafb;
