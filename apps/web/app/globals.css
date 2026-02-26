@@ -1009,14 +1009,18 @@ html.wally-embed .rounded-2xl {
 }
 
 /* --- Main content: remove card inset effect, flat like Wallesterpedia --- */
-html.wally-embed .rounded-tl-xl.border {
-	display: none; /* Remove rounded corner cap */
+html.wally-embed main > [aria-hidden] {
+	display: none !important; /* Remove rounded corner cap */
 }
 
-html.wally-embed .border.border-t-0.bg-gray-2 {
-	border: none;
-	border-radius: 0;
-	padding: 1.5rem; /* p-6 like Wallesterpedia */
+html.wally-embed main > div {
+	border: none !important;
+	border-radius: 0 !important;
+	padding: 1.5rem !important; /* p-6 like Wallesterpedia */
+}
+
+html.wally-embed main {
+	background: transparent !important;
 }
 
 /* --- Page background --- */
