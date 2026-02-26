@@ -34,7 +34,7 @@ export const DesktopNav = () => {
 		<motion.aside
 			initial={false}
 			animate={{
-				width: sidebarCollapsed ? 70 : 220,
+				width: sidebarCollapsed ? 70 : 260,
 				transition: {
 					duration: 0.6,
 					type: "spring",
