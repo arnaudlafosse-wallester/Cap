@@ -25,7 +25,6 @@ export default async function DashboardLayout({
 }: {
 	children: React.ReactNode;
 }) {
-	const isEmbedMode = (await cookies()).get("cap-embed")?.value === "true";
 	const user = await getCurrentUser();
 	if (!user) redirect("/login");
 
@@ -85,22 +84,14 @@ export default async function DashboardLayout({
 					userPreferences={userPreferences}
 					referClicked={referClicked === "true"}
 				>
-					{isEmbedMode ? (
-						<div className="bg-gray-2 w-full h-full min-h-screen">
-							<main className="flex flex-col flex-1 h-full overflow-y-auto p-5 lg:p-8 bg-gray-2">
-								<div className="flex flex-col flex-1 gap-4">{children}</div>
-							</main>
+					<div className="bg-gray-2 dashboard-grid">
+						<DesktopNav />
+						<div className="flex h-full [grid-area:main] focus:outline-none">
+							<MobileNav />
+							<DashboardInner>{children}</DashboardInner>
 						</div>
-					) : (
-						<div className="bg-gray-2 dashboard-grid">
-							<DesktopNav />
-							<div className="flex h-full [grid-area:main] focus:outline-none">
-								<MobileNav />
-								<DashboardInner>{children}</DashboardInner>
-							</div>
-							<MobileTab />
-						</div>
-					)}
+						<MobileTab />
+					</div>
 				</DashboardContexts>
 			</UploadingProvider>
 		</AuthContextProvider>

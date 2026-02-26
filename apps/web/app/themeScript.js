@@ -12,4 +12,10 @@ export function script() {
 		pathname.startsWith("/onboarding");
 
 	if (isDashboardPath) document.body.classList.add(cookie ?? "light");
+
+	// Wally embed mode detection
+	const embedMatch = document.cookie.match(/(?:^|;\s*)cap-embed=([^;]*)/);
+	if (embedMatch && embedMatch[1] === "true") {
+		document.documentElement.classList.add("wally-embed");
+	}
 }

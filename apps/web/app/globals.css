@@ -940,8 +940,79 @@ footer a {
 	border-color: #3c3d3f;
 }
 
-/* Wally embed mode - match Wally's design system */
-.wally-embed body,
-.wally-embed html {
-	font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+/* ============================================
+   Wally embed mode overrides
+   Active only when .wally-embed class is on <html>
+   (set by themeScript.js when cap-embed cookie is true)
+   ============================================ */
+
+/* --- Font override --- */
+html.wally-embed,
+html.wally-embed body {
+	font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+/* --- Light mode: Remap Radix gray scale to Wally cool-gray --- */
+html.wally-embed:root,
+html.wally-embed .light {
+	--gray-1: #ffffff;
+	--gray-2: #f9fafb;
+	--gray-3: #f3f4f6;
+	--gray-4: #e5e7eb;
+	--gray-5: #e5e7eb;
+	--gray-6: #d1d5db;
+	--gray-7: #d1d5db;
+	--gray-8: #9ca3af;
+	--gray-9: #9ca3af;
+	--gray-10: #6b7280;
+	--gray-11: #4b5563;
+	--gray-12: #1f2937;
+	--primary: #3b82f6;
+	--primary-2: #2563eb;
+	--primary-3: #1d4ed8;
+	--text-primary: #1f2937;
+}
+
+/* --- Dark mode: Remap to Wally dark palette --- */
+html.wally-embed .dark {
+	--gray-1: #131314;
+	--gray-2: #1e1f20;
+	--gray-3: #2a2b2c;
+	--gray-4: #3c3d3f;
+	--gray-5: #3c3d3f;
+	--gray-6: #4b4c4e;
+	--gray-7: #4b4c4e;
+	--gray-8: #9ca3af;
+	--gray-9: #9ca3af;
+	--gray-10: #d1d5db;
+	--gray-11: #d1d5db;
+	--gray-12: #f9fafb;
+	--primary: #3b82f6;
+	--primary-2: #2563eb;
+	--primary-3: #1d4ed8;
+}
+
+/* --- Border radius: pill buttons → rounded-lg --- */
+html.wally-embed button.rounded-full,
+html.wally-embed a.rounded-full {
+	border-radius: 0.5rem; /* 8px */
+}
+
+/* --- Border radius: nav items, inputs → rounded-lg --- */
+html.wally-embed .rounded-xl {
+	border-radius: 0.5rem; /* 8px */
+}
+
+/* --- Border radius: cards → rounded-xl --- */
+html.wally-embed .rounded-2xl {
+	border-radius: 0.75rem; /* 12px */
+}
+
+/* --- Page background --- */
+html.wally-embed body {
+	background-color: #f9fafb;
+}
+
+html.wally-embed .dark body {
+	background-color: #131314;
 }
