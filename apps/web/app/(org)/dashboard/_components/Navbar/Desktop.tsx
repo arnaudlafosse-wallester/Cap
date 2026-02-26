@@ -42,7 +42,7 @@ export const DesktopNav = () => {
 				},
 			}}
 			className={clsx(
-				"hidden relative z-50 flex-1 h-full [grid-area:sidebar] will-change-[width] lg:flex group bg-gray-1",
+				"hidden relative z-50 flex-1 h-full [grid-area:sidebar] will-change-[width] lg:flex group bg-gray-2",
 			)}
 		>
 			<div className="flex flex-col mx-auto w-full h-full">
