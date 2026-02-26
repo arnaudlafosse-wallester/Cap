@@ -24,6 +24,17 @@ export async function middleware(request: NextRequest) {
 	const url = new URL(request.url);
 	const path = url.pathname;
 
+	// Allow iframe embedding for Wally embed mode
+	if (url.searchParams.get("embed") === "true" && path.startsWith("/dashboard")) {
+		const response = NextResponse.next();
+		response.headers.delete("X-Frame-Options");
+		response.headers.set(
+			"Content-Security-Policy",
+			"frame-ancestors 'self' https://api-production-2b0d.up.railway.app http://localhost:3000 http://localhost:8000",
+		);
+		return response;
+	}
+
 	// Add anti-clickjacking headers for /login
 	if (path.startsWith("/login")) {
 		const response = NextResponse.next();

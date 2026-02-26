@@ -136,6 +136,12 @@ function createServerEnv() {
 				.optional()
 				.describe("Secret for authenticating cron job requests"),
 
+			/// Wally SSO Integration
+			CAP_SSO_SECRET: z
+				.string()
+				.optional()
+				.describe("Shared HMAC secret for Wally SSO integration"),
+
 			/// Ignore
 			NODE_ENV: z.string(),
 			WORKFLOWS_RPC_URL: z.string().optional(),

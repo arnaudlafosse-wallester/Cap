@@ -939,3 +939,9 @@ footer a {
 	background-color: #131314;
 	border-color: #3c3d3f;
 }
+
+/* Wally embed mode - match Wally's design system */
+.wally-embed body,
+.wally-embed html {
+	font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
