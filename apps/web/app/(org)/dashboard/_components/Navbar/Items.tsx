@@ -76,7 +76,7 @@ const AdminNavItems = ({ toggleMobileNav }: Props) => {
 				{manageNavigation.map((item) => (
 					<div
 						key={item.name}
-						className="flex relative justify-center items-center mb-1.5 w-full"
+						className="flex relative justify-center items-center w-full"
 					>
 						{isPathActive(item.href, item.matchChildren ?? false) && (
 							<motion.div
@@ -95,7 +95,7 @@ const AdminNavItems = ({ toggleMobileNav }: Props) => {
 								}}
 								layoutId="navlinks"
 								id="navlinks"
-								className="absolute h-[36px] w-full rounded-xl pointer-events-none bg-[rgba(59,130,246,0.1)]"
+								className="absolute inset-0 rounded-md pointer-events-none bg-[rgba(59,130,246,0.1)]"
 							/>
 						)}
 
@@ -136,7 +136,7 @@ const AdminNavItems = ({ toggleMobileNav }: Props) => {
 									},
 								}}
 								layoutId="navlinks-settings"
-								className="absolute h-[36px] w-full rounded-xl pointer-events-none bg-[rgba(59,130,246,0.1)]"
+								className="absolute inset-0 rounded-md pointer-events-none bg-[rgba(59,130,246,0.1)]"
 							/>
 						)}
 						<NavItem
@@ -198,11 +198,11 @@ const NavItem = ({
 					"relative border border-transparent transition z-3",
 					sidebarCollapsed
 						? "flex justify-center items-center px-0 w-full size-9"
-						: "px-3 py-2 w-full",
+						: "px-2 py-[5px] w-full",
 					active
 						? "bg-transparent pointer-events-none text-[#3b82f6]"
 						: "hover:bg-gray-2 text-gray-12",
-					"flex overflow-hidden justify-start items-center tracking-tight rounded-xl outline-none",
+					"flex overflow-hidden justify-start items-center tracking-tight rounded-md outline-none",
 				)}
 			>
 				{cloneElement(icon, {
@@ -220,7 +220,7 @@ const NavItem = ({
 				<p
 					className={clsx(
 						"text-sm truncate",
-						sidebarCollapsed ? "hidden" : "ml-2.5",
+						sidebarCollapsed ? "hidden" : "ml-1.5",
 					)}
 				>
 					{name}

@@ -42,11 +42,11 @@ export const DesktopNav = () => {
 				},
 			}}
 			className={clsx(
-				"hidden relative z-50 flex-1 h-full [grid-area:sidebar] will-change-[width] lg:flex group bg-gray-2",
+				"hidden relative z-50 flex-1 h-full [grid-area:sidebar] will-change-[width] lg:flex group bg-gray-2 border-r border-gray-4",
 			)}
 		>
 			<div className="flex flex-col mx-auto w-full h-full">
-				<div className="h-12 flex items-center justify-between px-3 w-full">
+				<div className="h-12 flex items-center justify-between px-3 w-full border-b border-gray-4">
 					<Link
 						href="/dashboard"
 						className={clsx(

@@ -288,12 +288,12 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 					className={clsx(
 						"relative border border-transparent transition z-3",
 						sidebarCollapsed
-							? "flex justify-center px-0 mb-2 items-center w-full size-10"
-							: "py-2 w-full px-3 mb-2",
+							? "flex justify-center px-0 items-center w-full size-10"
+							: "py-[5px] w-full px-2",
 						pathname.includes("/dashboard/spaces/browse")
 							? "bg-[rgba(59,130,246,0.1)] pointer-events-none text-[#3b82f6]"
 							: "hover:bg-gray-2 text-gray-12",
-						"flex items-center justify-start rounded-xl outline-none tracking-tight overflow-hidden",
+						"flex items-center justify-start rounded-md outline-none tracking-tight overflow-hidden",
 					)}
 				>
 					<LayersIcon
@@ -310,7 +310,7 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 					<p
 						className={clsx(
 							"text-sm truncate",
-							sidebarCollapsed ? "hidden" : "ml-2.5",
+							sidebarCollapsed ? "hidden" : "ml-1.5",
 						)}
 					>
 						All Folders
@@ -491,7 +491,7 @@ const SpaceItem = ({
 		<Tooltip position="right" disable={!sidebarCollapsed} content={space.name}>
 			<div
 				className={clsx(
-					"relative transition-colors border border-transparent overflow-visible duration-150 rounded-xl mb-1 flex items-stretch",
+					"relative transition-colors border border-transparent overflow-visible duration-150 rounded-md flex items-stretch",
 					activeSpaceParams(space.id)
 						? "hover:bg-gray-3 cursor-default"
 						: "cursor-pointer",
@@ -506,7 +506,7 @@ const SpaceItem = ({
 						<motion.div
 							layoutId="navlinks"
 							className={clsx(
-								"absolute rounded-xl bg-[rgba(59,130,246,0.1)]",
+								"absolute rounded-md bg-[rgba(59,130,246,0.1)]",
 								sidebarCollapsed ? "inset-0 right-0 left-0 mx-auto" : "inset-0",
 							)}
 							style={{ willChange: "transform" }}
@@ -521,7 +521,7 @@ const SpaceItem = ({
 					<AnimatePresence>
 						{activeDropTarget === space.id && (
 							<motion.div
-								className="absolute inset-0 z-10 rounded-xl border transition-all duration-200 pointer-events-none border-blue-10 bg-gray-4"
+								className="absolute inset-0 z-10 rounded-md border transition-all duration-200 pointer-events-none border-blue-10 bg-gray-4"
 								initial={{ opacity: 0 }}
 								animate={{ opacity: 1 }}
 								exit={{ opacity: 0 }}
@@ -531,7 +531,7 @@ const SpaceItem = ({
 					</AnimatePresence>
 					<div
 						className={clsx(
-							"flex relative z-10 items-center px-2 py-1.5 truncate rounded-xl transition-colors group",
+							"flex relative z-10 items-center px-2 py-[5px] truncate rounded-md transition-colors group",
 							sidebarCollapsed ? "justify-center" : "",
 							activeSpaceParams(space.id)
 								? "hover:bg-gray-3"
@@ -634,7 +634,7 @@ const SpaceToggleControl = ({
 		return (
 			<div
 				onClick={() => setShowAllSpaces(true)}
-				className="flex justify-between items-center p-2 w-full truncate rounded-xl transition-colors cursor-pointer text-gray-10 hover:text-gray-12 hover:bg-gray-3"
+				className="flex justify-between items-center p-2 w-full truncate rounded-md transition-colors cursor-pointer text-gray-10 hover:text-gray-12 hover:bg-gray-3"
 			>
 				<span className="text-sm text-gray-10">+ {hiddenSpacesCount} more</span>
 				<ChevronDown size={16} className="ml-2" />
@@ -645,7 +645,7 @@ const SpaceToggleControl = ({
 		return (
 			<div
 				onClick={() => setShowAllSpaces(false)}
-				className="flex justify-between items-center p-2 w-full truncate rounded-xl transition-colors cursor-pointer text-gray-10 hover:text-gray-12 hover:bg-gray-3"
+				className="flex justify-between items-center p-2 w-full truncate rounded-md transition-colors cursor-pointer text-gray-10 hover:text-gray-12 hover:bg-gray-3"
 			>
 				<span className="text-sm text-gray-10">Show less</span>
 				<ChevronUp size={16} className="ml-2" />
