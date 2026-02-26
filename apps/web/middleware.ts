@@ -25,14 +25,24 @@ export async function middleware(request: NextRequest) {
 	const path = url.pathname;
 
 	// Allow iframe embedding for Wally embed mode
-	if (url.searchParams.get("embed") === "true" && path.startsWith("/dashboard")) {
-		const response = NextResponse.next();
-		response.headers.delete("X-Frame-Options");
-		response.headers.set(
-			"Content-Security-Policy",
-			"frame-ancestors 'self' https://api-production-2b0d.up.railway.app http://localhost:3000 http://localhost:8000",
-		);
-		return response;
+	if (path.startsWith("/dashboard")) {
+		const isEmbed = url.searchParams.get("embed") === "true" || request.cookies.get("cap-embed")?.value === "true";
+		if (isEmbed) {
+			const response = NextResponse.next();
+			response.headers.delete("X-Frame-Options");
+			response.headers.set(
+				"Content-Security-Policy",
+				"frame-ancestors 'self' https://api-production-2b0d.up.railway.app http://localhost:3000 http://localhost:8000",
+			);
+			// Persist embed mode via cookie so layouts can detect it
+			response.cookies.set("cap-embed", "true", {
+				path: "/",
+				maxAge: 60 * 60 * 24, // 24 hours
+				sameSite: "none",
+				secure: true,
+			});
+			return response;
+		}
 	}
 
 	// Add anti-clickjacking headers for /login

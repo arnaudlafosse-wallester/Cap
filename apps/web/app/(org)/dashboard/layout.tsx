@@ -22,13 +22,10 @@ export const dynamic = "force-dynamic";
 
 export default async function DashboardLayout({
 	children,
-	searchParams,
 }: {
 	children: React.ReactNode;
-	searchParams: Promise<{ embed?: string }>;
 }) {
-	const params = searchParams ? await searchParams : {};
-	const isEmbedMode = params.embed === "true";
+	const isEmbedMode = (await cookies()).get("cap-embed")?.value === "true";
 	const user = await getCurrentUser();
 	if (!user) redirect("/login");
 
