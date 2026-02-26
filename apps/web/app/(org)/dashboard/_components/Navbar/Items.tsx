@@ -45,13 +45,6 @@ const AdminNavItems = ({ toggleMobileNav }: Props) => {
 			icon: <RecordIcon />,
 			subNav: [],
 		},
-		{
-			name: "Organization Settings",
-			href: `/dashboard/settings/organization`,
-			adminOnly: true,
-			icon: <CogIcon />,
-			subNav: [],
-		},
 	];
 
 	const isPathActive = (path: string, matchChildren: boolean = false) => {
@@ -73,50 +66,92 @@ const AdminNavItems = ({ toggleMobileNav }: Props) => {
 					sidebarCollapsed ? "flex flex-col justify-center items-center" : "",
 				)}
 			>
-				{manageNavigation
-					.filter((item) => !item.adminOnly || isAdmin)
-					.map((item) => (
-						<div
-							key={item.name}
-							className="flex relative justify-center items-center mb-1.5 w-full"
-						>
-							{isPathActive(item.href, item.matchChildren ?? false) && (
-								<motion.div
-									animate={{
-										width: sidebarCollapsed ? 36 : "100%",
-									}}
-									transition={{
-										layout: {
-											type: "tween",
-											duration: 0.15,
-										},
-										width: {
-											type: "tween",
-											duration: 0.05,
-										},
-									}}
-									layoutId="navlinks"
-									id="navlinks"
-									className="absolute h-[36px] w-full rounded-xl pointer-events-none bg-gray-3"
-								/>
-							)}
+				{/* MY VIDEOS section header */}
+				{!sidebarCollapsed && (
+					<div className="text-[11px] font-semibold text-gray-9 uppercase tracking-wider px-2 py-1.5 mt-1">
+						My Videos
+					</div>
+				)}
 
-							<NavItem
-								name={item.name}
-								href={item.href}
-								icon={item.icon}
-								sidebarCollapsed={sidebarCollapsed}
-								toggleMobileNav={toggleMobileNav}
-								isPathActive={isPathActive}
-								extraText={item.extraText}
-								matchChildren={item.matchChildren ?? false}
+				{manageNavigation.map((item) => (
+					<div
+						key={item.name}
+						className="flex relative justify-center items-center mb-1.5 w-full"
+					>
+						{isPathActive(item.href, item.matchChildren ?? false) && (
+							<motion.div
+								animate={{
+									width: sidebarCollapsed ? 36 : "100%",
+								}}
+								transition={{
+									layout: {
+										type: "tween",
+										duration: 0.15,
+									},
+									width: {
+										type: "tween",
+										duration: 0.05,
+									},
+								}}
+								layoutId="navlinks"
+								id="navlinks"
+								className="absolute h-[36px] w-full rounded-xl pointer-events-none bg-[rgba(59,130,246,0.1)]"
 							/>
-						</div>
-					))}
+						)}
+
+						<NavItem
+							name={item.name}
+							href={item.href}
+							icon={item.icon}
+							sidebarCollapsed={sidebarCollapsed}
+							toggleMobileNav={toggleMobileNav}
+							isPathActive={isPathActive}
+							extraText={item.extraText}
+							matchChildren={item.matchChildren ?? false}
+						/>
+					</div>
+				))}
 
 				<SpacesList toggleMobileNav={() => toggleMobileNav?.()} />
 			</div>
-			{/* Footer removed for self-hosted version */}
+
+			{/* Organization Settings - admin only, at bottom */}
+			{isAdmin && (
+				<div
+					className={clsx(
+						"mt-auto pt-2",
+						!sidebarCollapsed && "border-t border-gray-4",
+					)}
+				>
+					<div className="flex relative justify-center items-center mb-1.5 w-full">
+						{isPathActive("/dashboard/settings/organization") && (
+							<motion.div
+								animate={{
+									width: sidebarCollapsed ? 36 : "100%",
+								}}
+								transition={{
+									layout: {
+										type: "tween",
+										duration: 0.15,
+									},
+								}}
+								layoutId="navlinks-settings"
+								className="absolute h-[36px] w-full rounded-xl pointer-events-none bg-[rgba(59,130,246,0.1)]"
+							/>
+						)}
+						<NavItem
+							name="Settings"
+							href="/dashboard/settings/organization"
+							icon={<CogIcon />}
+							sidebarCollapsed={sidebarCollapsed}
+							toggleMobileNav={toggleMobileNav}
+							isPathActive={isPathActive}
+							extraText={undefined}
+							matchChildren={false}
+						/>
+					</div>
+				</div>
+			)}
 		</nav>
 	);
 };
@@ -145,6 +180,7 @@ const NavItem = ({
 	matchChildren: boolean;
 }) => {
 	const iconRef = useRef<CogIconHandle>(null);
+	const active = isPathActive(href, matchChildren);
 	return (
 		<Tooltip disable={!sidebarCollapsed} content={name} position="right">
 			<Link
@@ -163,29 +199,34 @@ const NavItem = ({
 					sidebarCollapsed
 						? "flex justify-center items-center px-0 w-full size-9"
 						: "px-3 py-2 w-full",
-					isPathActive(href, matchChildren)
-						? "bg-transparent pointer-events-none"
-						: "hover:bg-gray-2",
+					active
+						? "bg-transparent pointer-events-none text-[#3b82f6]"
+						: "hover:bg-gray-2 text-gray-12",
 					"flex overflow-hidden justify-start items-center tracking-tight rounded-xl outline-none",
 				)}
 			>
 				{cloneElement(icon, {
 					ref: iconRef,
 					className: clsx(
-						sidebarCollapsed ? "text-gray-12 mx-auto" : "text-gray-10",
+						active
+							? "text-[#3b82f6]"
+							: sidebarCollapsed
+								? "text-gray-12"
+								: "text-gray-10",
+						sidebarCollapsed && "mx-auto",
 					),
 					size: sidebarCollapsed ? 18 : 16,
 				})}
 				<p
 					className={clsx(
-						"text-sm text-gray-12 truncate",
+						"text-sm truncate",
 						sidebarCollapsed ? "hidden" : "ml-2.5",
 					)}
 				>
 					{name}
 				</p>
-				{extraText !== null && !sidebarCollapsed && (
-					<p className="ml-auto text-xs font-medium text-gray-11">
+				{extraText !== null && extraText !== undefined && !sidebarCollapsed && (
+					<p className={clsx("ml-auto text-xs font-medium", active ? "text-[#3b82f6]/70" : "text-gray-11")}>
 						{extraText}
 					</p>
 				)}

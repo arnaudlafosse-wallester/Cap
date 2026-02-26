@@ -241,45 +241,40 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 		params.spaceId === spaceId;
 
 	return (
-		<div className="flex flex-col mt-4">
-			<div
-				className={clsx(
-					"flex items-center mb-3",
-					sidebarCollapsed ? "justify-center" : "justify-between",
-				)}
-			>
-				<h2
-					className={clsx(
-						"text-sm font-medium truncate text-gray-12",
-						sidebarCollapsed ? "hidden" : "flex",
-					)}
-				>
-					Folders
-				</h2>
-				<Tooltip position="right" content="Create folder">
-					<Button
-						className={clsx(
-							"p-0 min-w-[unset] hover:bg-gray-3",
-							sidebarCollapsed ? "size-8" : "size-7",
-						)}
-						variant="white"
-						onClick={() => {
-							setShowSpaceDialog(true);
-						}}
-					>
-						<FontAwesomeIcon
-							className={clsx(
-								"text-gray-12",
-								sidebarCollapsed ? "size-4" : "size-3",
-							)}
-							icon={faPlus}
-						/>
-					</Button>
-				</Tooltip>
-			</div>
+		<div className="flex flex-col mt-3">
+			{/* TEAMSPACES section header */}
+			{!sidebarCollapsed && (
+				<div className="flex items-center justify-between mb-2">
+					<span className="text-[11px] font-semibold uppercase tracking-wider text-gray-9">
+						Teamspaces
+					</span>
+					<Tooltip position="right" content="Create folder">
+						<button
+							type="button"
+							onClick={() => setShowSpaceDialog(true)}
+							className="p-1 rounded-md hover:bg-gray-3 text-gray-10 transition-colors"
+						>
+							<FontAwesomeIcon icon={faPlus} className="size-3" />
+						</button>
+					</Tooltip>
+				</div>
+			)}
+			{sidebarCollapsed && (
+				<div className="flex justify-center mb-2">
+					<Tooltip position="right" content="Create folder">
+						<Button
+							className="p-0 min-w-[unset] hover:bg-gray-3 size-8"
+							variant="white"
+							onClick={() => setShowSpaceDialog(true)}
+						>
+							<FontAwesomeIcon className="text-gray-12 size-4" icon={faPlus} />
+						</Button>
+					</Tooltip>
+				</div>
+			)}
 
 			<Tooltip
-				content="Browse folders"
+				content="All Folders"
 				disable={sidebarCollapsed === false}
 				position="right"
 			>
@@ -296,37 +291,36 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 							? "flex justify-center px-0 mb-2 items-center w-full size-10"
 							: "py-2 w-full px-3 mb-2",
 						pathname.includes("/dashboard/spaces/browse")
-							? "bg-gray-3 pointer-events-none"
-							: "hover:bg-gray-2",
+							? "bg-[rgba(59,130,246,0.1)] pointer-events-none text-[#3b82f6]"
+							: "hover:bg-gray-2 text-gray-12",
 						"flex items-center justify-start rounded-xl outline-none tracking-tight overflow-hidden",
 					)}
 				>
 					<LayersIcon
 						ref={layersIconRef}
-						className={clsx(sidebarCollapsed ? "text-gray-12" : "text-gray-10")}
+						className={clsx(
+							pathname.includes("/dashboard/spaces/browse")
+								? "text-[#3b82f6]"
+								: sidebarCollapsed
+									? "text-gray-12"
+									: "text-gray-10",
+						)}
 						size={sidebarCollapsed ? 18 : 14}
 					/>
 					<p
 						className={clsx(
-							"text-sm text-gray-12 truncate",
+							"text-sm truncate",
 							sidebarCollapsed ? "hidden" : "ml-2.5",
 						)}
 					>
-						Browse folders
+						All Folders
 					</p>
 				</Link>
 			</Tooltip>
 
-			{/* SHARED SPACES SECTION */}
+			{/* SHARED SPACES */}
 			{sharedSpaces.length > 0 && (
 				<>
-					{!sidebarCollapsed && (
-						<div className="flex items-center mb-2">
-							<span className="text-xs font-medium uppercase tracking-wider text-gray-9">
-								Shared
-							</span>
-						</div>
-					)}
 					<div className="overflow-hidden">
 						<div
 							className={clsx(
@@ -377,8 +371,8 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 			{/* PRIVATE SPACES SECTION */}
 			{privateSpaces.length > 0 && !sidebarCollapsed && (
 				<>
-					<div className="flex items-center mt-4 mb-2">
-						<span className="text-xs font-medium uppercase tracking-wider text-gray-9">
+					<div className="flex items-center mt-3 mb-2">
+						<span className="text-[11px] font-semibold uppercase tracking-wider text-gray-9">
 							Private
 						</span>
 					</div>
@@ -512,7 +506,7 @@ const SpaceItem = ({
 						<motion.div
 							layoutId="navlinks"
 							className={clsx(
-								"absolute rounded-xl bg-gray-3",
+								"absolute rounded-xl bg-[rgba(59,130,246,0.1)]",
 								sidebarCollapsed ? "inset-0 right-0 left-0 mx-auto" : "inset-0",
 							)}
 							style={{ willChange: "transform" }}
@@ -591,7 +585,7 @@ const SpaceItem = ({
 								/>
 							)}
 							{!sidebarCollapsed && (
-								<span className="text-sm truncate transition-colors text-gray-11 group-hover:text-gray-12">
+								<span className={clsx("text-sm truncate transition-colors", activeSpaceParams(space.id) ? "text-[#3b82f6]" : "text-gray-11 group-hover:text-gray-12")}>
 									{space.name}
 								</span>
 							)}
