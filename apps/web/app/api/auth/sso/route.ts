@@ -144,7 +144,11 @@ export async function GET(request: NextRequest) {
   });
 
   // Build redirect response with session cookie
-  const redirectUrl = new URL(redirect, request.url);
+  // Use x-forwarded-host/proto to get the public URL (Railway runs behind a proxy)
+  const forwardedHost = request.headers.get("x-forwarded-host") || request.headers.get("host");
+  const forwardedProto = request.headers.get("x-forwarded-proto") || "https";
+  const origin = forwardedHost ? `${forwardedProto}://${forwardedHost}` : request.url;
+  const redirectUrl = new URL(redirect, origin);
   const response = NextResponse.redirect(redirectUrl);
 
   response.cookies.set("next-auth.session-token", token, {
