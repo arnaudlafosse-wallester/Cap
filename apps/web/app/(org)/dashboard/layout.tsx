@@ -27,7 +27,7 @@ export default async function DashboardLayout({
 	children: React.ReactNode;
 	searchParams: Promise<{ embed?: string }>;
 }) {
-	const params = await searchParams;
+	const params = searchParams ? await searchParams : {};
 	const isEmbedMode = params.embed === "true";
 	const user = await getCurrentUser();
 	if (!user) redirect("/login");
