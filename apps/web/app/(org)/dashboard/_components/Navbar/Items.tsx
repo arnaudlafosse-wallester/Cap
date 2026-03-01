@@ -62,13 +62,12 @@ const AdminNavItems = ({ toggleMobileNav }: Props) => {
 		>
 			<div
 				className={clsx(
-					"mt-1.5",
+					"mt-1",
 					sidebarCollapsed ? "flex flex-col justify-center items-center" : "",
 				)}
 			>
-				{/* MY VIDEOS section header */}
 				{!sidebarCollapsed && (
-					<div className="text-[11px] font-semibold text-gray-9 uppercase tracking-wider px-2 py-1.5 mt-1">
+					<div className="text-[11px] font-semibold text-gray-9 uppercase tracking-wider px-1.5 py-1">
 						My Videos
 					</div>
 				)}

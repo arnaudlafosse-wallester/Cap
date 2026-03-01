@@ -1,1 +1,7 @@
-module.exports = require("@cap/ui/postcss");
+module.exports = {
+	plugins: {
+		"postcss-import": {},
+		tailwindcss: {},
+		autoprefixer: {},
+	},
+};

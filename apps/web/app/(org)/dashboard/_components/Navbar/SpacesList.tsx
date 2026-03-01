@@ -241,10 +241,9 @@ const SpacesList = ({ toggleMobileNav }: { toggleMobileNav?: () => void }) => {
 		params.spaceId === spaceId;
 
 	return (
-		<div className="flex flex-col mt-3">
-			{/* TEAMSPACES section header */}
+		<div className="flex flex-col mt-2">
 			{!sidebarCollapsed && (
-				<div className="flex items-center justify-between mb-2">
+				<div className="flex items-center justify-between px-1.5 mb-1">
 					<span className="text-[11px] font-semibold uppercase tracking-wider text-gray-9">
 						Teamspaces
 					</span>

@@ -3,8 +3,8 @@ import { Button } from "@cap/ui";
 import clsx from "clsx";
 import { motion } from "framer-motion";
 import { useDetectPlatform } from "hooks/useDetectPlatform";
-import { ChevronRight } from "lucide-react";
-import { useEffect } from "react";
+import { ChevronRight, Search } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Tooltip } from "@/components/Tooltip";
 import { useDashboardContext } from "../../Contexts";
 import AdminNavItems from "./Items";
@@ -13,6 +13,7 @@ export const DesktopNav = () => {
 	const { toggleSidebarCollapsed, sidebarCollapsed } = useDashboardContext();
 	const { platform } = useDetectPlatform();
 	const cmdSymbol = platform === "macos" ? "⌘" : "Ctrl";
+	const [searchQuery, setSearchQuery] = useState("");
 
 	useEffect(() => {
 		const handleKeyDown = (event: KeyboardEvent) => {
@@ -45,7 +46,22 @@ export const DesktopNav = () => {
 			)}
 		>
 			<div className="flex flex-col mx-auto w-full h-full">
-				<div className="h-12 flex items-center justify-end px-3 w-full border-b border-gray-4">
+				<div className="h-12 flex items-center gap-2 px-3 w-full border-b border-gray-4">
+					{!sidebarCollapsed && (
+						<div className="relative flex-1">
+							<Search
+								size={14}
+								className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-9 pointer-events-none"
+							/>
+							<input
+								type="text"
+								placeholder="Search..."
+								value={searchQuery}
+								onChange={(e) => setSearchQuery(e.target.value)}
+								className="w-full h-8 pl-7 pr-2 text-sm bg-gray-3 border border-gray-4 rounded-md text-gray-12 placeholder:text-gray-9 outline-none focus:border-gray-6 transition-colors"
+							/>
+						</div>
+					)}
 					<Tooltip
 						kbd={[cmdSymbol, "Shift", "S"]}
 						position="right"
@@ -54,7 +70,7 @@ export const DesktopNav = () => {
 						<Button
 							variant="white"
 							onClick={toggleSidebarCollapsed}
-							className="size-7 p-0 min-w-[unset] rounded-full transition-all z-10"
+							className="size-7 p-0 min-w-[unset] rounded-full transition-all z-10 flex-shrink-0"
 						>
 							<ChevronRight
 								size={14}
@@ -67,7 +83,7 @@ export const DesktopNav = () => {
 					</Tooltip>
 				</div>
 				<div className="flex overflow-y-auto flex-col flex-grow">
-					<div className="flex flex-col px-3 h-full">
+					<div className="flex flex-col px-1.5 h-full">
 						<AdminNavItems />
 					</div>
 				</div>

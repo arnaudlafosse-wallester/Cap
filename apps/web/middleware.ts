@@ -32,7 +32,7 @@ export async function middleware(request: NextRequest) {
 			response.headers.delete("X-Frame-Options");
 			response.headers.set(
 				"Content-Security-Policy",
-				"frame-ancestors 'self' https://api-production-2b0d.up.railway.app http://localhost:3000 http://localhost:8000",
+				"frame-ancestors 'self' https://wallyhelp.com https://www.wallyhelp.com https://api-production-2b0d.up.railway.app http://localhost:3000 http://localhost:8000",
 			);
 			// Persist embed mode via cookie so layouts can detect it
 			response.cookies.set("cap-embed", "true", {

@@ -104,6 +104,11 @@ const nextConfig = {
 	async redirects() {
 		return [
 			{
+				source: "/record",
+				destination: "/dashboard/caps",
+				permanent: false,
+			},
+			{
 				source: "/roadmap",
 				destination:
 					"https://capso.notion.site/7aac740edeee49b5a23be901a7cb734e?v=9d4a3bf3d72d488cad9b899ab73116a1",
