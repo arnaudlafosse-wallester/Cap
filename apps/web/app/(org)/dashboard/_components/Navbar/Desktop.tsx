@@ -3,8 +3,7 @@ import { Button } from "@cap/ui";
 import clsx from "clsx";
 import { motion } from "framer-motion";
 import { useDetectPlatform } from "hooks/useDetectPlatform";
-import { ChevronRight, Video } from "lucide-react";
-import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { useEffect } from "react";
 import { Tooltip } from "@/components/Tooltip";
 import { useDashboardContext } from "../../Contexts";
@@ -46,57 +45,26 @@ export const DesktopNav = () => {
 			)}
 		>
 			<div className="flex flex-col mx-auto w-full h-full">
-				<div className="h-12 flex items-center justify-between px-3 w-full border-b border-gray-4">
-					<Link
-						href="/dashboard"
-						className={clsx(
-							"flex items-center gap-2 text-gray-12",
-							sidebarCollapsed && "justify-center w-full",
-						)}
+				<div className="h-12 flex items-center justify-end px-3 w-full border-b border-gray-4">
+					<Tooltip
+						kbd={[cmdSymbol, "Shift", "S"]}
+						position="right"
+						content={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
 					>
-						<Video size={18} className="flex-shrink-0" />
-						{!sidebarCollapsed && (
-							<span className="font-semibold text-sm truncate">
-								Wallester Record
-							</span>
-						)}
-					</Link>
-					{!sidebarCollapsed && (
-						<Tooltip
-							kbd={[cmdSymbol, "Shift", "S"]}
-							position="right"
-							content="Collapse sidebar"
+						<Button
+							variant="white"
+							onClick={toggleSidebarCollapsed}
+							className="size-7 p-0 min-w-[unset] rounded-full transition-all z-10"
 						>
-							<Button
-								variant="white"
-								onClick={toggleSidebarCollapsed}
-								className="size-7 p-0 min-w-[unset] rounded-full transition-all z-10 opacity-0 group-hover:opacity-100"
-							>
-								<ChevronRight
-									size={14}
-									className="transition-transform duration-200 text-gray-12 rotate-180"
-								/>
-							</Button>
-						</Tooltip>
-					)}
-					{sidebarCollapsed && (
-						<Tooltip
-							kbd={[cmdSymbol, "Shift", "S"]}
-							position="right"
-							content="Expand sidebar"
-						>
-							<Button
-								variant="white"
-								onClick={toggleSidebarCollapsed}
-								className="size-7 p-0 min-w-[unset] rounded-full transition-all z-10 absolute right-0 top-3 opacity-0 group-hover:opacity-100"
-							>
-								<ChevronRight
-									size={14}
-									className="transition-transform duration-200 text-gray-12"
-								/>
-							</Button>
-						</Tooltip>
-					)}
+							<ChevronRight
+								size={14}
+								className={clsx(
+									"transition-transform duration-200 text-gray-12",
+									!sidebarCollapsed && "rotate-180",
+								)}
+							/>
+						</Button>
+					</Tooltip>
 				</div>
 				<div className="flex overflow-y-auto flex-col flex-grow">
 					<div className="flex flex-col px-3 h-full">
