@@ -1023,10 +1023,6 @@ html.wally-embed main {
 	background: transparent !important;
 }
 
-html.wally-embed main main {
-	padding: 0 !important;
-}
-
 /* --- Page background --- */
 html.wally-embed body {
 	background-color: #f9fafb;
