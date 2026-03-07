@@ -87,10 +87,13 @@ export default async function DashboardLayout({
 					isEmbedMode={isEmbed}
 				>
 					{isEmbed ? (
-						<div className="bg-gray-2 h-screen flex flex-col">
-							<main className="flex-1 overflow-y-auto bg-gray-1 p-5 lg:p-8">
-								<div className="flex flex-col flex-1 gap-4">{children}</div>
-							</main>
+						<div className="bg-gray-2 dashboard-grid">
+							<DesktopNav />
+							<div className="flex h-full [grid-area:main] focus:outline-none">
+								<main className="flex-1 overflow-y-auto bg-gray-1 p-5 lg:p-8">
+									<div className="flex flex-col flex-1 gap-4">{children}</div>
+								</main>
+							</div>
 						</div>
 					) : (
 						<div className="bg-gray-2 dashboard-grid">
