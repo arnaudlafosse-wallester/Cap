@@ -31,6 +31,7 @@ type SharedContext = {
 	setUpgradeModalOpen: (open: boolean) => void;
 	referClickedState: boolean;
 	setReferClickedStateHandler: (referClicked: boolean) => void;
+	isEmbedMode: boolean;
 };
 
 type ITheme = "light" | "dark";
@@ -61,6 +62,7 @@ export function DashboardContexts({
 	initialTheme,
 	initialSidebarCollapsed,
 	referClicked,
+	isEmbedMode,
 }: {
 	children: React.ReactNode;
 	organizationData: SharedContext["organizationData"];
@@ -73,6 +75,7 @@ export function DashboardContexts({
 	initialTheme: ITheme;
 	initialSidebarCollapsed: boolean;
 	referClicked: boolean;
+	isEmbedMode?: boolean;
 }) {
 	const user = useCurrentUser();
 	if (!user) redirect("/login");
@@ -177,6 +180,7 @@ export function DashboardContexts({
 					setUpgradeModalOpen,
 					referClickedState,
 					setReferClickedStateHandler,
+					isEmbedMode: isEmbedMode ?? false,
 				}}
 			>
 				{children}

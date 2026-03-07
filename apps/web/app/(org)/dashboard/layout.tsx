@@ -68,6 +68,7 @@ export default async function DashboardLayout({
 	const theme = (await cookies()).get("theme")?.value ?? "light";
 	const sidebar = (await cookies()).get("sidebarCollapsed")?.value ?? "false";
 	const referClicked = (await cookies()).get("referClicked")?.value ?? "false";
+	const isEmbed = (await cookies()).get("cap-embed")?.value === "true";
 
 	return (
 		<AuthContextProvider user={runPromise(resolveCurrentUser)}>
@@ -83,15 +84,24 @@ export default async function DashboardLayout({
 					anyNewNotifications={anyNewNotifications}
 					userPreferences={userPreferences}
 					referClicked={referClicked === "true"}
+					isEmbedMode={isEmbed}
 				>
-					<div className="bg-gray-2 dashboard-grid">
-						<DesktopNav />
-						<div className="flex h-full [grid-area:main] focus:outline-none">
-							<MobileNav />
-							<DashboardInner>{children}</DashboardInner>
+					{isEmbed ? (
+						<div className="bg-gray-2 h-screen flex flex-col">
+							<main className="flex-1 overflow-y-auto bg-gray-1 p-5 lg:p-8">
+								<div className="flex flex-col flex-1 gap-4">{children}</div>
+							</main>
 						</div>
-						<MobileTab />
-					</div>
+					) : (
+						<div className="bg-gray-2 dashboard-grid">
+							<DesktopNav />
+							<div className="flex h-full [grid-area:main] focus:outline-none">
+								<MobileNav />
+								<DashboardInner>{children}</DashboardInner>
+							</div>
+							<MobileTab />
+						</div>
+					)}
 				</DashboardContexts>
 			</UploadingProvider>
 		</AuthContextProvider>
