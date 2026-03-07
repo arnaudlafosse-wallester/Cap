@@ -1031,3 +1031,12 @@ html.wally-embed body {
 html.wally-embed .dark body {
 	background-color: #131314;
 }
+
+/* --- Embed: hide Teamspaces and Settings in sidebar --- */
+html.wally-embed aside nav[aria-label="Sidebar"] > div:first-child > :last-child {
+	display: none !important;
+}
+
+html.wally-embed aside nav[aria-label="Sidebar"] > div:last-child:not(:first-child) {
+	display: none !important;
+}
