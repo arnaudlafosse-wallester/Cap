@@ -1016,7 +1016,7 @@ html.wally-embed main > [aria-hidden] {
 html.wally-embed main > div {
 	border: none !important;
 	border-radius: 0 !important;
-	padding: 1.5rem !important; /* p-6 like Wallesterpedia */
+	padding: 0 !important;
 }
 
 html.wally-embed main {
