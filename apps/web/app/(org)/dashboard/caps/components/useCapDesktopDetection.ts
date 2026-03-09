@@ -39,7 +39,14 @@ export function useCapDesktopDetection() {
 		window.addEventListener("pagehide", onChange, { once: true });
 		window.addEventListener("blur", onChange, { once: true });
 
-		window.location.href = "cap-desktop://";
+		// Use a temporary anchor instead of window.location.href to avoid
+		// navigating the page (which breaks iframes/embeds)
+		const a = document.createElement("a");
+		a.href = "cap-desktop://";
+		a.style.display = "none";
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
 
 		if (checkingRef.current) clearTimeout(checkingRef.current);
 		checkingRef.current = setTimeout(() => {
@@ -50,7 +57,6 @@ export function useCapDesktopDetection() {
 				localStorage.setItem(STORAGE_KEY, "false");
 				setIsInstalled(false);
 				setIsChecking(false);
-				window.location.assign("/download");
 			}
 		}, 3000);
 	}, []);
