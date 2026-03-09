@@ -1,13 +1,7 @@
 "use client";
 
-import {
-	Button,
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "@cap/ui";
-import { ChevronDown, MonitorIcon, PlayCircle } from "lucide-react";
+import { Button } from "@cap/ui";
+import { MonitorIcon, PlayCircle } from "lucide-react";
 import { useState } from "react";
 import { useCapDesktopDetection } from "./useCapDesktopDetection";
 import { WebRecorderDialog } from "./web-recorder-dialog/web-recorder-dialog";
@@ -16,61 +10,43 @@ export const RecordButton = () => {
 	const { isInstalled, isChecking, openDesktop } = useCapDesktopDetection();
 	const [recorderOpen, setRecorderOpen] = useState(false);
 
-	// Confirmed installed (previous successful launch stored in localStorage)
-	// → single "Record" button that launches the app directly
-	if (isInstalled === true) {
-		return (
+	return (
+		<>
+			{/* Button 1: Open Cap Desktop app */}
 			<Button
-				onClick={openDesktop}
+				onClick={
+					isInstalled === false
+						? () => window.open("/download", "_blank")
+						: openDesktop
+				}
 				disabled={isChecking}
-				variant="blue"
+				variant="dark"
 				size="sm"
 				className="flex items-center gap-2"
 			>
 				<PlayCircle className="size-3.5" />
-				{isChecking ? "Opening..." : "Record"}
+				{isChecking
+					? "Opening..."
+					: isInstalled === false
+						? "Get Cap App"
+						: "Open Cap"}
 			</Button>
-		);
-	}
 
-	// Not confirmed or unknown → dropdown with both options
-	// (Zoom/Slack/Figma pattern: always show both, don't try to detect)
-	return (
-		<>
-			<DropdownMenu>
-				<DropdownMenuTrigger asChild>
-					<Button
-						variant="blue"
-						size="sm"
-						className="flex items-center gap-2"
-					>
-						<MonitorIcon className="size-3.5" />
-						Record
-						<ChevronDown className="size-3 ml-0.5" />
-					</Button>
-				</DropdownMenuTrigger>
-				<DropdownMenuContent align="end">
-					<DropdownMenuItem
-						onClick={openDesktop}
-						className="rounded-lg"
-					>
-						<PlayCircle className="mr-1.5 size-3 text-gray-10" />
-						Record with Cap Desktop
-					</DropdownMenuItem>
-					<DropdownMenuItem
-						onClick={() => setRecorderOpen(true)}
-						className="rounded-lg"
-					>
-						<MonitorIcon className="mr-1.5 size-3 text-gray-10" />
-						Record in Browser
-					</DropdownMenuItem>
-				</DropdownMenuContent>
-			</DropdownMenu>
+			{/* Button 2: Record in Browser (always same) */}
 			<WebRecorderDialog
 				hideTrigger
 				externalOpen={recorderOpen}
 				onExternalOpenChange={setRecorderOpen}
 			/>
+			<Button
+				onClick={() => setRecorderOpen(true)}
+				variant="blue"
+				size="sm"
+				className="flex items-center gap-2"
+			>
+				<MonitorIcon className="size-3.5" />
+				Record in Browser
+			</Button>
 		</>
 	);
 };
