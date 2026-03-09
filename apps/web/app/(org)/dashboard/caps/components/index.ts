@@ -3,6 +3,7 @@ export * from "./CreateCapCard";
 export * from "./EmptyCapState";
 export * from "./Folder";
 export * from "./NewFolderDialog";
+export * from "./RecordButton";
 export * from "./SelectedCapsBar";
 export * from "./UploadCapButton";
 export * from "./UploadPlaceholderCard";

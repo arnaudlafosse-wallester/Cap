@@ -15,10 +15,10 @@ import { useDashboardContext } from "../Contexts";
 import {
 	CreateCapCard,
 	NewFolderDialog,
+	RecordButton,
 	SelectedCapsBar,
 	UploadCapButton,
 	UploadPlaceholderCard,
-	WebRecorderDialog,
 } from "./components";
 import { CapCard } from "./components/CapCard/CapCard";
 import { CapPagination } from "./components/CapPagination";
@@ -253,7 +253,7 @@ export const Caps = ({
 					New Folder
 				</Button>
 				<UploadCapButton size="sm" />
-				<WebRecorderDialog />
+				<RecordButton />
 			</div>
 			{folders.length > 0 && (
 				<>

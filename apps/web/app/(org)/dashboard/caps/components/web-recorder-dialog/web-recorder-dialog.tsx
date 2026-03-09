@@ -36,8 +36,18 @@ import {
 } from "./web-recorder-constants";
 import { WebRecorderDialogHeader } from "./web-recorder-dialog-header";
 
-export const WebRecorderDialog = () => {
-	const [open, setOpen] = useState(false);
+export const WebRecorderDialog = ({
+	externalOpen,
+	onExternalOpenChange,
+	hideTrigger = false,
+}: {
+	externalOpen?: boolean;
+	onExternalOpenChange?: (open: boolean) => void;
+	hideTrigger?: boolean;
+} = {}) => {
+	const [internalOpen, setInternalOpen] = useState(false);
+	const isControlled = externalOpen !== undefined;
+	const open = isControlled ? externalOpen : internalOpen;
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	const [howItWorksOpen, setHowItWorksOpen] = useState(false);
 	const [recordingMode, setRecordingMode] =
@@ -197,7 +207,11 @@ export const WebRecorderDialog = () => {
 			setSettingsOpen(false);
 			setHowItWorksOpen(false);
 		}
-		setOpen(next);
+		if (isControlled) {
+			onExternalOpenChange?.(next);
+		} else {
+			setInternalOpen(next);
+		}
 	};
 
 	const handleStopClick = () => {
@@ -230,12 +244,14 @@ export const WebRecorderDialog = () => {
 	return (
 		<>
 			<Dialog open={open} onOpenChange={handleOpenChange}>
-				<DialogTrigger asChild>
-					<Button variant="blue" size="sm" className="flex items-center gap-2">
-						<MonitorIcon className="size-3.5" />
-						Record in Browser
-					</Button>
-				</DialogTrigger>
+				{!hideTrigger && (
+					<DialogTrigger asChild>
+						<Button variant="blue" size="sm" className="flex items-center gap-2">
+							<MonitorIcon className="size-3.5" />
+							Record in Browser
+						</Button>
+					</DialogTrigger>
+				)}
 				<DialogContent
 					ref={dialogContentRef}
 					className="w-[300px] border-none bg-transparent p-0 [&>button]:hidden"
