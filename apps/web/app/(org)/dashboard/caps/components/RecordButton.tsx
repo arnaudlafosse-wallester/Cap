@@ -55,7 +55,7 @@ export const RecordButton = () => {
 						className="rounded-lg"
 					>
 						<PlayCircle className="mr-1.5 size-3 text-gray-10" />
-						Open Cap Desktop
+						Record with Cap Desktop
 					</DropdownMenuItem>
 					<DropdownMenuItem
 						onClick={() => setRecorderOpen(true)}
