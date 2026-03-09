@@ -7,8 +7,6 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@cap/ui";
-import { faDownload } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ChevronDown, MonitorIcon, PlayCircle } from "lucide-react";
 import { useState } from "react";
 import { useCapDesktopDetection } from "./useCapDesktopDetection";
@@ -18,7 +16,8 @@ export const RecordButton = () => {
 	const { isInstalled, isChecking, openDesktop } = useCapDesktopDetection();
 	const [recorderOpen, setRecorderOpen] = useState(false);
 
-	// Desktop app installed → single "Record" button that launches the app
+	// Confirmed installed (previous successful launch stored in localStorage)
+	// → single "Record" button that launches the app directly
 	if (isInstalled === true) {
 		return (
 			<Button
@@ -34,7 +33,8 @@ export const RecordButton = () => {
 		);
 	}
 
-	// Desktop not installed or unknown → dropdown with options
+	// Not confirmed or unknown → dropdown with both options
+	// (Zoom/Slack/Figma pattern: always show both, don't try to detect)
 	return (
 		<>
 			<DropdownMenu>
@@ -51,21 +51,18 @@ export const RecordButton = () => {
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
 					<DropdownMenuItem
+						onClick={openDesktop}
+						className="rounded-lg"
+					>
+						<PlayCircle className="mr-1.5 size-3 text-gray-10" />
+						Open Cap Desktop
+					</DropdownMenuItem>
+					<DropdownMenuItem
 						onClick={() => setRecorderOpen(true)}
 						className="rounded-lg"
 					>
 						<MonitorIcon className="mr-1.5 size-3 text-gray-10" />
 						Record in Browser
-					</DropdownMenuItem>
-					<DropdownMenuItem
-						onClick={() => window.open("/download", "_self")}
-						className="rounded-lg"
-					>
-						<FontAwesomeIcon
-							className="mr-1.5 size-3 text-gray-10"
-							icon={faDownload}
-						/>
-						Download Cap Desktop
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>
