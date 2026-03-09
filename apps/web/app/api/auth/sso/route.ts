@@ -3,6 +3,7 @@ import { serverEnv } from "@cap/env";
 import { db } from "@cap/database";
 import { users, organizations, organizationMembers } from "@cap/database/schema";
 import { nanoId } from "@cap/database/helpers";
+import { User, Organisation } from "@cap/web-domain";
 import { eq } from "drizzle-orm";
 import { encode } from "next-auth/jwt";
 import { NextResponse } from "next/server";
@@ -82,8 +83,8 @@ export async function GET(request: NextRequest) {
 
   if (!dbUser) {
     // Create new user with default organization
-    const userId = nanoId();
-    const organizationId = nanoId();
+    const userId = User.UserId.make(nanoId());
+    const organizationId = Organisation.OrganisationId.make(nanoId());
 
     await db().transaction(async (tx) => {
       await tx.insert(users).values({
@@ -91,7 +92,7 @@ export async function GET(request: NextRequest) {
         email: email,
         name: email.split("@")[0],
         emailVerified: new Date(),
-        activeOrganizationId: "",
+        activeOrganizationId: Organisation.OrganisationId.make(""),
       });
 
       await tx.insert(organizations).values({
