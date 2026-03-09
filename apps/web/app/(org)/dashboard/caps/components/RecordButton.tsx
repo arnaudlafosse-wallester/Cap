@@ -8,13 +8,25 @@ import {
 	DropdownMenuTrigger,
 } from "@cap/ui";
 import { ChevronDown, MonitorIcon, PlayCircle } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCapDesktopDetection } from "./useCapDesktopDetection";
 import { WebRecorderDialog } from "./web-recorder-dialog/web-recorder-dialog";
 
 export const RecordButton = () => {
 	const { isInstalled, isChecking, openDesktop } = useCapDesktopDetection();
 	const [recorderOpen, setRecorderOpen] = useState(false);
+	const [isEmbed, setIsEmbed] = useState(false);
+
+	useEffect(() => {
+		// Detect if running inside an iframe (e.g. Wally embed)
+		// Protocol handlers (cap-desktop://) break inside iframes
+		setIsEmbed(window.self !== window.top);
+	}, []);
+
+	// In embed mode (iframe): only show browser recorder — no desktop option
+	if (isEmbed) {
+		return <WebRecorderDialog />;
+	}
 
 	// Confirmed installed (previous successful launch stored in localStorage)
 	// → single "Record" button that launches the app directly
