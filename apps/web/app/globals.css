@@ -1029,7 +1029,7 @@ html.wally-embed body {
 	background-color: #f9fafb;
 }
 
-html.wally-embed .dark body {
+html.wally-embed body.dark {
 	background-color: #131314;
 }
 
