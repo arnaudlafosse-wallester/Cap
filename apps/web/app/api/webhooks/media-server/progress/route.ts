@@ -4,6 +4,7 @@ import { serverEnv } from "@cap/env";
 import type { Video } from "@cap/web-domain";
 import { eq } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
+import { transcribeVideo } from "@/lib/transcribe";
 
 interface ProgressWebhookPayload {
 	jobId: string;
@@ -90,6 +91,22 @@ export async function POST(request: NextRequest) {
 			await db()
 				.delete(videoUploads)
 				.where(eq(videoUploads.videoId, payload.videoId as Video.VideoId));
+
+			const [video] = await db()
+				.select({ ownerId: videos.ownerId })
+				.from(videos)
+				.where(eq(videos.id, payload.videoId as Video.VideoId));
+
+			if (video) {
+				transcribeVideo(payload.videoId as Video.VideoId, video.ownerId).catch(
+					(error) => {
+						console.error(
+							`[media-server-webhook] Failed to start transcription for ${payload.videoId}:`,
+							error,
+						);
+					},
+				);
+			}
 		} else if (dbPhase === "error") {
 			await db()
 				.update(videoUploads)

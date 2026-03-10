@@ -56,7 +56,10 @@ export async function getVideoStatus(
 
 	const metadata: VideoMetadata = (video.metadata as VideoMetadata) || {};
 
-	if (!video.transcriptionStatus && serverEnv().DEEPGRAM_API_KEY) {
+	if (
+		(!video.transcriptionStatus || video.transcriptionStatus === "ERROR") &&
+		serverEnv().DEEPGRAM_API_KEY
+	) {
 		console.log(
 			`[Get Status] Transcription not started for video ${videoId}, triggering transcription`,
 		);

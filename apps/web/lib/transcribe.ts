@@ -242,11 +242,11 @@ export async function transcribeVideo(
 			message: "Transcription completed",
 		};
 	} catch (error) {
-		console.error("[transcribeVideo] Failed:", error);
+		console.error(`[transcribeVideo] Failed for video ${videoId}:`, error);
 
 		await db()
 			.update(videos)
-			.set({ transcriptionStatus: "SKIPPED" })
+			.set({ transcriptionStatus: "ERROR" })
 			.where(eq(videos.id, videoId));
 
 		return {
