@@ -267,9 +267,7 @@ export const Transcript: React.FC<TranscriptProps> = ({ data, onSeek }) => {
 	};
 
 	const formatTranscriptForClipboard = (entries: TranscriptEntry[]): string => {
-		return entries
-			.map((entry) => `[${entry.timestamp}] ${entry.text}`)
-			.join("\n\n");
+		return entries.map((entry) => entry.text).join("\n\n");
 	};
 
 	const formatTranscriptAsVTT = (entries: TranscriptEntry[]): string => {
