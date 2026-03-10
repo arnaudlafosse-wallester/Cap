@@ -96,8 +96,12 @@ export async function checkHasAudioTrackViaMediaServer(
 	});
 
 	if (!response.ok) {
-		const errorData = (await response.json()) as MediaServerError;
-		throw new Error(errorData.error || "Audio check failed");
+		let errorMessage = `Audio check failed: ${response.status}`;
+		try {
+			const errorData = (await response.json()) as MediaServerError;
+			errorMessage = errorData.error || errorMessage;
+		} catch {}
+		throw new Error(errorMessage);
 	}
 
 	const data = (await response.json()) as { hasAudio: boolean };

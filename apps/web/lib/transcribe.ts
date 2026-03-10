@@ -156,17 +156,28 @@ export async function transcribeVideo(
 
 		console.log(`[transcribeVideo] Using media server: ${useMediaServer}`);
 
+		let mediaServerFailed = false;
 		if (useMediaServer) {
-			hasAudio = await checkHasAudioTrackViaMediaServer(videoUrl);
-			if (!hasAudio) {
-				await db()
-					.update(videos)
-					.set({ transcriptionStatus: "NO_AUDIO" })
-					.where(eq(videos.id, videoId));
-				return { success: true, message: "Video has no audio track" };
+			try {
+				hasAudio = await checkHasAudioTrackViaMediaServer(videoUrl);
+				if (!hasAudio) {
+					await db()
+						.update(videos)
+						.set({ transcriptionStatus: "NO_AUDIO" })
+						.where(eq(videos.id, videoId));
+					return { success: true, message: "Video has no audio track" };
+				}
+				audioBuffer = await extractAudioViaMediaServer(videoUrl);
+			} catch (mediaError) {
+				console.warn(
+					`[transcribeVideo] Media server failed for video ${videoId}, falling back to local ffmpeg:`,
+					mediaError instanceof Error ? mediaError.message : mediaError,
+				);
+				mediaServerFailed = true;
 			}
-			audioBuffer = await extractAudioViaMediaServer(videoUrl);
-		} else {
+		}
+
+		if (!useMediaServer || mediaServerFailed) {
 			hasAudio = await checkHasAudioTrack(videoUrl);
 			if (!hasAudio) {
 				await db()
