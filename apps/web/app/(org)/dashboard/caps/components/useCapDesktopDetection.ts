@@ -39,14 +39,20 @@ export function useCapDesktopDetection() {
 		window.addEventListener("pagehide", onChange, { once: true });
 		window.addEventListener("blur", onChange, { once: true });
 
-		// Use a temporary anchor instead of window.location.href to avoid
-		// navigating the page (which breaks iframes/embeds)
-		const a = document.createElement("a");
-		a.href = "cap-desktop://";
-		a.style.display = "none";
-		document.body.appendChild(a);
-		a.click();
-		document.body.removeChild(a);
+		const isInIframe = window.self !== window.top;
+		if (isInIframe) {
+			window.parent.postMessage(
+				{ type: "open-protocol", url: "cap-desktop://" },
+				"*"
+			);
+		} else {
+			const a = document.createElement("a");
+			a.href = "cap-desktop://";
+			a.style.display = "none";
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+		}
 
 		if (checkingRef.current) clearTimeout(checkingRef.current);
 		checkingRef.current = setTimeout(() => {
