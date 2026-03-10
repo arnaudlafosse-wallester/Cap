@@ -13,6 +13,7 @@ function getFfmpegPath(): string {
 	}
 
 	const candidatePaths = [
+		"/usr/bin/ffmpeg",
 		ffmpegStaticPath,
 		resolve(process.cwd(), "node_modules/ffmpeg-static/ffmpeg"),
 		resolve(
