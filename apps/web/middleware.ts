@@ -48,19 +48,18 @@ export async function middleware(request: NextRequest) {
 	}
 
 	if (path.startsWith("/login")) {
-		const isEmbed = request.cookies.get("cap-embed")?.value === "true";
 		const response = NextResponse.next();
-		if (isEmbed) {
-			response.headers.delete("X-Frame-Options");
-			response.headers.set(
-				"Content-Security-Policy",
-				"frame-ancestors 'self' https://wallyhelp.com https://www.wallyhelp.com https://api-production-2b0d.up.railway.app http://localhost:3000 http://localhost:8000",
-			);
-		} else {
+		if (buildEnv.NEXT_PUBLIC_IS_CAP === "true") {
 			response.headers.set("X-Frame-Options", "SAMEORIGIN");
 			response.headers.set(
 				"Content-Security-Policy",
 				"frame-ancestors https://cap.so",
+			);
+		} else {
+			response.headers.delete("X-Frame-Options");
+			response.headers.set(
+				"Content-Security-Policy",
+				"frame-ancestors 'self' https://wallyhelp.com https://www.wallyhelp.com https://api-production-2b0d.up.railway.app http://localhost:3000 http://localhost:8000",
 			);
 		}
 		return response;
