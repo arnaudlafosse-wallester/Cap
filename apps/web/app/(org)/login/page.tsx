@@ -1,7 +1,6 @@
 import { getCurrentUser } from "@cap/database/auth/session";
-import { cookies } from "next/headers";
+import { buildEnv } from "@cap/env";
 import { redirect } from "next/navigation";
-import { EmbedSessionExpired } from "./embed-session-expired";
 import { LoginForm } from "./form";
 
 export const dynamic = "force-dynamic";
@@ -12,10 +11,6 @@ export default async function LoginPage() {
 		redirect("/dashboard");
 	}
 
-	const isEmbed = (await cookies()).get("cap-embed")?.value === "true";
-	if (isEmbed) {
-		return <EmbedSessionExpired />;
-	}
-
-	return <LoginForm />;
+	const isSelfHosted = buildEnv.NEXT_PUBLIC_IS_CAP !== "true";
+	return <LoginForm isSelfHosted={isSelfHosted} />;
 }

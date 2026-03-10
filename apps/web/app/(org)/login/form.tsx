@@ -31,13 +31,20 @@ function GoogleIcon({ className }: { className?: string }) {
 	);
 }
 
-export function LoginForm() {
+export function LoginForm({ isSelfHosted = false }: { isSelfHosted?: boolean }) {
 	const searchParams = useSearchParams();
 	const next = searchParams?.get("next");
 	const [isLoading, setIsLoading] = useState(false);
 	const [isDark, setIsDark] = useState(false);
+	const [isEmbedded, setIsEmbedded] = useState(false);
 
-	// Initialize theme from cookie or system preference
+	useEffect(() => {
+		if (isSelfHosted && window.self !== window.top) {
+			setIsEmbedded(true);
+			window.parent.postMessage({ type: "cap-session-expired" }, "*");
+		}
+	}, [isSelfHosted]);
+
 	useEffect(() => {
 		const savedTheme = Cookies.get("theme");
 		if (savedTheme) {
@@ -71,9 +78,18 @@ export function LoginForm() {
 		});
 	};
 
+	if (isEmbedded) {
+		return (
+			<div className="min-h-screen w-full flex items-center justify-center bg-gray-2">
+				<div className="text-center p-8">
+					<p className="text-gray-10 text-sm">Session expired. Reconnecting...</p>
+				</div>
+			</div>
+		);
+	}
+
 	return (
 		<div className="min-h-screen w-full login-gradient flex items-center justify-center relative">
-			{/* Dark mode toggle - bottom left */}
 			<button
 				onClick={toggleTheme}
 				className="absolute bottom-6 left-6 p-2 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
