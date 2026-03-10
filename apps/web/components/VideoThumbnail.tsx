@@ -1,10 +1,12 @@
 import { LogoSpinner } from "@cap/ui";
 import type { Video } from "@cap/web-domain";
+import { useQueryClient } from "@tanstack/react-query";
 import clsx from "clsx";
 import { Effect } from "effect";
 import moment from "moment";
 import Image from "next/image";
 import { memo, useEffect, useRef } from "react";
+import { regenerateThumbnail } from "@/actions/video/regenerate-thumbnail";
 import { useEffectQuery } from "@/lib/EffectRuntime";
 import { ThumbnailRequest } from "@/lib/Requests/ThumbnailRequest";
 
@@ -39,6 +41,8 @@ const formatDuration = (durationSecs: number) => {
 		return "< 1 sec"; // For very short durations
 	}
 };
+
+const regenerationAttempted = new Set<string>();
 
 function generateRandomGrayScaleColor() {
 	const minGrayScaleValue = 190;
@@ -78,6 +82,7 @@ export const VideoThumbnail: React.FC<VideoThumbnailProps> = memo(
 		hasActiveUpload = false,
 	}) => {
 		const thumbnailUrl = useThumnailQuery(videoId, !hasActiveUpload);
+		const queryClient = useQueryClient();
 		const imageRef = useRef<HTMLImageElement>(null);
 
 		const randomGradient = `linear-gradient(to right, ${generateRandomGrayScaleColor()}, ${generateRandomGrayScaleColor()})`;
@@ -129,7 +134,25 @@ export const VideoThumbnail: React.FC<VideoThumbnailProps> = memo(
 							imageStatus === "loading" && "opacity-0",
 						)}
 						onLoad={() => setImageStatus("success")}
-						onError={() => setImageStatus("error")}
+						onError={() => {
+							if (!regenerationAttempted.has(videoId)) {
+								regenerationAttempted.add(videoId);
+								regenerateThumbnail({ videoId })
+									.then((result) => {
+										if (result.regenerated) {
+											queryClient.invalidateQueries({
+												queryKey: ThumbnailRequest.queryKey(videoId),
+											});
+											setImageStatus("loading");
+										} else {
+											setImageStatus("error");
+										}
+									})
+									.catch(() => setImageStatus("error"));
+							} else {
+								setImageStatus("error");
+							}
+						}}
 					/>
 				)}
 				{videoDuration && (
