@@ -26,7 +26,9 @@ export async function middleware(request: NextRequest) {
 
 	// Allow iframe embedding for Wally embed mode
 	if (path.startsWith("/dashboard")) {
-		const isEmbed = url.searchParams.get("embed") === "true" || request.cookies.get("cap-embed")?.value === "true";
+		const isEmbed =
+			url.searchParams.get("embed") === "true" ||
+			request.cookies.get("cap-embed")?.value === "true";
 		if (isEmbed) {
 			const response = NextResponse.next();
 			response.headers.delete("X-Frame-Options");
@@ -45,14 +47,22 @@ export async function middleware(request: NextRequest) {
 		}
 	}
 
-	// Add anti-clickjacking headers for /login
 	if (path.startsWith("/login")) {
+		const isEmbed = request.cookies.get("cap-embed")?.value === "true";
 		const response = NextResponse.next();
-		response.headers.set("X-Frame-Options", "SAMEORIGIN");
-		response.headers.set(
-			"Content-Security-Policy",
-			"frame-ancestors https://cap.so",
-		);
+		if (isEmbed) {
+			response.headers.delete("X-Frame-Options");
+			response.headers.set(
+				"Content-Security-Policy",
+				"frame-ancestors 'self' https://wallyhelp.com https://www.wallyhelp.com https://api-production-2b0d.up.railway.app http://localhost:3000 http://localhost:8000",
+			);
+		} else {
+			response.headers.set("X-Frame-Options", "SAMEORIGIN");
+			response.headers.set(
+				"Content-Security-Policy",
+				"frame-ancestors https://cap.so",
+			);
+		}
 		return response;
 	}
 
