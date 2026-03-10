@@ -949,7 +949,8 @@ footer a {
 /* --- Font override --- */
 html.wally-embed,
 html.wally-embed body {
-	font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+	font-family:
+		system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
 }
 
 /* --- Light mode: Remap Radix gray scale to Wally cool-gray --- */
@@ -1033,10 +1034,16 @@ html.wally-embed .dark body {
 }
 
 /* --- Embed: hide Teamspaces and Settings in sidebar --- */
-html.wally-embed aside nav[aria-label="Sidebar"] > div:first-child > :last-child {
+html.wally-embed aside
+	nav[aria-label="Sidebar"]
+	> div:first-child
+	> :last-child {
 	display: none !important;
 }
 
-html.wally-embed aside nav[aria-label="Sidebar"] > div:last-child:not(:first-child) {
+html.wally-embed
+	aside
+	nav[aria-label="Sidebar"]
+	> div:last-child:not(:first-child) {
 	display: none !important;
 }

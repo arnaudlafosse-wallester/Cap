@@ -584,7 +584,14 @@ const SpaceItem = ({
 								/>
 							)}
 							{!sidebarCollapsed && (
-								<span className={clsx("text-sm truncate transition-colors", activeSpaceParams(space.id) ? "text-[#3b82f6]" : "text-gray-11 group-hover:text-gray-12")}>
+								<span
+									className={clsx(
+										"text-sm truncate transition-colors",
+										activeSpaceParams(space.id)
+											? "text-[#3b82f6]"
+											: "text-gray-11 group-hover:text-gray-12",
+									)}
+								>
 									{space.name}
 								</span>
 							)}

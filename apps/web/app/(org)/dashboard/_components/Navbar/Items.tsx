@@ -225,7 +225,12 @@ const NavItem = ({
 					{name}
 				</p>
 				{extraText !== null && extraText !== undefined && !sidebarCollapsed && (
-					<p className={clsx("ml-auto text-xs font-medium", active ? "text-[#3b82f6]/70" : "text-gray-11")}>
+					<p
+						className={clsx(
+							"ml-auto text-xs font-medium",
+							active ? "text-[#3b82f6]/70" : "text-gray-11",
+						)}
+					>
 						{extraText}
 					</p>
 				)}
