@@ -12,6 +12,7 @@ module.exports = (__app, _options) => {
 	}
 
 	const config = {
+		darkMode: "class",
 		content: [
 			`../../apps/*/pages/**/*.{js,ts,jsx,tsx,mdx}`,
 			`../../apps/*/components/**/*.{js,ts,jsx,tsx,mdx}`,

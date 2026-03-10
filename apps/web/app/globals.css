@@ -51,6 +51,12 @@ html {
 	color: #000000;
 	background-color: #f2f2f2;
 }
+
+body.dark,
+html.dark {
+	color: #eeeeee;
+	background-color: #111111;
+}
 .dashboard-grid {
 	display: grid;
 	grid-template-columns: auto 1fr 1fr;
