@@ -149,17 +149,20 @@ export async function transcribeVideo(
 			throw new Error("Video file not accessible");
 		}
 
-		// Extract audio (via Media Server or locally)
+		// Try to extract audio, or send video directly to Deepgram
 		const useMediaServer = isMediaServerConfigured();
-		let hasAudio: boolean;
-		let audioBuffer: Buffer;
+		let transcribeUrl = videoUrl;
+		let transcribeMimeType = "video/mp4";
+		let audioKey: string | null = null;
 
 		console.log(`[transcribeVideo] Using media server: ${useMediaServer}`);
 
-		let mediaServerFailed = false;
-		if (useMediaServer) {
-			try {
-				hasAudio = await checkHasAudioTrackViaMediaServer(videoUrl);
+		try {
+			let audioBuffer: Buffer | null = null;
+
+			if (useMediaServer) {
+				const hasAudio =
+					await checkHasAudioTrackViaMediaServer(videoUrl);
 				if (!hasAudio) {
 					await db()
 						.update(videos)
@@ -168,55 +171,58 @@ export async function transcribeVideo(
 					return { success: true, message: "Video has no audio track" };
 				}
 				audioBuffer = await extractAudioViaMediaServer(videoUrl);
-			} catch (mediaError) {
-				console.warn(
-					`[transcribeVideo] Media server failed for video ${videoId}, falling back to local ffmpeg:`,
-					mediaError instanceof Error ? mediaError.message : mediaError,
-				);
-				mediaServerFailed = true;
+			} else {
+				const hasAudio = await checkHasAudioTrack(videoUrl);
+				if (!hasAudio) {
+					await db()
+						.update(videos)
+						.set({ transcriptionStatus: "NO_AUDIO" })
+						.where(eq(videos.id, videoId));
+					return { success: true, message: "Video has no audio track" };
+				}
+				const extractResult = await extractAudioFromUrl(videoUrl);
+				try {
+					audioBuffer = await fs.readFile(extractResult.filePath);
+				} finally {
+					await extractResult.cleanup();
+				}
 			}
+
+			if (audioBuffer) {
+				audioKey = `${userId}/${videoId}/audio-temp.mp3`;
+				await bucket
+					.putObject(audioKey, audioBuffer, {
+						contentType: "audio/mpeg",
+					})
+					.pipe(runPromise);
+
+				transcribeUrl = await bucket
+					.getSignedObjectUrl(audioKey)
+					.pipe(runPromise);
+				transcribeMimeType = "audio/mpeg";
+			}
+		} catch (audioError) {
+			console.warn(
+				`[transcribeVideo] Audio extraction failed for video ${videoId}, sending video directly to Deepgram:`,
+				audioError instanceof Error ? audioError.message : audioError,
+			);
 		}
-
-		if (!useMediaServer || mediaServerFailed) {
-			hasAudio = await checkHasAudioTrack(videoUrl);
-			if (!hasAudio) {
-				await db()
-					.update(videos)
-					.set({ transcriptionStatus: "NO_AUDIO" })
-					.where(eq(videos.id, videoId));
-				return { success: true, message: "Video has no audio track" };
-			}
-			const extractResult = await extractAudioFromUrl(videoUrl);
-			try {
-				audioBuffer = await fs.readFile(extractResult.filePath);
-			} finally {
-				await extractResult.cleanup();
-			}
-		}
-
-		// Upload temp audio to S3
-		const audioKey = `${userId}/${videoId}/audio-temp.mp3`;
-		await bucket
-			.putObject(audioKey, audioBuffer, { contentType: "audio/mpeg" })
-			.pipe(runPromise);
-
-		const audioSignedUrl = await bucket
-			.getSignedObjectUrl(audioKey)
-			.pipe(runPromise);
 
 		// Transcribe with Deepgram
-		console.log(`[transcribeVideo] Calling Deepgram for video ${videoId}`);
+		console.log(
+			`[transcribeVideo] Calling Deepgram for video ${videoId} (${transcribeMimeType})`,
+		);
 		const deepgram = createClient(serverEnv().DEEPGRAM_API_KEY as string);
 
 		const { result: dgResult, error: dgError } =
 			await deepgram.listen.prerecorded.transcribeUrl(
-				{ url: audioSignedUrl },
+				{ url: transcribeUrl },
 				{
 					model: "nova-3",
 					smart_format: true,
 					detect_language: true,
 					utterances: true,
-					mime_type: "audio/mpeg",
+					mime_type: transcribeMimeType,
 				},
 			);
 
@@ -239,10 +245,11 @@ export async function transcribeVideo(
 			.set({ transcriptionStatus: "COMPLETE" })
 			.where(eq(videos.id, videoId));
 
-		// Cleanup temp audio
-		try {
-			await bucket.deleteObject(audioKey).pipe(runPromise);
-		} catch {}
+		if (audioKey) {
+			try {
+				await bucket.deleteObject(audioKey).pipe(runPromise);
+			} catch {}
+		}
 
 		console.log(
 			`[transcribeVideo] Transcription completed for video ${videoId}`,

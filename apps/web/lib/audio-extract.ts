@@ -145,8 +145,12 @@ export async function checkHasAudioTrack(videoUrl: string): Promise<boolean> {
 	let ffmpeg: string;
 	try {
 		ffmpeg = getFfmpegPath();
-	} catch {
-		return false;
+	} catch (err) {
+		console.warn(
+			"[checkHasAudioTrack] FFmpeg not found, assuming audio present:",
+			err instanceof Error ? err.message : err,
+		);
+		return true;
 	}
 	const ffmpegArgs = ["-i", videoUrl, "-hide_banner"];
 
@@ -161,12 +165,20 @@ export async function checkHasAudioTrack(videoUrl: string): Promise<boolean> {
 			stderr += data.toString();
 		});
 
-		proc.on("error", () => {
-			resolve(false);
+		proc.on("error", (err) => {
+			console.warn(
+				"[checkHasAudioTrack] FFmpeg process error, assuming audio present:",
+				err.message,
+			);
+			resolve(true);
 		});
 
 		proc.on("close", () => {
-			resolve(/Stream #\d+:\d+.*Audio:/.test(stderr));
+			const hasAudio = /Stream #\d+:\d+.*Audio:/.test(stderr);
+			console.log(
+				`[checkHasAudioTrack] FFmpeg probe result: hasAudio=${hasAudio}`,
+			);
+			resolve(hasAudio);
 		});
 	});
 }
