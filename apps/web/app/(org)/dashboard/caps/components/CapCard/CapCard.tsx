@@ -19,10 +19,8 @@ import {
 	faEllipsis,
 	faGear,
 	faLink,
-	faLock,
 	faShare,
 	faTrash,
-	faUnlock,
 	faVideo,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -44,7 +42,8 @@ import { useEffectMutation, useRpcClient } from "@/lib/EffectRuntime";
 import { ThumbnailRequest } from "@/lib/Requests/ThumbnailRequest";
 import { usePublicEnv } from "@/utils/public-env";
 
-import { PasswordDialog } from "../PasswordDialog";
+// V2: Password moved to SharingDialog
+// import { PasswordDialog } from "../PasswordDialog";
 import { SettingsDialog } from "../SettingsDialog";
 import { SharingDialog } from "../SharingDialog";
 import { CapCardAnalytics } from "./CapCardAnalytics";
@@ -148,7 +147,8 @@ export const CapCard = ({
 	const domainVerified = activeOrganization?.organization.domainVerified;
 
 	const [isSharingDialogOpen, setIsSharingDialogOpen] = useState(false);
-	const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+	// V2: Password moved to SharingDialog
+	// const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const [passwordProtected, setPasswordProtected] = useState(
 		cap.hasPassword || false,
@@ -158,8 +158,6 @@ export const CapCard = ({
 	const [copyPressed, setCopyPressed] = useState(false);
 	const [isDragging, setIsDragging] = useState(false);
 	const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false);
-	const { user, setUpgradeModalOpen } = useDashboardContext();
-
 	const [confirmOpen, setConfirmOpen] = useState(false);
 
 	const router = useRouter();
@@ -367,6 +365,9 @@ export const CapCard = ({
 				sharedSpaces={cap.sharedSpaces || []}
 				onSharingUpdated={handleSharingUpdated}
 				isPublic={cap.public}
+				hasPassword={passwordProtected}
+				videoId={cap.id}
+				onPasswordUpdated={handlePasswordUpdated}
 			/>
 			<SettingsDialog
 				isOpen={isSettingsDialogOpen}
@@ -374,6 +375,7 @@ export const CapCard = ({
 				capId={cap.id}
 				onClose={() => setIsSettingsDialogOpen(false)}
 			/>
+			{/* V2: Password moved to SharingDialog
 			<PasswordDialog
 				isOpen={isPasswordDialogOpen}
 				onClose={() => setIsPasswordDialogOpen(false)}
@@ -381,6 +383,7 @@ export const CapCard = ({
 				hasPassword={passwordProtected}
 				onPasswordUpdated={handlePasswordUpdated}
 			/>
+			*/}
 			<div
 				onClick={handleCardClick}
 				draggable={isOwner && !anyCapSelected}
@@ -534,21 +537,7 @@ export const CapCard = ({
 										<FontAwesomeIcon className="size-3" icon={faCopy} />
 										<p className="text-sm text-gray-12">Duplicate</p>
 									</DropdownMenuItem>
-									<DropdownMenuItem
-										onClick={() => {
-											if (!user.isPro) setUpgradeModalOpen(true);
-											else setIsPasswordDialogOpen(true);
-										}}
-										className="flex gap-2 items-center rounded-lg"
-									>
-										<FontAwesomeIcon
-											className="size-3"
-											icon={passwordProtected ? faLock : faUnlock}
-										/>
-										<p className="text-sm text-gray-12">
-											{passwordProtected ? "Edit password" : "Add password"}
-										</p>
-									</DropdownMenuItem>
+									{/* V2: Password moved to SharingDialog */}
 									<DropdownMenuItem
 										onClick={(e) => {
 											e.stopPropagation();

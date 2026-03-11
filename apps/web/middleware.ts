@@ -36,6 +36,11 @@ export async function middleware(request: NextRequest) {
 				"Content-Security-Policy",
 				"frame-ancestors 'self' https://wallyhelp.com https://www.wallyhelp.com https://api-production-2b0d.up.railway.app http://localhost:3000 http://localhost:8000",
 			);
+			// Allow camera/microphone/screen capture in embedded iframe
+			response.headers.set(
+				"Permissions-Policy",
+				"camera=*, microphone=*, display-capture=*",
+			);
 			// Persist embed mode via cookie so layouts can detect it
 			response.cookies.set("cap-embed", "true", {
 				path: "/",

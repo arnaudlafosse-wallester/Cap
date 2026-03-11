@@ -70,7 +70,7 @@ export const UploadCapButton = ({
 			<Button
 				onClick={handleClick}
 				disabled={isUploading}
-				variant="dark"
+				variant="green"
 				className="flex gap-2 items-center"
 				size={size}
 				spinner={isUploading}

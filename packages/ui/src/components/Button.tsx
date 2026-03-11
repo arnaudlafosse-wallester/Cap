@@ -25,6 +25,7 @@ const buttonVariants = cva(
 				ghost: "hover:bg-white/20 hover:text-white",
 				gray: "bg-gray-5 hover:bg-gray-7 border gray-button-border gray-button-shadow text-gray-12 disabled:border-gray-7 disabled:bg-gray-8 disabled:text-gray-11",
 				dark: "bg-gray-12 dark-button-shadow hover:bg-gray-11 border dark-button-border text-gray-1 disabled:cursor-not-allowed disabled:text-gray-10 disabled:bg-gray-7 disabled:border-gray-8",
+				green: "bg-emerald-600 text-white border border-emerald-700 hover:bg-emerald-700 shadow-[0_1.50px_0_0_rgba(255,255,255,0.20)_inset] disabled:bg-gray-7 disabled:text-gray-10",
 				darkgradient:
 					"bg-gradient-to-t button-gradient-border from-[#0f0f0f] to-[#404040] shadow-[0_0_0_1px] hover:brightness-110 shadow-[#383838] text-gray-50 hover:bg-[#383838] disabled:bg-[#383838] border-transparent",
 				radialblue:

@@ -46,7 +46,10 @@ export const DesktopNav = () => {
 			)}
 		>
 			<div className="flex flex-col mx-auto w-full h-full">
-				<div className="h-12 flex items-center gap-2 px-3 w-full border-b border-gray-4">
+				<div className={clsx(
+					"h-12 flex items-center w-full border-b border-gray-4",
+					sidebarCollapsed ? "justify-center px-0" : "gap-2 px-3",
+				)}>
 					{!sidebarCollapsed && (
 						<div className="relative flex-1">
 							<Search
@@ -70,10 +73,13 @@ export const DesktopNav = () => {
 						<Button
 							variant="white"
 							onClick={toggleSidebarCollapsed}
-							className="size-7 p-0 min-w-[unset] rounded-full transition-all z-10 flex-shrink-0"
+							className={clsx(
+								"p-0 min-w-[unset] rounded-full transition-all z-10 flex-shrink-0",
+								sidebarCollapsed ? "size-9" : "size-7",
+							)}
 						>
 							<ChevronRight
-								size={14}
+								size={sidebarCollapsed ? 16 : 14}
 								className={clsx(
 									"transition-transform duration-200 text-gray-12",
 									!sidebarCollapsed && "rotate-180",
@@ -83,7 +89,10 @@ export const DesktopNav = () => {
 					</Tooltip>
 				</div>
 				<div className="flex overflow-y-auto flex-col flex-grow">
-					<div className="flex flex-col px-1.5 h-full">
+					<div className={clsx(
+						"flex flex-col h-full",
+						sidebarCollapsed ? "px-0 items-center" : "px-1.5",
+					)}>
 						<AdminNavItems />
 					</div>
 				</div>

@@ -75,12 +75,15 @@ const AdminNavItems = ({ toggleMobileNav }: Props) => {
 				{manageNavigation.map((item) => (
 					<div
 						key={item.name}
-						className="flex relative justify-center items-center w-full"
+						className={clsx(
+							"flex relative justify-center items-center",
+							sidebarCollapsed ? "w-9 mx-auto" : "w-full",
+						)}
 					>
 						{isPathActive(item.href, item.matchChildren ?? false) && (
 							<motion.div
 								animate={{
-									width: sidebarCollapsed ? 36 : "100%",
+									width: "100%",
 								}}
 								transition={{
 									layout: {
@@ -122,11 +125,14 @@ const AdminNavItems = ({ toggleMobileNav }: Props) => {
 						!sidebarCollapsed && "border-t border-gray-4",
 					)}
 				>
-					<div className="flex relative justify-center items-center mb-1.5 w-full">
+					<div className={clsx(
+						"flex relative justify-center items-center mb-1.5",
+						sidebarCollapsed ? "w-9 mx-auto" : "w-full",
+					)}>
 						{isPathActive("/dashboard/settings/organization") && (
 							<motion.div
 								animate={{
-									width: sidebarCollapsed ? 36 : "100%",
+									width: "100%",
 								}}
 								transition={{
 									layout: {

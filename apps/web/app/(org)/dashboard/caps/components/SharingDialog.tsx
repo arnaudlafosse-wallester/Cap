@@ -10,14 +10,18 @@ import {
 	Switch,
 } from "@cap/ui";
 import { type ImageUpload, Space, type Video } from "@cap/web-domain";
-import { faCopy, faShareNodes } from "@fortawesome/free-solid-svg-icons";
+import { faCopy, faLock, faShareNodes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useMutation } from "@tanstack/react-query";
 import clsx from "clsx";
-import { Globe2, Search } from "lucide-react";
+import { Globe2, Lock, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { shareCap } from "@/actions/caps/share";
+import {
+	removeVideoPassword,
+	setVideoPassword,
+} from "@/actions/videos/password";
 import { useDashboardContext } from "@/app/(org)/dashboard/Contexts";
 import type { Spaces } from "@/app/(org)/dashboard/dashboard-data";
 import { SignedImageUrl } from "@/components/SignedImageUrl";
@@ -37,6 +41,9 @@ interface SharingDialogProps {
 	onSharingUpdated: (updatedSharedSpaces: string[]) => void;
 	isPublic?: boolean;
 	spacesData?: Spaces[] | null;
+	hasPassword?: boolean;
+	videoId?: Video.VideoId;
+	onPasswordUpdated?: (status: boolean) => void;
 }
 
 export const SharingDialog: React.FC<SharingDialogProps> = ({
@@ -48,6 +55,9 @@ export const SharingDialog: React.FC<SharingDialogProps> = ({
 	onSharingUpdated,
 	isPublic = false,
 	spacesData: propSpacesData = null,
+	hasPassword = false,
+	videoId,
+	onPasswordUpdated,
 }) => {
 	const { spacesData: contextSpacesData } = useDashboardContext();
 	const spacesData = propSpacesData || contextSpacesData;
@@ -60,6 +70,56 @@ export const SharingDialog: React.FC<SharingDialogProps> = ({
 	const [initialPublicState, setInitialPublicState] = useState(isPublic);
 	const tabs = ["Share", "Embed"] as const;
 	const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>("Share");
+
+	const [passwordToggle, setPasswordToggle] = useState(hasPassword);
+	const [passwordInput, setPasswordInput] = useState("");
+
+	const effectiveVideoId = videoId || capId;
+
+	const setPasswordMutation = useMutation({
+		mutationFn: async (password: string) => {
+			const result = await setVideoPassword(effectiveVideoId, password);
+			if (!result.success) {
+				throw new Error(result.error);
+			}
+			return result.value;
+		},
+		onSuccess: (message) => {
+			toast.success(message);
+			setPasswordInput("");
+			onPasswordUpdated?.(true);
+		},
+		onError: (e) => {
+			toast.error(e.message);
+		},
+	});
+
+	const removePasswordMutation = useMutation({
+		mutationFn: async () => {
+			const result = await removeVideoPassword(effectiveVideoId);
+			if (!result.success) {
+				throw new Error(result.error);
+			}
+			return result.value;
+		},
+		onSuccess: (message) => {
+			toast.success(message);
+			setPasswordToggle(false);
+			onPasswordUpdated?.(false);
+		},
+		onError: (e) => {
+			toast.error(e.message);
+			setPasswordToggle(true);
+		},
+	});
+
+	const handlePasswordToggle = (checked: boolean) => {
+		if (!checked && hasPassword) {
+			removePasswordMutation.mutate();
+		} else {
+			setPasswordToggle(checked);
+		}
+	};
 
 	const updateSharing = useMutation({
 		mutationFn: async ({
@@ -155,8 +215,10 @@ export const SharingDialog: React.FC<SharingDialogProps> = ({
 			setInitialPublicState(isPublic);
 			setSearchTerm("");
 			setActiveTab(tabs[0]);
+			setPasswordToggle(hasPassword);
+			setPasswordInput("");
 		}
-	}, [isOpen, sharedSpaces, isPublic, tabs[0]]);
+	}, [isOpen, sharedSpaces, isPublic, hasPassword, tabs[0]]);
 
 	const handleToggleSpace = (spaceId: string) => {
 		setSelectedSpaces((prev) => {
@@ -338,6 +400,76 @@ export const SharingDialog: React.FC<SharingDialogProps> = ({
 								<PublicLinkSection isPublic={publicToggle} capId={capId} />
 							</div>
 
+							{/* Password protection */}
+							<div className="p-3 mb-4 rounded-lg border bg-gray-1 border-gray-4">
+								<div className="flex justify-between items-center">
+									<div className="flex gap-3 items-center">
+										<div className="flex justify-center items-center w-8 h-8 rounded-full bg-gray-3">
+											<Lock className="w-4 h-4 text-gray-11" />
+										</div>
+										<div>
+											<p className="text-sm font-medium text-gray-12">
+												Password protection
+											</p>
+											<p className="text-xs text-gray-10">
+												{passwordToggle
+													? "Viewers must enter a password"
+													: "No password required"}
+											</p>
+										</div>
+									</div>
+									<Switch
+										checked={passwordToggle}
+										onCheckedChange={handlePasswordToggle}
+										disabled={
+											removePasswordMutation.isPending ||
+											setPasswordMutation.isPending
+										}
+									/>
+								</div>
+								{passwordToggle && (
+									<div className="mt-3 pt-3 border-t border-gray-4">
+										<div className="flex gap-2 items-center">
+											<Input
+												type="password"
+												value={passwordInput}
+												onChange={(e) => setPasswordInput(e.target.value)}
+												placeholder={
+													hasPassword
+														? "Enter new password"
+														: "Enter password"
+												}
+												className="flex-1"
+											/>
+											<Button
+												size="sm"
+												variant="dark"
+												className="flex-shrink-0"
+												disabled={
+													!passwordInput.trim() ||
+													setPasswordMutation.isPending
+												}
+												spinner={setPasswordMutation.isPending}
+												onClick={() =>
+													setPasswordMutation.mutate(passwordInput)
+												}
+											>
+												{setPasswordMutation.isPending
+													? "Saving..."
+													: "Save"}
+											</Button>
+										</div>
+										{hasPassword && (
+											<p className="mt-2 text-xs text-gray-9">
+												A password is currently set. Enter a new one to
+												change it.
+											</p>
+										)}
+									</div>
+								)}
+							</div>
+
+							{/* V2: re-enable folder sharing
 							<div className="relative mb-3">
 								<Input
 									type="text"
@@ -354,7 +486,6 @@ export const SharingDialog: React.FC<SharingDialogProps> = ({
 							<div className="overflow-y-auto pt-2 max-h-60 space-y-4">
 								{hasResults ? (
 									<>
-										{/* SHARED Section */}
 										{filteredShared.length > 0 && (
 											<div>
 												<p className="mb-2 text-xs font-medium uppercase text-gray-10">
@@ -373,8 +504,6 @@ export const SharingDialog: React.FC<SharingDialogProps> = ({
 												</div>
 											</div>
 										)}
-
-										{/* PRIVATE Section */}
 										{filteredPrivate.length > 0 && (
 											<div>
 												<p className="mb-2 text-xs font-medium uppercase text-gray-10">
@@ -404,6 +533,7 @@ export const SharingDialog: React.FC<SharingDialogProps> = ({
 									</div>
 								)}
 							</div>
+							*/}
 						</>
 					) : (
 						<div className="space-y-4">

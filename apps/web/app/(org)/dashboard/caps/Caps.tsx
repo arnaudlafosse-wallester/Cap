@@ -246,7 +246,7 @@ export const Caps = ({
 				<Button
 					onClick={() => setOpenNewFolderDialog(true)}
 					size="sm"
-					variant="dark"
+					variant="green"
 					className="flex gap-2 items-center w-fit"
 				>
 					<FontAwesomeIcon className="size-3.5" icon={faFolderPlus} />

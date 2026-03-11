@@ -26,7 +26,7 @@ export const CreateCapCard = () => {
 							onClick={openDesktop}
 							disabled={isChecking}
 							className="flex relative gap-2 justify-center items-center w-full"
-							variant="dark"
+							variant="blue"
 							size="sm"
 						>
 							<PlayCircle className="size-3.5" />
@@ -36,7 +36,7 @@ export const CreateCapCard = () => {
 						<Button
 							href="/download"
 							className="flex relative gap-2 justify-center items-center w-full"
-							variant="dark"
+							variant="blue"
 							size="sm"
 						>
 							<FontAwesomeIcon className="size-3.5" icon={faDownload} />
@@ -45,7 +45,7 @@ export const CreateCapCard = () => {
 					)}
 					<Button
 						href="/dashboard/caps/record"
-						variant="blue"
+						variant="green"
 						size="sm"
 						className="flex items-center justify-center gap-2 w-full"
 					>

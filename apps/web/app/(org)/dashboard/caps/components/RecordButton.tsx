@@ -20,7 +20,7 @@ export const RecordButton = () => {
 						: openDesktop
 				}
 				disabled={isChecking}
-				variant="dark"
+				variant="blue"
 				size="sm"
 				className="flex items-center gap-2"
 			>
@@ -40,7 +40,7 @@ export const RecordButton = () => {
 			/>
 			<Button
 				onClick={() => setRecorderOpen(true)}
-				variant="blue"
+				variant="green"
 				size="sm"
 				className="flex items-center gap-2"
 			>

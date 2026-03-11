@@ -40,7 +40,7 @@ export const EmptyCapState: React.FC<EmptyCapStateProps> = ({ userName }) => {
 							onClick={openDesktop}
 							disabled={isChecking}
 							className="flex relative gap-2 justify-center items-center"
-							variant="primary"
+							variant="blue"
 						>
 							<PlayCircle className="size-3.5" />
 							{isChecking ? "Opening..." : "Open Cap Desktop"}
@@ -49,7 +49,7 @@ export const EmptyCapState: React.FC<EmptyCapStateProps> = ({ userName }) => {
 						<Button
 							href="/download"
 							className="flex relative gap-2 justify-center items-center"
-							variant="primary"
+							variant="blue"
 						>
 							<FontAwesomeIcon className="size-3.5" icon={faDownload} />
 							Download Cap

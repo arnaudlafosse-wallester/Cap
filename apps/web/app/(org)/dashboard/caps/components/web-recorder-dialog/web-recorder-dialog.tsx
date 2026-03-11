@@ -247,7 +247,7 @@ export const WebRecorderDialog = ({
 				{!hideTrigger && (
 					<DialogTrigger asChild>
 						<Button
-							variant="blue"
+							variant="green"
 							size="sm"
 							className="flex items-center gap-2"
 						>

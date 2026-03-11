@@ -36,7 +36,7 @@ export const RecordingButton = ({
 	return (
 		<div className="flex items-center space-x-1 w-full">
 			<Button
-				variant="blue"
+				variant="green"
 				size="md"
 				disabled={disabled}
 				onClick={isRecording ? onStop : onStart}
