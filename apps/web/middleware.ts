@@ -24,22 +24,27 @@ export async function middleware(request: NextRequest) {
 	const url = new URL(request.url);
 	const path = url.pathname;
 
-	// Allow iframe embedding for Wally embed mode
+	// Allow iframe embedding and camera/microphone for Wally embed mode
 	if (path.startsWith("/dashboard")) {
+		const response = NextResponse.next();
+
+		// Always allow camera/microphone/screen capture on dashboard pages.
+		// Cap.so is always accessed via iframe from wallyhelp.com, and third-party
+		// cookie blocking (Chrome 2024+) prevents the cap-embed cookie from persisting
+		// across navigations within the iframe.
+		response.headers.set(
+			"Permissions-Policy",
+			"camera=*, microphone=*, display-capture=*",
+		);
+
 		const isEmbed =
 			url.searchParams.get("embed") === "true" ||
 			request.cookies.get("cap-embed")?.value === "true";
 		if (isEmbed) {
-			const response = NextResponse.next();
 			response.headers.delete("X-Frame-Options");
 			response.headers.set(
 				"Content-Security-Policy",
 				"frame-ancestors 'self' https://wallyhelp.com https://www.wallyhelp.com https://api-production-2b0d.up.railway.app http://localhost:3000 http://localhost:8000",
-			);
-			// Allow camera/microphone/screen capture in embedded iframe
-			response.headers.set(
-				"Permissions-Policy",
-				"camera=*, microphone=*, display-capture=*",
 			);
 			// Persist embed mode via cookie so layouts can detect it
 			response.cookies.set("cap-embed", "true", {
@@ -58,8 +63,9 @@ export async function middleware(request: NextRequest) {
 					secure: true,
 				});
 			}
-			return response;
 		}
+
+		return response;
 	}
 
 	if (path.startsWith("/login")) {
