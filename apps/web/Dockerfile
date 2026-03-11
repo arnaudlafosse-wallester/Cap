@@ -8,7 +8,7 @@ WORKDIR /app
 COPY . .
 
 RUN corepack enable pnpm
-RUN pnpm i --frozen-lockfile
+RUN pnpm i --no-frozen-lockfile
 
 ARG NEXT_PUBLIC_DOCKER_BUILD=true
 ENV NEXT_PUBLIC_WEB_URL=http://localhost:3000
