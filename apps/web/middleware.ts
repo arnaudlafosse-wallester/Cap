@@ -43,6 +43,16 @@ export async function middleware(request: NextRequest) {
 				sameSite: "none",
 				secure: true,
 			});
+			// Allow parent to set theme via URL param (?theme=dark|light)
+			const themeParam = url.searchParams.get("theme");
+			if (themeParam === "dark" || themeParam === "light") {
+				response.cookies.set("theme", themeParam, {
+					path: "/",
+					maxAge: 365 * 24 * 60 * 60,
+					sameSite: "none",
+					secure: true,
+				});
+			}
 			return response;
 		}
 	}

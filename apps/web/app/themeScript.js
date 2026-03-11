@@ -18,4 +18,17 @@ export function script() {
 	if (embedMatch && embedMatch[1] === "true") {
 		document.documentElement.classList.add("wally-embed");
 	}
+
+	// Listen for theme changes from parent window (Wally embed)
+	window.addEventListener("message", function (e) {
+		if (
+			e.data &&
+			e.data.type === "cap-set-theme" &&
+			(e.data.theme === "dark" || e.data.theme === "light")
+		) {
+			document.body.className = e.data.theme;
+			document.cookie =
+				"theme=" + e.data.theme + ";path=/;max-age=31536000";
+		}
+	});
 }
