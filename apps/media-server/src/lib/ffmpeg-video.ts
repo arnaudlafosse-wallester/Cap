@@ -215,7 +215,20 @@ export async function processVideo(
 		: needsVideoTranscode(metadata, opts);
 	const audioTranscode = remuxOnly ? false : needsAudioTranscode(metadata);
 
-	const ffmpegArgs: string[] = ["ffmpeg", "-threads", "2", "-i", inputPath];
+	// -fflags +genpts: regenerate missing PTS (browser MediaRecorder emits mp4
+	//   fragments with duplicate/non-monotonic DTS — Chrome's own <video>
+	//   element then refuses to decode its own recordings with "Media Error").
+	// -avoid_negative_ts make_zero: shift timestamps so first frame starts at 0.
+	// Applied at input-side so both remux (-c:v copy) and transcode paths benefit.
+	const ffmpegArgs: string[] = [
+		"ffmpeg",
+		"-threads",
+		"2",
+		"-fflags",
+		"+genpts",
+		"-i",
+		inputPath,
+	];
 
 	if (videoTranscode) {
 		ffmpegArgs.push(
@@ -243,6 +256,8 @@ export async function processVideo(
 	}
 
 	ffmpegArgs.push(
+		"-avoid_negative_ts",
+		"make_zero",
 		"-movflags",
 		"+faststart",
 		"-progress",
