@@ -147,12 +147,14 @@ export async function startAiGeneration(
 			.where(eq(videos.id, videoId));
 
 		// Update video name if it's a default name
-		const hasDatePattern = /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/.test(
+		const hasDatePattern = /\d{4}-\d{2}-\d{2}(?: at | )\d{2}[.:]\d{2}[.:]\d{2}/.test(
 			video.name || "",
 		);
 
 		if (
-			(video.name?.startsWith("Cap Recording -") || hasDatePattern) &&
+			(video.name?.startsWith("Cap Recording -") ||
+				video.name?.startsWith("Cap Upload -") ||
+				hasDatePattern) &&
 			result.title
 		) {
 			await db()
