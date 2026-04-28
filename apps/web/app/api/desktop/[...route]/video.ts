@@ -20,6 +20,7 @@ import { Effect, Option } from "effect";
 import { Hono } from "hono";
 import { z } from "zod";
 import { runPromise } from "@/lib/server";
+import { transcribeVideo } from "@/lib/transcribe";
 import { isFromDesktopSemver, UPLOAD_PROGRESS_VERSION } from "@/utils/desktop";
 import { stringOrNumberOptional } from "@/utils/zod";
 import { withAuth } from "../../utils";
@@ -350,6 +351,13 @@ app.post(
 					await db()
 						.delete(videoUploads)
 						.where(eq(videoUploads.videoId, videoId));
+
+					transcribeVideo(videoId, user.id).catch((error) => {
+						console.error(
+							`[desktop-upload] Failed to start transcription for ${videoId}:`,
+							error,
+						);
+					});
 				} else {
 					await db()
 						.update(videoUploads)

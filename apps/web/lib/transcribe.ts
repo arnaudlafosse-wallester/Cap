@@ -1,6 +1,6 @@
 import { promises as fs } from "node:fs";
 import { db } from "@cap/database";
-import { organizations, s3Buckets, videos } from "@cap/database/schema";
+import { organizations, s3Buckets, users, videos } from "@cap/database/schema";
 import { serverEnv } from "@cap/env";
 import { S3Buckets } from "@cap/web-backend";
 import type { S3Bucket, Video } from "@cap/web-domain";
@@ -13,8 +13,10 @@ import {
 	extractAudioViaMediaServer,
 	isMediaServerConfigured,
 } from "@/lib/media-client";
+import { startAiGeneration } from "@/lib/generate-ai";
 import { runPromise } from "@/lib/server";
 import { type DeepgramResult, formatToWebVTT } from "@/lib/transcribe-utils";
+import { isAiGenerationEnabled } from "@/utils/flags";
 
 type TranscribeResult = {
 	success: boolean;
@@ -244,6 +246,28 @@ export async function transcribeVideo(
 			.update(videos)
 			.set({ transcriptionStatus: "COMPLETE" })
 			.where(eq(videos.id, videoId));
+
+		if (serverEnv().GROQ_API_KEY || serverEnv().OPENAI_API_KEY) {
+			const ownerQuery = await db()
+				.select({
+					email: users.email,
+					stripeSubscriptionStatus: users.stripeSubscriptionStatus,
+					thirdPartyStripeSubscriptionId: users.thirdPartyStripeSubscriptionId,
+				})
+				.from(users)
+				.where(eq(users.id, userId))
+				.limit(1);
+
+			const owner = ownerQuery[0];
+			if (owner && (await isAiGenerationEnabled(owner))) {
+				startAiGeneration(videoId, userId).catch((error) => {
+					console.error(
+						`[transcribeVideo] Failed to start AI generation for ${videoId}:`,
+						error,
+					);
+				});
+			}
+		}
 
 		if (audioKey) {
 			try {

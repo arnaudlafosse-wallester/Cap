@@ -22,6 +22,7 @@ import { Hono, type MiddlewareHandler } from "hono";
 import { z } from "zod";
 import { withAuth } from "@/app/api/utils";
 import { runPromise } from "@/lib/server";
+import { transcribeVideo } from "@/lib/transcribe";
 import { stringOrNumberOptional } from "@/utils/zod";
 import { parseVideoIdOrFileKey } from "../utils";
 
@@ -472,6 +473,13 @@ app.post(
 								return Effect.succeed(null);
 							}),
 						);
+					} else {
+						transcribeVideo(videoId, user.id).catch((error) => {
+							console.error(
+								`[multipart-upload] Failed to start transcription for ${videoId}:`,
+								error,
+							);
+						});
 					}
 
 					if (Option.isNone(customBucket)) {
