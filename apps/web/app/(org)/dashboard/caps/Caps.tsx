@@ -1,11 +1,12 @@
 "use client";
 
 import type { VideoMetadata } from "@cap/database/types";
-import { Button } from "@cap/ui";
+import { Button, buttonVariants } from "@cap/ui";
 import type { ImageUpload, Video } from "@cap/web-domain";
 import { faFolderPlus, faInfoCircle } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Effect, Exit } from "effect";
+import { HelpCircle } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -242,7 +243,7 @@ export const Caps = ({
 				open={openNewFolderDialog}
 				onOpenChange={setOpenNewFolderDialog}
 			/>
-			<div className="flex gap-3 items-center mb-10 w-full">
+			<div className="flex gap-3 items-start mb-10 w-full">
 				<Button
 					onClick={() => setOpenNewFolderDialog(true)}
 					size="sm"
@@ -308,6 +309,27 @@ export const Caps = ({
 					<CapPagination currentPage={page} totalPages={totalPages} />
 				</div>
 			)}
+			<div className="flex flex-col gap-3 justify-between items-start p-4 mt-8 rounded-xl border sm:flex-row sm:gap-4 sm:items-center bg-blue-3 border-blue-6 dark:bg-blue-4 dark:border-blue-7">
+				<div className="flex gap-3 items-center min-w-0">
+					<HelpCircle className="flex-shrink-0 size-5 text-blue-11 dark:text-blue-10" />
+					<div className="min-w-0">
+						<p className="text-sm font-medium text-blue-12">
+							First time with Wallester Record?
+						</p>
+						<p className="text-xs text-blue-11 dark:text-blue-10">
+							Setup Cap, shortcuts, video sharing.
+						</p>
+					</div>
+				</div>
+				<a
+					href="https://wallyhelp.com/app/kb/configurer-cap-pour-wallester-record"
+					target="_blank"
+					rel="noopener noreferrer"
+					className={`${buttonVariants({ variant: "blue", size: "sm" })} flex-shrink-0 whitespace-nowrap`}
+				>
+					Read the guide →
+				</a>
+			</div>
 			<SelectedCapsBar
 				selectedCaps={selectedCaps}
 				setSelectedCaps={setSelectedCaps}
