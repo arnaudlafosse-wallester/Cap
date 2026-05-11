@@ -17,7 +17,7 @@ export const useDevicePreferences = ({
 	availableCameras,
 	availableMics,
 }: DevicePreferencesOptions) => {
-	const [rememberDevices, setRememberDevices] = useState(false);
+	const [rememberDevices, setRememberDevices] = useState(true);
 	const [selectedCameraId, setSelectedCameraId] = useState<string | null>(null);
 	const [selectedMicId, setSelectedMicId] = useState<string | null>(null);
 
@@ -26,8 +26,8 @@ export const useDevicePreferences = ({
 
 		try {
 			const storedRemember = window.localStorage.getItem(REMEMBER_DEVICES_KEY);
-			if (storedRemember === "true") {
-				setRememberDevices(true);
+			if (storedRemember === "false") {
+				setRememberDevices(false);
 			}
 		} catch (error) {
 			console.error("Failed to load recorder preferences", error);
@@ -35,7 +35,7 @@ export const useDevicePreferences = ({
 	}, []);
 
 	useEffect(() => {
-		if (!open || !rememberDevices) return;
+		if (!open) return;
 		if (typeof window === "undefined") return;
 
 		try {
@@ -74,7 +74,7 @@ export const useDevicePreferences = ({
 	const handleCameraChange = (cameraId: string | null) => {
 		setSelectedCameraId(cameraId);
 
-		if (!rememberDevices || typeof window === "undefined") {
+		if (typeof window === "undefined") {
 			return;
 		}
 
@@ -92,7 +92,7 @@ export const useDevicePreferences = ({
 	const handleMicChange = (micId: string | null) => {
 		setSelectedMicId(micId);
 
-		if (!rememberDevices || typeof window === "undefined") {
+		if (typeof window === "undefined") {
 			return;
 		}
 

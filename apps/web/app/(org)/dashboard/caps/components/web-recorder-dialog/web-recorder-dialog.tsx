@@ -109,6 +109,7 @@ export const WebRecorderDialog = ({
 		selectedCameraId,
 		selectedMicId,
 		setSelectedCameraId,
+		setSelectedMicId,
 		handleCameraChange,
 		handleMicChange,
 		handleRememberDevicesChange,
@@ -121,14 +122,16 @@ export const WebRecorderDialog = ({
 	const micEnabled = selectedMicId !== null;
 
 	useEffect(() => {
-		if (
-			recordingMode === "camera" &&
-			!selectedCameraId &&
-			availableCameras.length > 0
-		) {
+		if (!selectedCameraId && availableCameras.length > 0) {
 			setSelectedCameraId(availableCameras[0]?.deviceId ?? null);
 		}
-	}, [recordingMode, selectedCameraId, availableCameras, setSelectedCameraId]);
+	}, [selectedCameraId, availableCameras, setSelectedCameraId]);
+
+	useEffect(() => {
+		if (!selectedMicId && availableMics.length > 0) {
+			setSelectedMicId(availableMics[0]?.deviceId ?? null);
+		}
+	}, [selectedMicId, availableMics, setSelectedMicId]);
 
 	const {
 		phase,
