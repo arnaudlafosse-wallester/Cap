@@ -660,12 +660,19 @@ export const useWebRecorder = ({
 						"Failed to start recorder with timeslice chunks, falling back to manual flush",
 						startError,
 					);
+					if (recorder.state !== "inactive") {
+						try {
+							recorder.stop();
+						} catch (_stopError) {}
+					}
 				}
 
 				if (startedWithTimeslice) {
 					scheduleInstantChunkGuard();
 				} else {
-					recorder.start();
+					if (recorder.state === "inactive") {
+						recorder.start();
+					}
 					beginManualInstantChunking();
 				}
 			} else {

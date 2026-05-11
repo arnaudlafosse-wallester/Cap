@@ -122,6 +122,29 @@ export const WebRecorderDialog = ({
 	const micEnabled = selectedMicId !== null;
 
 	useEffect(() => {
+		if (!open) return;
+		if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia)
+			return;
+
+		let cancelled = false;
+		(async () => {
+			try {
+				const stream = await navigator.mediaDevices.getUserMedia({
+					video: { width: { ideal: 1280 }, height: { ideal: 720 } },
+					audio: true,
+				});
+				stream.getTracks().forEach((track) => track.stop());
+				if (cancelled) return;
+				await Promise.all([refreshCameras(), refreshMics()]);
+			} catch (_error) {}
+		})();
+
+		return () => {
+			cancelled = true;
+		};
+	}, [open, refreshCameras, refreshMics]);
+
+	useEffect(() => {
 		if (!selectedCameraId && availableCameras.length > 0) {
 			setSelectedCameraId(availableCameras[0]?.deviceId ?? null);
 		}
