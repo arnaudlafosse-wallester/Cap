@@ -657,7 +657,7 @@ export const useWebRecorder = ({
 					startedWithTimeslice = true;
 				} catch (startError) {
 					console.warn(
-						"Failed to start recorder with timeslice chunks, falling back to manual flush",
+						"MP4 MediaRecorder start failed, abandoning instant upload and retrying with WEBM",
 						startError,
 					);
 					if (recorder.state !== "inactive") {
@@ -670,10 +670,32 @@ export const useWebRecorder = ({
 				if (startedWithTimeslice) {
 					scheduleInstantChunkGuard();
 				} else {
-					if (recorder.state === "inactive") {
-						recorder.start();
+					const orphanVideoId = videoCreationRef.current?.id ?? null;
+					if (orphanVideoId) {
+						try {
+							await deleteVideo.mutateAsync(orphanVideoId);
+						} catch (_deleteError) {}
 					}
-					beginManualInstantChunking();
+					instantUploaderRef.current = null;
+					instantMp4ActiveRef.current = false;
+					videoCreationRef.current = null;
+					pendingInstantVideoIdRef.current = null;
+					setVideoId(null);
+
+					if (!fallbackMimeType) {
+						throw new Error(
+							"MP4 recorder unavailable and no WEBM fallback is supported on this browser",
+						);
+					}
+
+					const webmRecorder = new MediaRecorder(mixedStream, {
+						mimeType: fallbackMimeType,
+					});
+					webmRecorder.ondataavailable = handleRecorderDataAvailable;
+					webmRecorder.onstop = onRecorderStop;
+					webmRecorder.onerror = onRecorderError;
+					mediaRecorderRef.current = webmRecorder;
+					webmRecorder.start(200);
 				}
 			} else {
 				recorder.start(200);
