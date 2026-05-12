@@ -549,16 +549,17 @@ export const useWebRecorder = ({
 			instantUploaderRef.current = null;
 			instantMp4ActiveRef.current = false;
 
-			const mp4Candidates = hasAudio
-				? [...MP4_MIME_TYPES.withAudio, ...MP4_MIME_TYPES.videoOnly]
-				: [...MP4_MIME_TYPES.videoOnly, ...MP4_MIME_TYPES.withAudio];
-			const supportedMp4MimeType = pickSupportedMimeType(mp4Candidates);
 			const webmCandidates = hasAudio
 				? [...WEBM_MIME_TYPES.withAudio, ...WEBM_MIME_TYPES.videoOnly]
 				: [...WEBM_MIME_TYPES.videoOnly, ...WEBM_MIME_TYPES.withAudio];
-			const fallbackMimeType = pickSupportedMimeType(webmCandidates);
-			const mimeType = supportedMp4MimeType ?? fallbackMimeType;
-			const useInstantMp4 = Boolean(supportedMp4MimeType);
+			const mp4Candidates = hasAudio
+				? [...MP4_MIME_TYPES.withAudio, ...MP4_MIME_TYPES.videoOnly]
+				: [...MP4_MIME_TYPES.videoOnly, ...MP4_MIME_TYPES.withAudio];
+			const supportedWebmMimeType = pickSupportedMimeType(webmCandidates);
+			const supportedMp4MimeType = pickSupportedMimeType(mp4Candidates);
+			const fallbackMimeType = supportedWebmMimeType;
+			const mimeType = supportedWebmMimeType ?? supportedMp4MimeType;
+			const useInstantMp4 = false;
 			instantMp4ActiveRef.current = useInstantMp4;
 
 			const allCandidates = [
