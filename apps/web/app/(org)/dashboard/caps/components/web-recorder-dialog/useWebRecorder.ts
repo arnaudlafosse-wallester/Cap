@@ -560,6 +560,45 @@ export const useWebRecorder = ({
 			const mimeType = supportedMp4MimeType ?? fallbackMimeType;
 			const useInstantMp4 = Boolean(supportedMp4MimeType);
 			instantMp4ActiveRef.current = useInstantMp4;
+
+			const allCandidates = [
+				...MP4_MIME_TYPES.withAudio,
+				...MP4_MIME_TYPES.videoOnly,
+				...WEBM_MIME_TYPES.withAudio,
+				...WEBM_MIME_TYPES.videoOnly,
+			];
+			const supportMatrix = Object.fromEntries(
+				allCandidates.map((c) => [c, MediaRecorder.isTypeSupported(c)]),
+			);
+			console.info("[cap-recorder] diagnostic", {
+				userAgent:
+					typeof navigator !== "undefined" ? navigator.userAgent : "unknown",
+				platform:
+					typeof navigator !== "undefined"
+						? (navigator as Navigator & { userAgentData?: { platform?: string } })
+								.userAgentData?.platform ?? navigator.platform
+						: "unknown",
+				recordingMode,
+				hasAudio,
+				selectedMimeType: mimeType ?? null,
+				supportedMp4MimeType: supportedMp4MimeType ?? null,
+				fallbackMimeType: fallbackMimeType ?? null,
+				supportMatrix,
+				tracks: mixedStream.getTracks().map((t) => ({
+					kind: t.kind,
+					label: t.label,
+					readyState: t.readyState,
+					muted: t.muted,
+					enabled: t.enabled,
+					settings: (() => {
+						try {
+							return t.getSettings();
+						} catch {
+							return null;
+						}
+					})(),
+				})),
+			});
 			const shouldReuseInstantVideo = Boolean(
 				options?.reuseInstantVideo && videoCreationRef.current,
 			);
