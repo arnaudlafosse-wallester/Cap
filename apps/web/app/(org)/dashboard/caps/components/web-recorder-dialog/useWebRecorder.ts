@@ -735,25 +735,44 @@ export const useWebRecorder = ({
 					}
 					webmAttempts.push(undefined);
 
+					const streamAttempts: Array<{
+						stream: MediaStream;
+						label: string;
+					}> = [{ stream: mixedStream, label: "mixed" }];
+
+					const videoOnlyTracks = mixedStream.getVideoTracks();
+					if (videoOnlyTracks.length > 0 && mixedStream.getAudioTracks().length > 0) {
+						const videoOnlyStream = new MediaStream(videoOnlyTracks);
+						streamAttempts.push({
+							stream: videoOnlyStream,
+							label: "video-only",
+						});
+					}
+
 					let webmRecorder: MediaRecorder | null = null;
+					let usedStreamLabel = "mixed";
 					let lastWebmError: unknown = null;
-					for (const opts of webmAttempts) {
-						try {
-							const candidateRecorder = new MediaRecorder(mixedStream, opts);
-							candidateRecorder.ondataavailable = handleRecorderDataAvailable;
-							candidateRecorder.onstop = onRecorderStop;
-							candidateRecorder.onerror = onRecorderError;
-							candidateRecorder.start(200);
-							webmRecorder = candidateRecorder;
-							break;
-						} catch (webmError) {
-							lastWebmError = webmError;
-							console.warn(
-								`WEBM MediaRecorder start failed for ${
-									opts?.mimeType ?? "default mimeType"
-								}, trying next fallback`,
-								webmError,
-							);
+					attempts: for (const { stream, label } of streamAttempts) {
+						for (const opts of webmAttempts) {
+							try {
+								const candidateRecorder = new MediaRecorder(stream, opts);
+								candidateRecorder.ondataavailable = handleRecorderDataAvailable;
+								candidateRecorder.onstop = onRecorderStop;
+								candidateRecorder.onerror = onRecorderError;
+								candidateRecorder.start(200);
+								webmRecorder = candidateRecorder;
+								usedStreamLabel = label;
+								mixedStreamRef.current = stream;
+								break attempts;
+							} catch (webmError) {
+								lastWebmError = webmError;
+								console.warn(
+									`MediaRecorder start failed for stream=${label}, mimeType=${
+										opts?.mimeType ?? "default"
+									}, trying next fallback`,
+									webmError,
+								);
+							}
 						}
 					}
 
@@ -763,6 +782,13 @@ export const useWebRecorder = ({
 							: new Error(
 									"Unable to start MediaRecorder with any supported mimeType",
 								);
+					}
+
+					if (usedStreamLabel === "video-only") {
+						setHasAudioTrack(false);
+						toast.warning(
+							"Audio capture failed on this browser. Recording without microphone.",
+						);
 					}
 
 					mediaRecorderRef.current = webmRecorder;
