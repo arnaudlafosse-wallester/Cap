@@ -682,20 +682,51 @@ export const useWebRecorder = ({
 					pendingInstantVideoIdRef.current = null;
 					setVideoId(null);
 
-					if (!fallbackMimeType) {
-						throw new Error(
-							"MP4 recorder unavailable and no WEBM fallback is supported on this browser",
-						);
+					const webmAttempts: Array<MediaRecorderOptions | undefined> = [];
+					if (fallbackMimeType) {
+						webmAttempts.push({ mimeType: fallbackMimeType });
+					}
+					for (const candidate of WEBM_MIME_TYPES.videoOnly) {
+						if (
+							candidate !== fallbackMimeType &&
+							MediaRecorder.isTypeSupported(candidate)
+						) {
+							webmAttempts.push({ mimeType: candidate });
+						}
+					}
+					webmAttempts.push(undefined);
+
+					let webmRecorder: MediaRecorder | null = null;
+					let lastWebmError: unknown = null;
+					for (const opts of webmAttempts) {
+						try {
+							const candidateRecorder = new MediaRecorder(mixedStream, opts);
+							candidateRecorder.ondataavailable = handleRecorderDataAvailable;
+							candidateRecorder.onstop = onRecorderStop;
+							candidateRecorder.onerror = onRecorderError;
+							candidateRecorder.start(200);
+							webmRecorder = candidateRecorder;
+							break;
+						} catch (webmError) {
+							lastWebmError = webmError;
+							console.warn(
+								`WEBM MediaRecorder start failed for ${
+									opts?.mimeType ?? "default mimeType"
+								}, trying next fallback`,
+								webmError,
+							);
+						}
 					}
 
-					const webmRecorder = new MediaRecorder(mixedStream, {
-						mimeType: fallbackMimeType,
-					});
-					webmRecorder.ondataavailable = handleRecorderDataAvailable;
-					webmRecorder.onstop = onRecorderStop;
-					webmRecorder.onerror = onRecorderError;
+					if (!webmRecorder) {
+						throw lastWebmError instanceof Error
+							? lastWebmError
+							: new Error(
+									"Unable to start MediaRecorder with any supported mimeType",
+								);
+					}
+
 					mediaRecorderRef.current = webmRecorder;
-					webmRecorder.start(200);
 				}
 			} else {
 				recorder.start(200);
