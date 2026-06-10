@@ -25,7 +25,7 @@ export const RecordButton = () => {
 					disabled={isChecking}
 					variant="blue"
 					size="sm"
-					className="flex items-center gap-2"
+					className="flex items-center gap-2 whitespace-nowrap"
 				>
 					<PlayCircle className="size-3.5" />
 					{isChecking
@@ -56,7 +56,7 @@ export const RecordButton = () => {
 				onClick={() => setRecorderOpen(true)}
 				variant="green"
 				size="sm"
-				className="flex items-center gap-2"
+				className="flex items-center gap-2 whitespace-nowrap"
 			>
 				<MonitorIcon className="size-3.5" />
 				Record in Browser
